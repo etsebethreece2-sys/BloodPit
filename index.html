@@ -87,8 +87,7 @@
     .barOuter {
       height: 22px;
       border: 2px solid #b88a44;
-      background:
-        linear-gradient(#160c07, #2a170d);
+      background: linear-gradient(#160c07, #2a170d);
       border-radius: 4px;
       overflow: hidden;
       box-shadow:
@@ -128,7 +127,7 @@
 
     #crosshair {
       position: absolute;
-      left: 50%;
+      left: 54%;
       top: 50%;
       width: 22px;
       height: 22px;
@@ -216,8 +215,7 @@
       cursor: pointer;
       border: 3px solid #d6a14a;
       border-radius: 8px;
-      background:
-        linear-gradient(#8d5520, #4d260d);
+      background: linear-gradient(#8d5520, #4d260d);
       color: #ffe7ad;
       font-family: "Cinzel", Georgia, serif;
       font-size: 18px;
@@ -322,7 +320,7 @@
     </div>
 
     <div id="instructions">
-      Click to lock mouse.  
+      Click to lock mouse.
       <b>WASD</b> move · <b>Mouse</b> look · <b>Left Click</b> sword attack · <b>Hold Right Click</b> block · <b>R</b> restart
     </div>
   </div>
@@ -372,6 +370,60 @@
 
     init();
     animate();
+
+    function toonMaterial(color, extra = {}) {
+      return new THREE.MeshToonMaterial({
+        color,
+        gradientMap: createToonGradient(),
+        ...extra
+      });
+    }
+
+    function createToonGradient() {
+      const canvas = document.createElement("canvas");
+      canvas.width = 4;
+      canvas.height = 1;
+      const ctx = canvas.getContext("2d");
+
+      ctx.fillStyle = "#222";
+      ctx.fillRect(0, 0, 1, 1);
+
+      ctx.fillStyle = "#777";
+      ctx.fillRect(1, 0, 1, 1);
+
+      ctx.fillStyle = "#bbb";
+      ctx.fillRect(2, 0, 1, 1);
+
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(3, 0, 1, 1);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.minFilter = THREE.NearestFilter;
+      texture.magFilter = THREE.NearestFilter;
+      return texture;
+    }
+
+    function addOutline(mesh, scale = 1.045) {
+      if (!mesh.geometry) return;
+
+      const outline = new THREE.Mesh(
+        mesh.geometry,
+        new THREE.MeshBasicMaterial({
+          color: 0x160a05,
+          side: THREE.BackSide
+        })
+      );
+
+      outline.position.copy(mesh.position);
+      outline.rotation.copy(mesh.rotation);
+      outline.scale.copy(mesh.scale).multiplyScalar(scale);
+      outline.castShadow = false;
+      outline.receiveShadow = false;
+
+      mesh.add(outline);
+      outline.position.set(0, 0, 0);
+      outline.rotation.set(0, 0, 0);
+    }
 
     function init() {
       scene = new THREE.Scene();
@@ -430,10 +482,10 @@
     }
 
     function addLights() {
-      const hemi = new THREE.HemisphereLight(0xffddbb, 0x21110b, 1.8);
+      const hemi = new THREE.HemisphereLight(0xffddbb, 0x21110b, 2.1);
       scene.add(hemi);
 
-      const sun = new THREE.DirectionalLight(0xffd19a, 3.8);
+      const sun = new THREE.DirectionalLight(0xffd19a, 3.4);
       sun.position.set(10, 22, 13);
       sun.castShadow = true;
       sun.shadow.mapSize.width = 2048;
@@ -446,21 +498,17 @@
       sun.shadow.camera.bottom = -38;
       scene.add(sun);
 
-      const fireLight1 = new THREE.PointLight(0xff4c1a, 3, 18);
+      const fireLight1 = new THREE.PointLight(0xff4c1a, 3.5, 18);
       fireLight1.position.set(-18, 5, -16);
       scene.add(fireLight1);
 
-      const fireLight2 = new THREE.PointLight(0xff4c1a, 3, 18);
+      const fireLight2 = new THREE.PointLight(0xff4c1a, 3.5, 18);
       fireLight2.position.set(18, 5, 16);
       scene.add(fireLight2);
     }
 
     function createArena() {
-      const groundMat = new THREE.MeshStandardMaterial({
-        color: 0x7b5230,
-        roughness: 0.95,
-        metalness: 0.02
-      });
+      const groundMat = toonMaterial(0x7b5230);
 
       const ground = new THREE.Mesh(
         new THREE.CircleGeometry(ARENA_RADIUS, 96),
@@ -470,10 +518,7 @@
       ground.receiveShadow = true;
       scene.add(ground);
 
-      const ringMat = new THREE.MeshStandardMaterial({
-        color: 0x3b2115,
-        roughness: 0.8
-      });
+      const ringMat = toonMaterial(0x3b2115);
 
       const wall = new THREE.Mesh(
         new THREE.TorusGeometry(ARENA_RADIUS, 0.55, 12, 128),
@@ -484,6 +529,7 @@
       wall.castShadow = true;
       wall.receiveShadow = true;
       scene.add(wall);
+      addOutline(wall, 1.035);
 
       for (let i = 0; i < 48; i++) {
         const angle = (i / 48) * Math.PI * 2;
@@ -492,10 +538,7 @@
 
         const block = new THREE.Mesh(
           new THREE.BoxGeometry(1.5, 2.7 + Math.random() * 1.4, 1.2),
-          new THREE.MeshStandardMaterial({
-            color: i % 2 ? 0x8b765d : 0x6c5842,
-            roughness: 0.9
-          })
+          toonMaterial(i % 2 ? 0x8b765d : 0x6c5842)
         );
 
         block.position.set(x, block.geometry.parameters.height / 2 - 0.15, z);
@@ -503,6 +546,7 @@
         block.castShadow = true;
         block.receiveShadow = true;
         scene.add(block);
+        addOutline(block, 1.035);
       }
 
       for (let i = 0; i < 90; i++) {
@@ -511,7 +555,7 @@
 
         const stone = new THREE.Mesh(
           new THREE.DodecahedronGeometry(0.08 + Math.random() * 0.18),
-          new THREE.MeshStandardMaterial({ color: 0x5a3b28, roughness: 1 })
+          toonMaterial(0x5a3b28)
         );
 
         stone.position.set(Math.cos(a) * r, 0.06, Math.sin(a) * r);
@@ -519,6 +563,7 @@
         stone.receiveShadow = true;
         stone.castShadow = true;
         scene.add(stone);
+        addOutline(stone, 1.08);
       }
 
       createTorches();
@@ -535,22 +580,45 @@
       for (const [x, z] of positions) {
         const pole = new THREE.Mesh(
           new THREE.CylinderGeometry(0.18, 0.25, 4.5, 12),
-          new THREE.MeshStandardMaterial({ color: 0x2b160d, roughness: 0.85 })
+          toonMaterial(0x2b160d)
         );
         pole.position.set(x, 2.25, z);
         pole.castShadow = true;
         scene.add(pole);
+        addOutline(pole, 1.04);
 
-        const flame = new THREE.Mesh(
-          new THREE.SphereGeometry(0.55, 16, 16),
+        const bowl = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.62, 0.4, 0.35, 12),
+          toonMaterial(0x1d0d07)
+        );
+        bowl.position.set(x, 4.48, z);
+        bowl.castShadow = true;
+        scene.add(bowl);
+        addOutline(bowl, 1.04);
+
+        const flame = new THREE.Group();
+        flame.position.set(x, 4.75, z);
+        scene.add(flame);
+
+        const outerFlame = new THREE.Mesh(
+          new THREE.ConeGeometry(0.55, 1.35, 8),
           new THREE.MeshBasicMaterial({ color: 0xff5a14 })
         );
-        flame.position.set(x, 4.75, z);
-        flame.scale.y = 1.45;
-        scene.add(flame);
+        outerFlame.position.y = 0.25;
+        flame.add(outerFlame);
+
+        const innerFlame = new THREE.Mesh(
+          new THREE.ConeGeometry(0.32, 0.95, 8),
+          new THREE.MeshBasicMaterial({ color: 0xffe16b })
+        );
+        innerFlame.position.y = 0.22;
+        flame.add(innerFlame);
 
         flame.userData.baseY = flame.position.y;
         flame.userData.flicker = Math.random() * 10;
+        flame.userData.outer = outerFlame;
+        flame.userData.inner = innerFlame;
+
         particles.push({
           mesh: flame,
           velocity: new THREE.Vector3(),
@@ -565,46 +633,36 @@
       const group = new THREE.Group();
       group.position.set(opts.x, 0, opts.z);
 
-      const skin = new THREE.MeshStandardMaterial({
-        color: opts.skinColor,
-        roughness: 0.65
-      });
-
-      const armor = new THREE.MeshStandardMaterial({
-        color: opts.armorColor,
-        roughness: 0.35,
-        metalness: 0.55
-      });
-
-      const cloth = new THREE.MeshStandardMaterial({
-        color: opts.clothColor,
-        roughness: 0.85
-      });
-
-      const leather = new THREE.MeshStandardMaterial({
-        color: opts.bodyColor,
-        roughness: 0.75
-      });
+      const skin = toonMaterial(opts.skinColor);
+      const armor = toonMaterial(opts.armorColor);
+      const cloth = toonMaterial(opts.clothColor);
+      const leather = toonMaterial(opts.bodyColor);
+      const white = toonMaterial(0xffffff);
+      const black = new THREE.MeshBasicMaterial({ color: 0x050505 });
 
       const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.7, 1.15, 8, 16), skin);
       body.position.y = 1.75;
       body.castShadow = true;
       group.add(body);
+      addOutline(body, 1.045);
 
       const chest = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.1, 0.5), armor);
       chest.position.y = 2.08;
       chest.castShadow = true;
       group.add(chest);
+      addOutline(chest, 1.04);
 
       const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 1.02, 0.65, 12), cloth);
       skirt.position.y = 1.18;
       skirt.castShadow = true;
       group.add(skirt);
+      addOutline(skirt, 1.04);
 
       const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 24), skin);
       head.position.y = 3.05;
       head.castShadow = true;
       group.add(head);
+      addOutline(head, 1.045);
 
       const helmet = new THREE.Mesh(
         new THREE.SphereGeometry(0.45, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
@@ -613,14 +671,29 @@
       helmet.position.y = 3.13;
       helmet.castShadow = true;
       group.add(helmet);
+      addOutline(helmet, 1.035);
 
       const crest = new THREE.Mesh(
         new THREE.BoxGeometry(0.12, 0.48, 0.8),
-        new THREE.MeshStandardMaterial({ color: opts.clothColor, roughness: 0.8 })
+        cloth
       );
       crest.position.y = 3.58;
       crest.castShadow = true;
       group.add(crest);
+      addOutline(crest, 1.05);
+
+      const eyeGroup = new THREE.Group();
+      eyeGroup.position.set(0, 3.08, 0.37);
+      group.add(eyeGroup);
+
+      const leftEye = createCartoonEye();
+      const rightEye = createCartoonEye();
+
+      leftEye.position.set(-0.17, 0.02, 0);
+      rightEye.position.set(0.17, 0.02, 0);
+
+      eyeGroup.add(leftEye);
+      eyeGroup.add(rightEye);
 
       const leftArmPivot = new THREE.Group();
       const rightArmPivot = new THREE.Group();
@@ -634,11 +707,13 @@
       leftArm.position.y = -0.52;
       leftArm.castShadow = true;
       leftArmPivot.add(leftArm);
+      addOutline(leftArm, 1.05);
 
       const rightArm = new THREE.Mesh(armGeo, skin);
       rightArm.position.y = -0.52;
       rightArm.castShadow = true;
       rightArmPivot.add(rightArm);
+      addOutline(rightArm, 1.05);
 
       const shieldPivot = new THREE.Group();
       shieldPivot.position.set(0, -0.88, 0.1);
@@ -646,15 +721,12 @@
 
       const shield = new THREE.Mesh(
         new THREE.CylinderGeometry(0.58, 0.58, 0.16, 32),
-        new THREE.MeshStandardMaterial({
-          color: 0x5b2619,
-          roughness: 0.45,
-          metalness: 0.2
-        })
+        toonMaterial(0x5b2619)
       );
       shield.rotation.x = Math.PI / 2;
       shield.castShadow = true;
       shieldPivot.add(shield);
+      addOutline(shield, 1.04);
 
       const shieldRim = new THREE.Mesh(
         new THREE.TorusGeometry(0.58, 0.045, 8, 32),
@@ -663,6 +735,16 @@
       shieldRim.rotation.x = Math.PI / 2;
       shieldRim.castShadow = true;
       shieldPivot.add(shieldRim);
+      addOutline(shieldRim, 1.04);
+
+      const shieldBoss = new THREE.Mesh(
+        new THREE.SphereGeometry(0.18, 16, 16),
+        armor
+      );
+      shieldBoss.position.z = 0.08;
+      shieldBoss.castShadow = true;
+      shieldPivot.add(shieldBoss);
+      addOutline(shieldBoss, 1.04);
 
       const swordPivot = new THREE.Group();
       swordPivot.position.set(0, -0.92, 0);
@@ -670,15 +752,12 @@
 
       const blade = new THREE.Mesh(
         new THREE.BoxGeometry(0.13, 1.55, 0.07),
-        new THREE.MeshStandardMaterial({
-          color: 0xdedede,
-          metalness: 0.85,
-          roughness: 0.2
-        })
+        toonMaterial(0xdedede)
       );
       blade.position.y = -0.98;
       blade.castShadow = true;
       swordPivot.add(blade);
+      addOutline(blade, 1.08);
 
       const tip = new THREE.Mesh(
         new THREE.ConeGeometry(0.09, 0.24, 4),
@@ -688,6 +767,7 @@
       tip.rotation.y = Math.PI / 4;
       tip.castShadow = true;
       swordPivot.add(tip);
+      addOutline(tip, 1.08);
 
       const guard = new THREE.Mesh(
         new THREE.BoxGeometry(0.52, 0.09, 0.12),
@@ -696,6 +776,7 @@
       guard.position.y = -0.18;
       guard.castShadow = true;
       swordPivot.add(guard);
+      addOutline(guard, 1.05);
 
       const handle = new THREE.Mesh(
         new THREE.CylinderGeometry(0.07, 0.07, 0.45, 12),
@@ -704,6 +785,7 @@
       handle.position.y = 0.05;
       handle.castShadow = true;
       swordPivot.add(handle);
+      addOutline(handle, 1.06);
 
       const leftLegPivot = new THREE.Group();
       const rightLegPivot = new THREE.Group();
@@ -719,11 +801,13 @@
       leftLeg.position.y = -0.6;
       leftLeg.castShadow = true;
       leftLegPivot.add(leftLeg);
+      addOutline(leftLeg, 1.05);
 
       const rightLeg = new THREE.Mesh(legGeo, skin);
       rightLeg.position.y = -0.6;
       rightLeg.castShadow = true;
       rightLegPivot.add(rightLeg);
+      addOutline(rightLeg, 1.05);
 
       const sandalGeo = new THREE.BoxGeometry(0.38, 0.12, 0.65);
 
@@ -731,16 +815,21 @@
       leftSandal.position.set(0, -1.15, 0.08);
       leftSandal.castShadow = true;
       leftLegPivot.add(leftSandal);
+      addOutline(leftSandal, 1.05);
 
       const rightSandal = new THREE.Mesh(sandalGeo, leather);
       rightSandal.position.set(0, -1.15, 0.08);
       rightSandal.castShadow = true;
       rightLegPivot.add(rightSandal);
+      addOutline(rightSandal, 1.05);
 
       return {
         group,
         body,
         head,
+        eyeGroup,
+        leftEye,
+        rightEye,
         leftArmPivot,
         rightArmPivot,
         leftLegPivot,
@@ -751,8 +840,54 @@
         shield,
         velocity: new THREE.Vector3(),
         walkTime: 0,
-        hurtTimer: 0
+        hurtTimer: 0,
+        blinkTimer: Math.random() * 2,
+        blinkDuration: 0
       };
+    }
+
+    function createCartoonEye() {
+      const eye = new THREE.Group();
+
+      const whitePart = new THREE.Mesh(
+        new THREE.SphereGeometry(0.115, 20, 20),
+        toonMaterial(0xffffff)
+      );
+      whitePart.scale.set(1.1, 1.35, 0.35);
+      eye.add(whitePart);
+
+      const pupil = new THREE.Mesh(
+        new THREE.SphereGeometry(0.042, 12, 12),
+        new THREE.MeshBasicMaterial({ color: 0x050505 })
+      );
+      pupil.position.set(0, -0.005, 0.085);
+      pupil.scale.set(1, 1.2, 0.35);
+      eye.add(pupil);
+
+      const shine = new THREE.Mesh(
+        new THREE.SphereGeometry(0.014, 8, 8),
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
+      );
+      shine.position.set(-0.018, 0.03, 0.112);
+      eye.add(shine);
+
+      const outline = new THREE.Mesh(
+        new THREE.SphereGeometry(0.12, 20, 20),
+        new THREE.MeshBasicMaterial({
+          color: 0x120704,
+          side: THREE.BackSide
+        })
+      );
+      outline.scale.set(1.18, 1.43, 0.39);
+      eye.add(outline);
+      outline.renderOrder = -1;
+
+      eye.userData.white = whitePart;
+      eye.userData.pupil = pupil;
+      eye.userData.shine = shine;
+      eye.userData.originalScaleY = 1;
+
+      return eye;
     }
 
     function setupEvents() {
@@ -855,8 +990,6 @@
       playerAttackTimer = Math.max(0, playerAttackTimer - dt);
 
       const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
-
-      // Fixed A/D inversion here.
       const right = new THREE.Vector3(-Math.cos(yaw), 0, Math.sin(yaw));
 
       const move = new THREE.Vector3();
@@ -949,20 +1082,53 @@
     function updateAnimations(dt) {
       animateGladiator(player, dt, true);
       animateGladiator(enemy, dt, false);
+      updateBlinking(player, dt);
+      updateBlinking(enemy, dt);
+      updateEyeFocus(player, enemy.group.position);
+      updateEyeFocus(enemy, player.group.position);
 
       if (player.hurtTimer > 0) player.hurtTimer -= dt;
       if (enemy.hurtTimer > 0) enemy.hurtTimer -= dt;
 
-      if (player.hurtTimer > 0) {
-        player.body.material.emissive = new THREE.Color(0x550000);
-      } else {
-        player.body.material.emissive = new THREE.Color(0x000000);
+      if (player.body.material.emissive) {
+        player.body.material.emissive.set(player.hurtTimer > 0 ? 0x550000 : 0x000000);
       }
 
-      if (enemy.hurtTimer > 0) {
-        enemy.body.material.emissive = new THREE.Color(0x550000);
-      } else {
-        enemy.body.material.emissive = new THREE.Color(0x000000);
+      if (enemy.body.material.emissive) {
+        enemy.body.material.emissive.set(enemy.hurtTimer > 0 ? 0x550000 : 0x000000);
+      }
+    }
+
+    function updateBlinking(g, dt) {
+      g.blinkTimer -= dt;
+
+      if (g.blinkTimer <= 0 && g.blinkDuration <= 0) {
+        g.blinkDuration = 0.15;
+        g.blinkTimer = 1.6 + Math.random() * 2.8;
+      }
+
+      let eyeScaleY = 1;
+
+      if (g.blinkDuration > 0) {
+        g.blinkDuration -= dt;
+        const t = 1 - Math.max(0, g.blinkDuration) / 0.15;
+        eyeScaleY = 1 - Math.sin(t * Math.PI) * 0.9;
+      }
+
+      g.leftEye.scale.y = eyeScaleY;
+      g.rightEye.scale.y = eyeScaleY;
+    }
+
+    function updateEyeFocus(g, targetPosition) {
+      const localTarget = g.group.worldToLocal(targetPosition.clone());
+      const xLook = THREE.MathUtils.clamp(localTarget.x * 0.035, -0.025, 0.025);
+      const yLook = THREE.MathUtils.clamp((localTarget.y - 2.4) * 0.02, -0.015, 0.025);
+
+      for (const eye of [g.leftEye, g.rightEye]) {
+        eye.userData.pupil.position.x = xLook;
+        eye.userData.pupil.position.y = yLook - 0.005;
+        eye.userData.shine.position.x = xLook - 0.018;
+        eye.userData.shine.position.y = yLook + 0.03;
       }
     }
 
@@ -1023,16 +1189,28 @@
 
     function updateCamera(dt) {
       const target = player.group.position.clone();
-      target.y += 1.75;
+      target.y += 1.8;
 
-      const camOffset = new THREE.Vector3(
-        -Math.sin(yaw) * 6,
-        3.2 + Math.sin(pitch) * 2.5,
-        -Math.cos(yaw) * 6
-      );
+      const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+      const right = new THREE.Vector3(-Math.cos(yaw), 0, Math.sin(yaw));
 
-      camera.position.lerp(target.clone().add(camOffset), 1 - Math.pow(0.001, dt));
-      camera.lookAt(target.clone().add(new THREE.Vector3(0, pitch * 2.5, 0)));
+      const shoulderSide = right.clone().multiplyScalar(1.85);
+      const backOffset = forward.clone().multiplyScalar(-5.8);
+      const heightOffset = new THREE.Vector3(0, 2.45 + Math.sin(pitch) * 1.3, 0);
+
+      const desiredPosition = target
+        .clone()
+        .add(shoulderSide)
+        .add(backOffset)
+        .add(heightOffset);
+
+      const aimTarget = target
+        .clone()
+        .add(forward.clone().multiplyScalar(8))
+        .add(new THREE.Vector3(0, pitch * 4.2 + 0.35, 0));
+
+      camera.position.lerp(desiredPosition, 1 - Math.pow(0.001, dt));
+      camera.lookAt(aimTarget);
     }
 
     function damageEnemy(amount) {
@@ -1097,7 +1275,9 @@
       for (let i = 0; i < 36; i++) {
         const mesh = new THREE.Mesh(
           new THREE.SphereGeometry(0.04 + Math.random() * 0.08, 8, 8),
-          new THREE.MeshBasicMaterial({ color: Math.random() > 0.35 ? 0x8f0000 : 0xd11212 })
+          new THREE.MeshBasicMaterial({
+            color: Math.random() > 0.35 ? 0x8f0000 : 0xd11212
+          })
         );
 
         mesh.position.copy(position);
@@ -1139,7 +1319,11 @@
 
       splat.rotation.x = -Math.PI / 2;
       splat.rotation.z = Math.random() * Math.PI * 2;
-      splat.position.set(position.x + (Math.random() - 0.5) * 1.2, 0.012, position.z + (Math.random() - 0.5) * 1.2);
+      splat.position.set(
+        position.x + (Math.random() - 0.5) * 1.2,
+        0.012,
+        position.z + (Math.random() - 0.5) * 1.2
+      );
       splat.scale.set(1, 0.55 + Math.random() * 0.8, 1);
       scene.add(splat);
 
@@ -1208,10 +1392,15 @@
         const p = particles[i];
 
         if (p.type === "flame") {
-          p.mesh.userData.flicker += dt * 9;
-          const s = 1 + Math.sin(p.mesh.userData.flicker) * 0.12 + Math.random() * 0.08;
-          p.mesh.scale.set(0.8 * s, 1.4 * s, 0.8 * s);
+          p.mesh.userData.flicker += dt * 12;
+
+          const s = 1 + Math.sin(p.mesh.userData.flicker) * 0.18 + Math.random() * 0.08;
+          p.mesh.scale.set(0.85 * s, 1.05 * s, 0.85 * s);
           p.mesh.position.y = p.mesh.userData.baseY + Math.sin(p.mesh.userData.flicker * 1.7) * 0.08;
+          p.mesh.rotation.y += dt * 1.4;
+
+          p.mesh.userData.outer.rotation.z = Math.sin(p.mesh.userData.flicker * 0.7) * 0.12;
+          p.mesh.userData.inner.rotation.z = -Math.sin(p.mesh.userData.flicker * 0.9) * 0.16;
           continue;
         }
 
@@ -1361,6 +1550,11 @@
       enemyAttackCooldown = 1.2;
       playerHitDone = false;
       enemyHitDone = false;
+
+      player.blinkTimer = Math.random() * 2;
+      enemy.blinkTimer = Math.random() * 2;
+      player.blinkDuration = 0;
+      enemy.blinkDuration = 0;
 
       messagePanel.classList.remove("show");
 
