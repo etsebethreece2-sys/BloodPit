@@ -82,6 +82,7 @@
       color: #ffe7ad;
       text-shadow: 0 2px 4px #000;
       font-weight: 900;
+      min-height: 19px;
     }
 
     .barOuter {
@@ -125,51 +126,6 @@
       background: linear-gradient(90deg, #7a0b0b, #c62828, #ff8a2b);
     }
 
-    #crosshair {
-      position: absolute;
-      left: 54%;
-      top: 50%;
-      width: 22px;
-      height: 22px;
-      transform: translate(-50%, -50%) rotate(45deg);
-      border: 2px solid rgba(247, 229, 189, 0.8);
-      box-shadow: 0 0 12px rgba(255, 207, 111, 0.35);
-    }
-
-    #crosshair::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 5px;
-      height: 5px;
-      transform: translate(-50%, -50%);
-      background: #f7e5bd;
-      box-shadow: 0 0 8px #ffc76b;
-      border-radius: 50%;
-    }
-
-    #instructions {
-      position: absolute;
-      left: 50%;
-      bottom: 24px;
-      transform: translateX(-50%);
-      padding: 15px 22px;
-      background:
-        linear-gradient(135deg, rgba(64, 35, 17, 0.9), rgba(18, 11, 7, 0.92));
-      border: 2px solid #9b6a2d;
-      border-radius: 10px;
-      text-align: center;
-      font-size: 13px;
-      line-height: 1.55;
-      box-shadow:
-        0 0 0 2px rgba(27, 13, 5, 0.8),
-        0 8px 22px rgba(0,0,0,0.55),
-        inset 0 0 20px rgba(255, 187, 92, 0.08);
-      color: #f9e3b0;
-      text-shadow: 0 2px 4px #000;
-    }
-
     #messagePanel {
       position: absolute;
       left: 50%;
@@ -207,7 +163,17 @@
       text-shadow:
         0 4px 0 #4a1b0a,
         0 8px 18px #000;
-      margin-bottom: 18px;
+      margin-bottom: 10px;
+    }
+
+    #subMessage {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #f7d894;
+      text-shadow: 0 2px 5px #000;
+      margin-bottom: 20px;
+      text-transform: uppercase;
     }
 
     #restartBtn {
@@ -245,7 +211,7 @@
     #staminaWrap {
       position: absolute;
       left: 50%;
-      bottom: 118px;
+      bottom: 24px;
       transform: translateX(-50%);
       width: 280px;
       padding: 10px 12px;
@@ -298,14 +264,12 @@
       </div>
 
       <div class="healthBox">
-        <div class="label" style="text-align:right;">Opponent</div>
+        <div id="enemyNameLabel" class="label" style="text-align:right;">Opponent</div>
         <div class="barOuter">
           <div id="enemyHealth" class="barInner"></div>
         </div>
       </div>
     </div>
-
-    <div id="crosshair"></div>
 
     <div id="staminaWrap">
       <div class="barOuter">
@@ -316,12 +280,8 @@
 
     <div id="messagePanel">
       <div id="message"></div>
+      <div id="subMessage"></div>
       <button id="restartBtn">Fight Again</button>
-    </div>
-
-    <div id="instructions">
-      Click to lock mouse.
-      <b>WASD</b> move · <b>Mouse</b> look · <b>Left Click</b> sword attack · <b>Hold Right Click</b> block · <b>R</b> restart
     </div>
   </div>
 
@@ -351,6 +311,30 @@
 
     let isBlocking = false;
     let gameOver = false;
+    let currentEnemyName = "";
+
+    const opponentNames = [
+      "Marcus Bloodfang",
+      "Titus Ironjaw",
+      "Cassius the Cruel",
+      "Brutus Stormblade",
+      "Lucius Skullsplitter",
+      "Gaius Redmane",
+      "Drusus the Unbroken",
+      "Flavius Nightwolf",
+      "Octavius Bonebreaker",
+      "Aurelius Ashborn",
+      "Valerius Doomhand",
+      "Severus the Savage",
+      "Maximus Blackshield",
+      "Nero Flameheart",
+      "Magnus the Merciless",
+      "Rufus Steelborn",
+      "Corvus Sandstrider",
+      "Decimus the Viper",
+      "Atticus Grimblade",
+      "Varrus Thunderfist"
+    ];
 
     const particles = [];
     const floatingTexts = [];
@@ -363,13 +347,24 @@
     const uiPlayerHealth = document.getElementById("playerHealth");
     const uiEnemyHealth = document.getElementById("enemyHealth");
     const uiStamina = document.getElementById("stamina");
+    const enemyNameLabel = document.getElementById("enemyNameLabel");
     const msg = document.getElementById("message");
+    const subMessage = document.getElementById("subMessage");
     const messagePanel = document.getElementById("messagePanel");
     const restartBtn = document.getElementById("restartBtn");
     const damageFlash = document.getElementById("damageFlash");
 
     init();
     animate();
+
+    function randomOpponentName() {
+      return opponentNames[Math.floor(Math.random() * opponentNames.length)];
+    }
+
+    function setNewOpponentName() {
+      currentEnemyName = randomOpponentName();
+      enemyNameLabel.textContent = currentEnemyName;
+    }
 
     function toonMaterial(color, extra = {}) {
       return new THREE.MeshToonMaterial({
@@ -446,6 +441,7 @@
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       document.body.appendChild(renderer.domElement);
 
+      setNewOpponentName();
       addLights();
       createArena();
 
@@ -637,8 +633,6 @@
       const armor = toonMaterial(opts.armorColor);
       const cloth = toonMaterial(opts.clothColor);
       const leather = toonMaterial(opts.bodyColor);
-      const white = toonMaterial(0xffffff);
-      const black = new THREE.MeshBasicMaterial({ color: 0x050505 });
 
       const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.7, 1.15, 8, 16), skin);
       body.position.y = 1.75;
@@ -1232,7 +1226,7 @@
       );
 
       if (enemyHP <= 0) {
-        endGame("Victory");
+        endGame("Victory", currentEnemyName + " has fallen.");
       }
     }
 
@@ -1265,7 +1259,7 @@
       createFloatingText("-" + Math.round(finalDamage), player.group.position.clone().add(new THREE.Vector3(0, 2.4, 0)), 0xff3b30);
 
       if (playerHP <= 0) {
-        endGame("Defeat");
+        endGame("Defeat", currentEnemyName + " claims victory.");
       }
     }
 
@@ -1523,10 +1517,11 @@
       camera.position.z += (Math.random() - 0.5) * amount;
     }
 
-    function endGame(text) {
+    function endGame(text, detail) {
       gameOver = true;
       isBlocking = false;
       msg.textContent = text;
+      subMessage.textContent = detail || "";
       messagePanel.classList.add("show");
 
       if (document.pointerLockElement) {
@@ -1540,6 +1535,8 @@
       stamina = 100;
       gameOver = false;
       isBlocking = false;
+
+      setNewOpponentName();
 
       player.group.position.set(0, 0, 8);
       enemy.group.position.set(0, 0, -8);
