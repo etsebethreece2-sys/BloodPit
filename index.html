@@ -360,11 +360,8 @@
     const bloodDecals = [];
 
     const ARENA_RADIUS = 28;
-
-    /* 20% slower than the previous version */
     const PLAYER_SPEED = 7.2;
     const ENEMY_SPEED = 3.36;
-
     const ENEMY_ATTACK_DURATION = 1.25;
 
     const uiPlayerHealth = document.getElementById("playerHealth");
@@ -426,7 +423,6 @@
       const canvas = document.createElement("canvas");
       canvas.width = 512;
       canvas.height = 512;
-
       const ctx = canvas.getContext("2d");
 
       const baseGradient = ctx.createRadialGradient(256, 256, 20, 256, 256, 390);
@@ -502,7 +498,6 @@
       const canvas = document.createElement("canvas");
       canvas.width = 512;
       canvas.height = 512;
-
       const ctx = canvas.getContext("2d");
 
       const gradient = ctx.createLinearGradient(0, 0, 512, 512);
@@ -622,6 +617,7 @@
         armorColor: 0xd7d7d7,
         clothColor: 0x9e1b1b,
         skinColor: 0xd49a6a,
+        helmetTrimColor: 0xf1c15a,
         x: 0,
         z: 8
       });
@@ -631,6 +627,7 @@
         armorColor: 0x8e8e8e,
         clothColor: 0x273f8f,
         skinColor: 0xb9784a,
+        helmetTrimColor: 0xb8b8b8,
         x: 0,
         z: -8
       });
@@ -824,6 +821,7 @@
 
       const skin = toonMaterial(opts.skinColor);
       const armor = toonMaterial(opts.armorColor);
+      const helmetTrim = toonMaterial(opts.helmetTrimColor || 0xd6a14a);
       const cloth = toonMaterial(opts.clothColor);
       const leather = toonMaterial(opts.bodyColor);
 
@@ -862,23 +860,7 @@
       group.add(head);
       addOutline(head, 1.045);
 
-      const helmet = new THREE.Mesh(
-        new THREE.SphereGeometry(0.45, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
-        armor
-      );
-      helmet.position.y = 3.13;
-      helmet.castShadow = true;
-      group.add(helmet);
-      addOutline(helmet, 1.035);
-
-      const crest = new THREE.Mesh(
-        new THREE.BoxGeometry(0.12, 0.48, 0.8),
-        cloth
-      );
-      crest.position.y = 3.58;
-      crest.castShadow = true;
-      group.add(crest);
-      addOutline(crest, 1.05);
+      createHelmet(group, armor, helmetTrim, cloth);
 
       const eyeGroup = new THREE.Group();
       eyeGroup.position.set(0, 3.08, 0.37);
@@ -1063,6 +1045,106 @@
       };
     }
 
+    function createHelmet(group, armor, helmetTrim, cloth) {
+      const helmetGroup = new THREE.Group();
+      helmetGroup.position.set(0, 3.11, 0);
+      group.add(helmetGroup);
+
+      const dome = new THREE.Mesh(
+        new THREE.SphereGeometry(0.48, 28, 16, 0, Math.PI * 2, 0, Math.PI * 0.62),
+        armor
+      );
+      dome.scale.set(1.02, 0.86, 1.03);
+      dome.castShadow = true;
+      helmetGroup.add(dome);
+      addOutline(dome, 1.035);
+
+      const browBand = new THREE.Mesh(
+        new THREE.TorusGeometry(0.445, 0.045, 10, 40, Math.PI * 1.55),
+        helmetTrim
+      );
+      browBand.position.set(0, -0.02, 0.06);
+      browBand.rotation.x = Math.PI / 2;
+      browBand.rotation.z = -Math.PI * 0.78;
+      browBand.scale.set(1.06, 0.82, 1);
+      browBand.castShadow = true;
+      helmetGroup.add(browBand);
+      addOutline(browBand, 1.03);
+
+      const backNeckGuard = new THREE.Mesh(
+        new THREE.BoxGeometry(0.74, 0.34, 0.12),
+        armor
+      );
+      backNeckGuard.position.set(0, -0.16, -0.34);
+      backNeckGuard.rotation.x = -0.35;
+      backNeckGuard.castShadow = true;
+      helmetGroup.add(backNeckGuard);
+      addOutline(backNeckGuard, 1.045);
+
+      const noseGuard = new THREE.Mesh(
+        new THREE.BoxGeometry(0.075, 0.45, 0.09),
+        helmetTrim
+      );
+      noseGuard.position.set(0, -0.17, 0.43);
+      noseGuard.castShadow = true;
+      helmetGroup.add(noseGuard);
+      addOutline(noseGuard, 1.05);
+
+      const leftCheekGuard = new THREE.Mesh(
+        new THREE.BoxGeometry(0.17, 0.38, 0.11),
+        armor
+      );
+      leftCheekGuard.position.set(-0.34, -0.22, 0.27);
+      leftCheekGuard.rotation.z = -0.18;
+      leftCheekGuard.rotation.y = -0.25;
+      leftCheekGuard.castShadow = true;
+      helmetGroup.add(leftCheekGuard);
+      addOutline(leftCheekGuard, 1.045);
+
+      const rightCheekGuard = new THREE.Mesh(
+        new THREE.BoxGeometry(0.17, 0.38, 0.11),
+        armor
+      );
+      rightCheekGuard.position.set(0.34, -0.22, 0.27);
+      rightCheekGuard.rotation.z = 0.18;
+      rightCheekGuard.rotation.y = 0.25;
+      rightCheekGuard.castShadow = true;
+      helmetGroup.add(rightCheekGuard);
+      addOutline(rightCheekGuard, 1.045);
+
+      const crestBase = new THREE.Mesh(
+        new THREE.BoxGeometry(0.14, 0.13, 0.92),
+        helmetTrim
+      );
+      crestBase.position.set(0, 0.4, -0.02);
+      crestBase.castShadow = true;
+      helmetGroup.add(crestBase);
+      addOutline(crestBase, 1.04);
+
+      for (let i = 0; i < 7; i++) {
+        const plume = new THREE.Mesh(
+          new THREE.BoxGeometry(0.075, 0.48 + i * 0.015, 0.08),
+          cloth
+        );
+
+        plume.position.set(0, 0.68, -0.36 + i * 0.12);
+        plume.rotation.x = -0.35 + i * 0.09;
+        plume.castShadow = true;
+        helmetGroup.add(plume);
+        addOutline(plume, 1.08);
+      }
+
+      const frontGem = new THREE.Mesh(
+        new THREE.SphereGeometry(0.065, 12, 12),
+        helmetTrim
+      );
+      frontGem.position.set(0, 0.07, 0.45);
+      frontGem.scale.set(1, 0.65, 0.45);
+      frontGem.castShadow = true;
+      helmetGroup.add(frontGem);
+      addOutline(frontGem, 1.04);
+    }
+
     function createCartoonEye() {
       const eye = new THREE.Group();
 
@@ -1190,10 +1272,6 @@
       updateEnemy(dt);
       updateAnimations(dt);
 
-      /*
-        Enemy damage is checked AFTER animation updates now,
-        so the sword's world position matches the visual swing.
-      */
       checkEnemySwordDamage();
 
       updateParticles(dt);
@@ -1287,7 +1365,14 @@
       const targetYaw = Math.atan2(toPlayer.x, toPlayer.z);
       enemy.group.rotation.y = lerpAngle(enemy.group.rotation.y, targetYaw, dt * 8);
 
-      if (dist > 2.25 && enemyAttackTimer <= 0) {
+      /*
+        Enemy now moves closer before attacking.
+        Old behavior stopped too far away; this closes the gap enough for the sword to reach.
+      */
+      const enemyStopDistance = 1.55;
+      const enemyAttackStartDistance = 2.25;
+
+      if (dist > enemyStopDistance && enemyAttackTimer <= 0) {
         enemy.group.position.addScaledVector(toPlayer, ENEMY_SPEED * dt);
         enemy.walkTime += dt * 9.2;
         enemy.dustTimer -= dt;
@@ -1301,7 +1386,7 @@
         enemy.walkTime += dt * 1.2;
         enemy.dustTimer = 0;
 
-        if (enemyAttackCooldown <= 0 && enemyAttackTimer <= 0 && dist < 2.75) {
+        if (enemyAttackCooldown <= 0 && enemyAttackTimer <= 0 && dist < enemyAttackStartDistance) {
           enemyAttackTimer = ENEMY_ATTACK_DURATION;
           enemyAttackCooldown = 1.25 + Math.random() * 0.75;
           enemyHitDone = false;
@@ -1316,7 +1401,7 @@
 
       const progress = 1 - enemyAttackTimer / ENEMY_ATTACK_DURATION;
 
-      if (progress < 0.43 || progress > 0.84) return;
+      if (progress < 0.4 || progress > 0.88) return;
 
       const toPlayer = player.group.position.clone().sub(enemy.group.position).normalize();
       const enemyFacing = new THREE.Vector3(
@@ -1325,7 +1410,7 @@
         Math.cos(enemy.group.rotation.y)
       );
 
-      if (enemyFacing.dot(toPlayer) < 0.28) return;
+      if (enemyFacing.dot(toPlayer) < 0.2) return;
 
       if (enemySwordTouchesPlayer()) {
         damagePlayer(16 + Math.random() * 8);
@@ -1336,11 +1421,19 @@
     function enemySwordTouchesPlayer() {
       scene.updateMatrixWorld(true);
 
+      /*
+        Larger sword hitbox:
+        Samples the whole blade and a little past the tip so the hitbox
+        accommodates the full visual length of the weapon.
+      */
       const swordSamples = [
-        new THREE.Vector3(0, -1.95, 0),
-        new THREE.Vector3(0, -1.55, 0),
+        new THREE.Vector3(0, -0.55, 0),
+        new THREE.Vector3(0, -0.85, 0),
         new THREE.Vector3(0, -1.15, 0),
-        new THREE.Vector3(0, -0.75, 0)
+        new THREE.Vector3(0, -1.45, 0),
+        new THREE.Vector3(0, -1.75, 0),
+        new THREE.Vector3(0, -2.05, 0),
+        new THREE.Vector3(0, -2.28, 0)
       ];
 
       const playerBase = player.group.position.clone();
@@ -1348,15 +1441,11 @@
       for (const sample of swordSamples) {
         const p = sample.clone().applyMatrix4(enemy.swordPivot.matrixWorld);
 
-        const closestY = THREE.MathUtils.clamp(p.y, playerBase.y + 0.75, playerBase.y + 2.85);
+        const closestY = THREE.MathUtils.clamp(p.y, playerBase.y + 0.65, playerBase.y + 2.95);
         const closest = new THREE.Vector3(playerBase.x, closestY, playerBase.z);
         const dist = p.distanceTo(closest);
 
-        /*
-          Slightly forgiving contact radius so it matches the visual sword width
-          and does not miss due to stylized model scale.
-        */
-        if (dist < 1.02) {
+        if (dist < 1.22) {
           return true;
         }
       }
@@ -1420,7 +1509,7 @@
     function animateGladiator(g, dt, isPlayer) {
       const moving = isPlayer
         ? keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD
-        : enemy.group.position.distanceTo(player.group.position) > 2.4 && enemyAttackTimer <= 0;
+        : enemy.group.position.distanceTo(player.group.position) > 1.65 && enemyAttackTimer <= 0;
 
       const walkSwing = moving ? Math.sin(g.walkTime) * 0.48 : 0;
       const stepBob = moving ? Math.abs(Math.sin(g.walkTime * 1.05)) * 0.075 : Math.sin(clock.elapsedTime * 2.1 + g.idleTime) * 0.018;
