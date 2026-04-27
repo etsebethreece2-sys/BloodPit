@@ -103,7 +103,6 @@ const shop = document.getElementById("shop");
 
 let W = window.innerWidth;
 let H = window.innerHeight;
-
 canvas.width = W;
 canvas.height = H;
 
@@ -158,12 +157,17 @@ const nets = [];
 const particles = [];
 const floatingTexts = [];
 const cars = [];
-const windStreaks = [];
 
 const baseTrees = [];
-const forestObjects = [];
+const forestTrees = [];
+const forestRocks = [];
+const forestBushes = [];
 const fireflies = [];
 const grassTufts = [];
+const baseWindStreaks = [];
+const forestGroundTufts = [];
+const forestPebbles = [];
+const forestDarkPatches = [];
 
 const CAR_STOP_X = 225;
 const CAR_SPACING = 145;
@@ -235,7 +239,6 @@ function roundedRect(x, y, w, h, r) {
 
 function shadeColor(hex, percent) {
     let num = parseInt(hex.replace("#", ""), 16);
-
     let r = (num >> 16) + percent;
     let g = ((num >> 8) & 0x00ff) + percent;
     let b = (num & 0x0000ff) + percent;
@@ -247,54 +250,63 @@ function shadeColor(hex, percent) {
     return "#" + (b | (g << 8) | (r << 16)).toString(16).padStart(6, "0");
 }
 
-function tryPlace(list, obj, minDist, attempts = 90) {
-    for (let i = 0; i < attempts; i++) {
+function tryPlaceNonOverlap(existing, minX, maxX, minY, maxY, radius, maxTries = 160) {
+    minX = Math.max(0, minX);
+    maxX = Math.max(minX + 1, maxX);
+    minY = Math.max(0, minY);
+    maxY = Math.max(minY + 1, maxY);
+
+    for (let t = 0; t < maxTries; t++) {
+        const x = rand(minX, maxX);
+        const y = rand(minY, maxY);
         let valid = true;
 
-        for (const other of list) {
-            const d = Math.hypot(obj.x - other.x, obj.y - other.y);
-            const required = minDist * ((obj.s || 1) + (other.s || 1)) * 0.5;
-
-            if (d < required) {
+        for (const e of existing) {
+            if (Math.hypot(x - e.x, y - e.y) < radius + e.r) {
                 valid = false;
                 break;
             }
         }
 
         if (valid) {
-            list.push(obj);
-            return true;
+            return { x, y, r: radius };
         }
-
-        obj.x = rand(obj.minX, obj.maxX);
-        obj.y = rand(obj.minY, obj.maxY);
     }
 
-    list.push(obj);
-    return false;
+    return {
+        x: rand(minX, maxX),
+        y: rand(minY, maxY),
+        r: radius
+    };
 }
 
 function generateDecor() {
     baseTrees.length = 0;
-    forestObjects.length = 0;
+    forestTrees.length = 0;
+    forestRocks.length = 0;
+    forestBushes.length = 0;
     fireflies.length = 0;
     grassTufts.length = 0;
+    baseWindStreaks.length = 0;
+    forestGroundTufts.length = 0;
+    forestPebbles.length = 0;
+    forestDarkPatches.length = 0;
 
-    for (let i = 0; i < 24; i++) {
-        const obj = {
-            type: "tree",
-            x: rand(220, W - 70),
-            y: rand(35, 145),
-            minX: 220,
-            maxX: W - 70,
-            minY: 35,
-            maxY: 145,
-            s: rand(0.8, 1.28),
+    const baseOccupied = [];
+
+    for (let i = 0; i < 22; i++) {
+        const s = rand(0.8, 1.28);
+        const placed = tryPlaceNonOverlap(baseOccupied, 230, W - 80, 38, 145, 34 * s);
+
+        baseTrees.push({
+            x: placed.x,
+            y: placed.y,
+            s,
             sway: rand(0, 10),
-            treeType: Math.floor(rand(0, 3))
-        };
+            type: Math.floor(rand(0, 3))
+        });
 
-        tryPlace(baseTrees, obj, 70);
+        baseOccupied.push({ x: placed.x, y: placed.y, r: 34 * s });
     }
 
     for (let i = 0; i < 180; i++) {
@@ -307,67 +319,95 @@ function generateDecor() {
         });
     }
 
-    const placedForest = [];
+    for (let i = 0; i < 14; i++) {
+        baseWindStreaks.push({
+            x: rand(-W, W),
+            y: rand(90, H - 165),
+            len: rand(45, 95),
+            speed: rand(0.5, 1.2),
+            alpha: rand(0.04, 0.1),
+            drift: rand(-0.2, 0.2)
+        });
+    }
+
+    const occupied = [];
 
     for (let i = 0; i < 16; i++) {
-        const obj = {
-            decor: "tree",
-            x: rand(55, W - 55),
-            y: rand(65, H - 145),
-            minX: 55,
-            maxX: W - 55,
-            minY: 65,
-            maxY: H - 145,
-            s: rand(0.85, 1.75),
-            sway: rand(0, 10),
-            treeType: Math.floor(rand(0, 4))
-        };
+        const s = rand(0.85, 1.75);
+        const placed = tryPlaceNonOverlap(occupied, 60, W - 60, 95, H - 55, 40 * s);
 
-        tryPlace(placedForest, obj, 95);
-        forestObjects.push(obj);
+        forestTrees.push({
+            x: placed.x,
+            y: placed.y,
+            s,
+            sway: rand(0, 10),
+            type: Math.floor(rand(0, 4))
+        });
+
+        occupied.push({ x: placed.x, y: placed.y + 20 * s, r: 42 * s });
     }
 
     for (let i = 0; i < 14; i++) {
-        const obj = {
-            decor: "rock",
-            x: rand(50, W - 50),
-            y: rand(80, H - 155),
-            minX: 50,
-            maxX: W - 50,
-            minY: 80,
-            maxY: H - 155,
-            s: rand(0.75, 1.45),
-            rot: rand(0, Math.PI)
-        };
+        const s = rand(0.7, 1.45);
+        const placed = tryPlaceNonOverlap(occupied, 50, W - 50, 95, H - 35, 25 * s);
 
-        tryPlace(placedForest, obj, 62);
-        forestObjects.push(obj);
-    }
-
-    for (let i = 0; i < 12; i++) {
-        const obj = {
-            decor: "bush",
-            x: rand(45, W - 45),
-            y: rand(80, H - 145),
-            minX: 45,
-            maxX: W - 45,
-            minY: 80,
-            maxY: H - 145,
-            s: rand(0.7, 1.4),
+        forestBushes.push({
+            x: placed.x,
+            y: placed.y,
+            s,
             c: Math.random() < 0.5 ? "#275f3d" : "#1f4d34"
-        };
+        });
 
-        tryPlace(placedForest, obj, 58);
-        forestObjects.push(obj);
+        occupied.push({ x: placed.x, y: placed.y + 12 * s, r: 23 * s });
     }
 
-    forestObjects.sort((a, b) => a.y - b.y);
-    baseTrees.sort((a, b) => a.y - b.y);
+    for (let i = 0; i < 16; i++) {
+        const s = rand(0.8, 1.4);
+        const placed = tryPlaceNonOverlap(occupied, 45, W - 45, 90, H - 25, 19 * s);
+
+        forestRocks.push({
+            x: placed.x,
+            y: placed.y,
+            s,
+            rot: rand(0, Math.PI)
+        });
+
+        occupied.push({ x: placed.x, y: placed.y + 8 * s, r: 18 * s });
+    }
+
+    for (let i = 0; i < 190; i++) {
+        forestGroundTufts.push({
+            x: rand(0, W),
+            y: rand(65, H - 8),
+            s: rand(0.45, 1.15),
+            tilt: rand(-0.6, 0.6),
+            color: Math.random() < 0.5 ? "#163d2b" : "#1f5137"
+        });
+    }
+
+    for (let i = 0; i < 60; i++) {
+        forestPebbles.push({
+            x: rand(0, W),
+            y: rand(80, H - 10),
+            s: rand(0.5, 1.5),
+            rot: rand(0, Math.PI)
+        });
+    }
+
+    for (let i = 0; i < 18; i++) {
+        forestDarkPatches.push({
+            x: rand(0, W),
+            y: rand(90, H - 20),
+            rx: rand(55, 140),
+            ry: rand(16, 45),
+            a: rand(0.05, 0.13)
+        });
+    }
 
     for (let i = 0; i < 26; i++) {
         fireflies.push({
             x: rand(0, W),
-            y: rand(60, H - 130),
+            y: rand(60, H - 35),
             vx: rand(-0.25, 0.25),
             vy: rand(-0.2, 0.2),
             glow: rand(0, Math.PI * 2)
@@ -380,7 +420,7 @@ function createCar(x = CAR_STOP_X) {
 
     return {
         x,
-        y: H - 75,
+        y: H - 58,
         targetX: x,
         w: rand(92, 122),
         h: 45,
@@ -391,7 +431,7 @@ function createCar(x = CAR_STOP_X) {
 }
 
 function desiredQueueLength() {
-    return clamp(Math.ceil((W + 180 - CAR_STOP_X) / CAR_SPACING), 4, 13);
+    return clamp(Math.ceil((W - CAR_STOP_X - 45) / CAR_SPACING), 5, 14);
 }
 
 function rebuildCarLine() {
@@ -409,7 +449,7 @@ function rebuildCarLine() {
         if (oldCar) {
             oldCar.x = targetX;
             oldCar.targetX = targetX;
-            oldCar.y = H - 75;
+            oldCar.y = H - 58;
             oldCar.state = "queue";
             cars.push(oldCar);
         } else {
@@ -440,27 +480,26 @@ function fillCarLine() {
 
 function spawnZombie() {
     const side = Math.floor(rand(0, 4));
-    let x;
-    let y;
+    let x, y;
 
     if (side === 0) {
         x = rand(80, W - 80);
         y = 60;
     } else if (side === 1) {
         x = W - 60;
-        y = rand(80, H - 170);
+        y = rand(80, H - 65);
     } else if (side === 2) {
         x = rand(80, W - 80);
-        y = H - 165;
+        y = H - 55;
     } else {
         x = 70;
-        y = rand(80, H - 170);
+        y = rand(80, H - 65);
     }
 
     zombies.push({
         x,
         y,
-        r: rand(15, 20),
+        r: rand(15.2, 20),
         speed: rand(0.45, 0.9),
         angle: rand(0, Math.PI * 2),
         wander: rand(0, 100),
@@ -510,20 +549,6 @@ function addFloatingText(text, x, y, color = "#fff") {
         maxLife: 55,
         color,
         size: 30
-    });
-}
-
-function addWindStreak() {
-    if (game.screen !== "base") return;
-
-    windStreaks.push({
-        x: rand(-100, W * 0.7),
-        y: rand(185, H - 165),
-        vx: rand(2.2, 3.8),
-        life: rand(70, 110),
-        maxLife: 110,
-        len: rand(55, 120),
-        wave: rand(0, Math.PI * 2)
     });
 }
 
@@ -660,7 +685,7 @@ function updatePlayer() {
         if (player.x < 32) startTransition("base");
 
         player.x = clamp(player.x, 30, W - 35);
-        player.y = clamp(player.y, 45, H - 140);
+        player.y = clamp(player.y, 45, H - 45);
     }
 
     if (player.cooldown > 0) player.cooldown--;
@@ -678,11 +703,11 @@ function updateCarriedZombies() {
         let targetY;
 
         if (game.screen === "base") {
-            targetX = player.x + 35 + offset * 22;
+            targetX = player.x + 35 + offset * 26;
             targetY = player.y + 16 + Math.sin(player.bob + i) * 7;
             z.facing = -1;
         } else {
-            targetX = player.x - player.facing * (28 + offset * 22);
+            targetX = player.x - player.facing * (28 + offset * 24);
             targetY = player.y + 18 + Math.sin(player.bob + i) * 7;
             z.facing = -player.facing;
         }
@@ -736,6 +761,7 @@ function updateZombies() {
 
     for (let i = zombies.length - 1; i >= 0; i--) {
         const z = zombies[i];
+
         if (z.caught) continue;
 
         z.wander--;
@@ -760,10 +786,10 @@ function updateZombies() {
         z.facing = Math.cos(z.angle) >= 0 ? 1 : -1;
 
         z.x = clamp(z.x, 45, W - 45);
-        z.y = clamp(z.y, 55, H - 150);
+        z.y = clamp(z.y, 55, H - 45);
 
         if (z.x <= 45 || z.x >= W - 45) z.angle = Math.PI - z.angle;
-        if (z.y <= 55 || z.y >= H - 150) z.angle = -z.angle;
+        if (z.y <= 55 || z.y >= H - 45) z.angle = -z.angle;
 
         if (z.scared > 0) {
             z.scared--;
@@ -799,11 +825,13 @@ function updateNets() {
 
         for (let j = zombies.length - 1; j >= 0; j--) {
             const z = zombies[j];
+
             if (z.caught) continue;
 
             if (Math.hypot(n.x - z.x, n.y - z.y) < n.r + z.r) {
                 if (player.carry.length < player.maxCarry) {
                     z.caught = true;
+                    z.scared = 0;
                     zombies.splice(j, 1);
                     player.carry.push(z);
                     world.totalCaught++;
@@ -862,7 +890,7 @@ function updateCars() {
             c.x = c.targetX;
         }
 
-        c.y = H - 75;
+        c.y = H - 58;
 
         if (i === 0 && c.x === CAR_STOP_X && world.juice > 0) {
             c.state = "leaving";
@@ -928,26 +956,28 @@ function updateFireflies() {
 
         if (f.x < 0) f.x = W;
         if (f.x > W) f.x = 0;
-        if (f.y < 45) f.y = H - 150;
-        if (f.y > H - 130) f.y = 60;
+        if (f.y < 45) f.y = H - 35;
+        if (f.y > H - 25) f.y = 60;
     }
 }
 
-function updateWind() {
-    if (game.screen === "base" && Math.random() < 0.012) {
-        addWindStreak();
-    }
+function updateBaseWind() {
+    if (game.screen !== "base") return;
 
-    for (let i = windStreaks.length - 1; i >= 0; i--) {
-        const w = windStreaks[i];
+    for (const s of baseWindStreaks) {
+        s.x += s.speed;
+        s.y += s.drift;
 
-        w.x += w.vx;
-        w.life--;
-        w.wave += 0.08;
-
-        if (w.life <= 0 || w.x > W + 180) {
-            windStreaks.splice(i, 1);
+        if (s.x > W + 120) {
+            s.x = -rand(40, 220);
+            s.y = rand(90, H - 165);
+            s.len = rand(45, 95);
+            s.speed = rand(0.5, 1.2);
+            s.alpha = rand(0.04, 0.1);
         }
+
+        if (s.y < 85) s.y = H - 170;
+        if (s.y > H - 160) s.y = 95;
     }
 }
 
@@ -969,7 +999,7 @@ function drawBaseWorld() {
 
     drawBaseHills();
     drawBaseGrassTexture();
-    drawWindStreaks();
+    drawBaseWindStreaks();
     drawRoad();
     drawBaseDecor();
     drawPortalSign();
@@ -1035,24 +1065,17 @@ function drawBaseGrassTexture() {
     }
 }
 
-function drawWindStreaks() {
+function drawBaseWindStreaks() {
     ctx.save();
+    ctx.lineCap = "round";
 
-    for (const w of windStreaks) {
-        const alpha = clamp(w.life / w.maxLife, 0, 1) * 0.22;
-
-        ctx.strokeStyle = `rgba(235,255,235,${alpha})`;
-        ctx.lineWidth = 3;
-        ctx.lineCap = "round";
+    for (const s of baseWindStreaks) {
+        ctx.strokeStyle = `rgba(255,255,255,${s.alpha})`;
+        ctx.lineWidth = 2;
 
         ctx.beginPath();
-        ctx.moveTo(w.x, w.y);
-        ctx.quadraticCurveTo(
-            w.x + w.len * 0.45,
-            w.y + Math.sin(w.wave) * 9,
-            w.x + w.len,
-            w.y + Math.sin(w.wave + 1.2) * 7
-        );
+        ctx.moveTo(s.x, s.y);
+        ctx.lineTo(s.x + s.len, s.y - 4);
         ctx.stroke();
     }
 
@@ -1079,14 +1102,16 @@ function drawRoad() {
 }
 
 function drawBaseDecor() {
-    for (const t of baseTrees) {
+    const sorted = [...baseTrees].sort((a, b) => a.y - b.y);
+
+    for (const t of sorted) {
         drawTree(t, false);
     }
 }
 
 function drawPortalSign() {
     ctx.save();
-    ctx.translate(W - 105, H / 2 - 145);
+    ctx.translate(W - 115, H / 2 - 145);
     ctx.scale(0.7, 0.7);
 
     ctx.fillStyle = "#7b4f2e";
@@ -1116,37 +1141,139 @@ function drawForestWorld() {
     const grd = ctx.createLinearGradient(0, 0, 0, H);
     grd.addColorStop(0, "#172c2d");
     grd.addColorStop(0.55, "#1f4035");
-    grd.addColorStop(1, "#102219");
+    grd.addColorStop(1, "#0d1d17");
 
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, W, H);
 
+    drawForestGroundTexture();
     drawForestBackTrees();
+}
 
-    for (const obj of forestObjects) {
-        if (obj.decor === "bush") drawForestBush(obj);
-        if (obj.decor === "rock") drawRock(obj, true);
-        if (obj.decor === "tree") drawTree(obj, true);
+function drawForestGroundTexture() {
+    ctx.save();
+
+    for (let y = 55; y < H; y += 22) {
+        ctx.strokeStyle = y % 44 === 0 ? "rgba(10,30,20,0.22)" : "rgba(90,140,95,0.05)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y + 7);
+        ctx.stroke();
     }
 
-    drawFireflies();
-    drawForestExitSign();
-    drawVignette();
+    for (const p of forestDarkPatches) {
+        ctx.fillStyle = `rgba(0,0,0,${p.a})`;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.rx, p.ry, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    for (const pebble of forestPebbles) {
+        ctx.save();
+        ctx.translate(pebble.x, pebble.y);
+        ctx.rotate(pebble.rot);
+        ctx.scale(pebble.s, pebble.s);
+
+        ctx.fillStyle = "#263d3a";
+        ctx.strokeStyle = "#0d1d17";
+        ctx.lineWidth = 1.5;
+
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 5, 2.8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    for (const g of forestGroundTufts) {
+        ctx.save();
+        ctx.translate(g.x, g.y);
+        ctx.scale(g.s, g.s);
+
+        ctx.strokeStyle = "#0b1c14";
+        ctx.lineWidth = 2.2;
+        ctx.lineCap = "round";
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(-3 + g.tilt * 6, -8, -6, -14);
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(g.tilt * 5, -10, 0, -17);
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(4 + g.tilt * 5, -8, 7, -13);
+        ctx.stroke();
+
+        ctx.strokeStyle = g.color;
+        ctx.lineWidth = 1.2;
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(-3 + g.tilt * 6, -8, -6, -14);
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(g.tilt * 5, -10, 0, -17);
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(4 + g.tilt * 5, -8, 7, -13);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    ctx.restore();
 }
 
 function drawForestBackTrees() {
     ctx.fillStyle = "#0f1e1a";
 
-    for (let i = 0; i < 5; i++) {
-        const x = i * 250 - 30;
-        const h = 190 + Math.sin(i * 5) * 50;
+    for (let i = 0; i < 6; i++) {
+        const x = i * 230 - 30;
+        const h = 210 + Math.sin(i * 5) * 50;
 
         ctx.beginPath();
-        ctx.moveTo(x, H - 125);
-        ctx.lineTo(x + 35, H - 125 - h);
-        ctx.lineTo(x + 70, H - 125);
+        ctx.moveTo(x, H);
+        ctx.lineTo(x + 35, H - h);
+        ctx.lineTo(x + 70, H);
         ctx.closePath();
         ctx.fill();
+    }
+}
+
+function drawForestLayeredEntities() {
+    const layered = [];
+
+    for (const b of forestBushes) {
+        layered.push({
+            depth: b.y + 18 * b.s,
+            draw: () => drawForestBush(b)
+        });
+    }
+
+    for (const r of forestRocks) {
+        layered.push({
+            depth: r.y + 10 * r.s,
+            draw: () => drawRock(r, true)
+        });
+    }
+
+    for (const t of forestTrees) {
+        layered.push({
+            depth: t.y + 58 * t.s,
+            draw: () => drawTree(t, true)
+        });
+    }
+
+    for (const z of zombies) {
+        layered.push({
+            depth: z.y + 35,
+            draw: () => drawZombie(z)
+        });
+    }
+
+    layered.sort((a, b) => a.depth - b.depth);
+
+    for (const entry of layered) {
+        entry.draw();
     }
 }
 
@@ -1165,6 +1292,12 @@ function drawForestBush(b) {
     ctx.arc(19, 6, 17, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+
+    ctx.fillStyle = "rgba(120,180,110,0.14)";
+    ctx.beginPath();
+    ctx.arc(-7, -10, 8, 0, Math.PI * 2);
+    ctx.arc(12, -5, 6, 0, Math.PI * 2);
+    ctx.fill();
 
     ctx.restore();
 }
@@ -1212,18 +1345,18 @@ function drawForestExitSign() {
     ctx.restore();
 }
 
-function drawVignette() {
+function drawGlobalVignette() {
     const grd = ctx.createRadialGradient(
         W / 2,
         H / 2,
-        Math.min(W, H) * 0.25,
+        Math.min(W, H) * 0.35,
         W / 2,
         H / 2,
-        Math.max(W, H) * 0.75
+        Math.max(W, H) * 0.82
     );
 
     grd.addColorStop(0, "rgba(0,0,0,0)");
-    grd.addColorStop(1, "rgba(0,0,0,0.45)");
+    grd.addColorStop(1, game.screen === "forest" ? "rgba(0,0,0,0.42)" : "rgba(0,0,0,0.18)");
 
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, W, H);
@@ -1235,24 +1368,55 @@ function drawRock(r, forest = false) {
     ctx.rotate(r.rot);
     ctx.scale(r.s, r.s);
 
-    ctx.fillStyle = forest ? "#3d5353" : "#607075";
-    ctx.strokeStyle = forest ? "#111f1f" : "#263238";
-    ctx.lineWidth = 3;
+    ctx.fillStyle = forest ? "#3b5450" : "#607075";
+    ctx.strokeStyle = forest ? "#0c1818" : "#263238";
+    ctx.lineWidth = 3.5;
 
     ctx.beginPath();
-    ctx.moveTo(-14, 8);
-    ctx.lineTo(-9, -8);
-    ctx.lineTo(6, -13);
-    ctx.lineTo(17, -2);
-    ctx.lineTo(13, 11);
+    ctx.moveTo(-16, 9);
+    ctx.lineTo(-12, -7);
+    ctx.lineTo(-2, -15);
+    ctx.lineTo(11, -11);
+    ctx.lineTo(19, 0);
+    ctx.lineTo(13, 12);
+    ctx.lineTo(-4, 15);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = forest ? "rgba(160,210,190,0.16)" : "rgba(255,255,255,0.25)";
+    ctx.fillStyle = forest ? "#4b6762" : "#78898e";
     ctx.beginPath();
-    ctx.ellipse(-3, -4, 7, 3, -0.4, 0, Math.PI * 2);
+    ctx.moveTo(-11, -4);
+    ctx.lineTo(-2, -12);
+    ctx.lineTo(7, -8);
+    ctx.lineTo(0, -2);
+    ctx.closePath();
     ctx.fill();
+
+    ctx.fillStyle = forest ? "rgba(130,180,155,0.18)" : "rgba(255,255,255,0.22)";
+    ctx.beginPath();
+    ctx.ellipse(-4, -6, 7, 3, -0.35, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = forest ? "#182b29" : "#3d4a4f";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+
+    ctx.beginPath();
+    ctx.moveTo(-8, 3);
+    ctx.lineTo(-2, 7);
+    ctx.lineTo(4, 2);
+    ctx.moveTo(7, -2);
+    ctx.lineTo(13, 1);
+    ctx.stroke();
+
+    if (forest) {
+        ctx.fillStyle = "rgba(75,140,82,0.35)";
+        ctx.beginPath();
+        ctx.arc(-9, 8, 3, 0, Math.PI * 2);
+        ctx.arc(-4, 10, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+    }
 
     ctx.restore();
 }
@@ -1270,6 +1434,15 @@ function drawTree(t, forest = false) {
 
     roundedRect(-8, 10, 16, forest ? 50 : 38, 5);
     ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(20,10,5,0.35)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-2, 16);
+    ctx.lineTo(-3, forest ? 54 : 42);
+    ctx.moveTo(4, 20);
+    ctx.lineTo(2, forest ? 50 : 37);
     ctx.stroke();
 
     ctx.save();
@@ -1292,7 +1465,6 @@ function drawTree(t, forest = false) {
     ctx.stroke();
 
     ctx.fillStyle = midLeaf;
-
     for (const p of [
         [-22, 3, 10],
         [-8, -15, 12],
@@ -1306,7 +1478,6 @@ function drawTree(t, forest = false) {
     }
 
     ctx.fillStyle = lightLeaf;
-
     for (const p of [
         [-10, -16, 6],
         [7, -12, 5],
@@ -1442,8 +1613,25 @@ function drawWoodChimney() {
 function drawDriveThruWindow() {
     if (game.screen !== "base") return;
 
+    const x = factory.x + 138;
+    const y = H - 162;
+
     ctx.save();
-    ctx.translate(factory.x + 122, H - 88);
+
+    ctx.fillStyle = "#5f8f4c";
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 4;
+
+    ctx.beginPath();
+    ctx.moveTo(x - 45, y + 38);
+    ctx.lineTo(x + 55, y + 38);
+    ctx.lineTo(x + 95, H - 125);
+    ctx.lineTo(x - 10, H - 125);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.translate(x, y);
 
     ctx.fillStyle = "#ffd166";
     ctx.strokeStyle = "#101820";
@@ -1706,7 +1894,7 @@ function drawZombie(z) {
     const facing = z.facing || 1;
     const squash = Math.sin(z.squish) * 0.07;
 
-    ctx.scale(facing * (1 + squash) * 0.8, (1 - squash) * 0.8);
+    ctx.scale(facing * (1 + squash), 1 - squash);
 
     const limp = Math.sin(z.limp);
 
@@ -1715,26 +1903,26 @@ function drawZombie(z) {
     ctx.lineCap = "round";
 
     ctx.beginPath();
-    ctx.moveTo(-10, 24);
-    ctx.lineTo(-17 + limp * 5, 45);
-    ctx.moveTo(8, 24);
-    ctx.lineTo(18 - limp * 5, 45);
+    ctx.moveTo(-8, 18);
+    ctx.lineTo(-14 + limp * 4, 34);
+    ctx.moveTo(6, 18);
+    ctx.lineTo(15 - limp * 4, 34);
     ctx.stroke();
 
     ctx.fillStyle = z.pants;
     ctx.strokeStyle = "#171717";
     ctx.lineWidth = 4;
 
-    roundedRect(-18, 14, 15, 27, 6);
+    roundedRect(-15, 9, 12, 22, 6);
     ctx.fill();
     ctx.stroke();
 
-    roundedRect(3, 14, 15, 27, 6);
+    roundedRect(2, 9, 12, 22, 6);
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = z.shirt;
-    roundedRect(-22, -6, 44, 34, 12);
+    roundedRect(-18, -7, 36, 27, 10);
     ctx.fill();
     ctx.stroke();
 
@@ -1743,15 +1931,15 @@ function drawZombie(z) {
     ctx.lineWidth = 5;
 
     ctx.beginPath();
-    ctx.moveTo(-20, 3);
-    ctx.lineTo(-37, 18 + limp * 5);
-    ctx.moveTo(20, 3);
-    ctx.lineTo(37, 16 - limp * 5);
+    ctx.moveTo(-16, 0);
+    ctx.lineTo(-30, 12 + limp * 4);
+    ctx.moveTo(16, 0);
+    ctx.lineTo(30, 10 - limp * 4);
     ctx.stroke();
 
     ctx.fillStyle = z.color;
     ctx.beginPath();
-    ctx.arc(0, -24, z.r, 0, Math.PI * 2);
+    ctx.arc(0, -19, z.r, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
@@ -1759,46 +1947,46 @@ function drawZombie(z) {
 
     if (z.variant === 0) {
         ctx.beginPath();
-        ctx.arc(-11, -34, 9, 0, Math.PI * 2);
+        ctx.arc(-9, -28, 7, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.beginPath();
-        ctx.arc(11, -33, 7, 0, Math.PI * 2);
+        ctx.arc(9, -28, 6, 0, Math.PI * 2);
         ctx.fill();
     } else if (z.variant === 1) {
         ctx.beginPath();
-        ctx.arc(-13, -25, 8, 0, Math.PI * 2);
+        ctx.arc(-10, -21, 6, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.beginPath();
-        ctx.arc(14, -31, 8, 0, Math.PI * 2);
+        ctx.arc(11, -26, 6, 0, Math.PI * 2);
         ctx.fill();
     } else {
         ctx.beginPath();
-        ctx.ellipse(0, -39, 18, 7, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, -31, 14, 5, 0, 0, Math.PI * 2);
         ctx.fill();
     }
 
-    drawZombieEye(-8, -26);
-    drawZombieEye(8, -27);
+    drawZombieEye(-6, -20);
+    drawZombieEye(6, -21);
 
     ctx.fillStyle = "#2d1b1b";
     ctx.beginPath();
-    ctx.arc(1, -13, 8, 0.1, Math.PI - 0.1);
+    ctx.arc(1, -9, 6.5, 0.1, Math.PI - 0.1);
     ctx.fill();
 
     ctx.fillStyle = "#f8f8f8";
-    ctx.fillRect(-3, -12, 3, 6);
-    ctx.fillRect(3, -12, 3, 5);
+    ctx.fillRect(-3, -8, 2.5, 5);
+    ctx.fillRect(2.5, -8, 2.5, 4.5);
 
     if (z.scared > 0 && !z.caught) {
         ctx.fillStyle = "#fff";
         ctx.strokeStyle = "#101820";
         ctx.lineWidth = 3;
-        ctx.font = "900 24px Trebuchet MS";
+        ctx.font = "900 22px Trebuchet MS";
         ctx.textAlign = "center";
-        ctx.strokeText("!", 0, -z.r - 44);
-        ctx.fillText("!", 0, -z.r - 44);
+        ctx.strokeText("!", 0, -z.r - 28);
+        ctx.fillText("!", 0, -z.r - 28);
     }
 
     ctx.restore();
@@ -1810,13 +1998,13 @@ function drawZombieEye(x, y) {
     ctx.lineWidth = 2.5;
 
     ctx.beginPath();
-    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.arc(x, y, 4.8, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = "#101820";
     ctx.beginPath();
-    ctx.arc(x + 2, y + 1, 2, 0, Math.PI * 2);
+    ctx.arc(x + 1.6, y + 0.7, 1.7, 0, Math.PI * 2);
     ctx.fill();
 }
 
@@ -1834,7 +2022,6 @@ function drawNet(n) {
 
     for (let i = 0; i < 4; i++) {
         ctx.rotate(Math.PI / 4);
-
         ctx.beginPath();
         ctx.moveTo(-n.r, 0);
         ctx.lineTo(n.r, 0);
@@ -1865,28 +2052,49 @@ function drawCar(c) {
     roundedRect(-c.w / 8, -c.h / 2 - 13, c.w * 0.22, 18, 6);
     ctx.fill();
 
-    const tireR = 14;
-    const hubR = 5.5;
+    drawTire(-c.w / 3, c.h / 2 + 2, 14);
+    drawTire(c.w / 3, c.h / 2 + 2, 14);
 
-    ctx.fillStyle = "#101820";
+    ctx.restore();
+}
+
+function drawTire(x, y, r) {
+    ctx.save();
+    ctx.translate(x, y);
+
+    ctx.fillStyle = "#0b1115";
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 3;
 
     ctx.beginPath();
-    ctx.arc(-c.w / 3, c.h / 2 + 2, tireR, 0, Math.PI * 2);
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#27333a";
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.62, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.beginPath();
-    ctx.arc(c.w / 3, c.h / 2 + 2, tireR, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.strokeStyle = "#eaf4f4";
+    ctx.lineWidth = 2.2;
+
+    for (let i = 0; i < 6; i++) {
+        const a = i / 6 * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * 2, Math.sin(a) * 2);
+        ctx.lineTo(Math.cos(a) * r * 0.52, Math.sin(a) * r * 0.52);
+        ctx.stroke();
+    }
 
     ctx.fillStyle = "#eaf4f4";
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 1.5;
 
     ctx.beginPath();
-    ctx.arc(-c.w / 3, c.h / 2 + 2, hubR, 0, Math.PI * 2);
+    ctx.arc(0, 0, r * 0.26, 0, Math.PI * 2);
     ctx.fill();
-
-    ctx.beginPath();
-    ctx.arc(c.w / 3, c.h / 2 + 2, hubR, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.stroke();
 
     ctx.restore();
 }
@@ -1933,7 +2141,6 @@ function drawAimLine() {
     if (game.screen !== "forest") return;
 
     ctx.save();
-
     ctx.strokeStyle = "rgba(255,255,255,0.35)";
     ctx.lineWidth = 4;
     ctx.setLineDash([10, 10]);
@@ -1962,7 +2169,6 @@ function drawUI() {
     const netCost = 35 + world.upgrades.net * world.upgrades.net * 40;
     const tankCost = 35 + world.upgrades.tank * world.upgrades.tank * 40;
     const factoryCost = 35 + world.upgrades.factory * world.upgrades.factory * 40;
-
     const area = game.screen === "base" ? "Juice Base" : "Zombie Forest";
 
     if (game.screen === "forest") {
@@ -2002,7 +2208,7 @@ function update() {
     updateParticles();
     updateFloatingTexts();
     updateFireflies();
-    updateWind();
+    updateBaseWind();
 }
 
 function draw() {
@@ -2017,15 +2223,25 @@ function draw() {
     }
 
     if (game.screen === "forest") {
-        for (const z of zombies) drawZombie(z);
-        for (const n of nets) drawNet(n);
+        drawForestLayeredEntities();
+
+        for (const n of nets) {
+            drawNet(n);
+        }
     }
 
     drawCarryZombies();
     drawAimLine();
     drawPlayer();
+
+    if (game.screen === "forest") {
+        drawFireflies();
+        drawForestExitSign();
+    }
+
     drawParticles();
     drawFloatingTexts();
+    drawGlobalVignette();
     drawUI();
     drawFade();
 }
