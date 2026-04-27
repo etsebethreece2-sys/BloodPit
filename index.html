@@ -3,2099 +3,1594 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>3D Gladiator Arena</title>
-
+  <title>Hungry Shark 2D Clone</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&display=swap');
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
 
     html, body {
       margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
-      background: #120b08;
-      font-family: "Cinzel", Georgia, serif;
-      user-select: none;
+      font-family: "Trebuchet MS", Arial, sans-serif;
+      background: #06192b;
+      cursor: none;
     }
 
     canvas {
       display: block;
+      width: 100vw;
+      height: 100vh;
+      background: #0b3556;
     }
 
     #ui {
       position: fixed;
-      inset: 0;
-      pointer-events: none;
-      color: #f7e5bd;
-      z-index: 10;
-    }
-
-    #topBar {
-      position: absolute;
       top: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(920px, 92vw);
+      left: 18px;
+      z-index: 5;
+      color: white;
+      pointer-events: none;
+      text-shadow: 0 3px 0 rgba(0,0,0,0.35);
+    }
+
+    .panel {
+      background: rgba(0, 20, 40, 0.55);
+      border: 3px solid rgba(255, 255, 255, 0.25);
+      border-radius: 18px;
+      padding: 12px 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(6px);
+    }
+
+    #stats {
+      font-size: 20px;
+      font-weight: 900;
       display: flex;
-      gap: 28px;
+      gap: 18px;
       align-items: center;
-      justify-content: space-between;
-      padding: 14px 18px;
-      border: 3px solid #8a5a24;
-      border-radius: 12px;
-      background:
-        linear-gradient(135deg, rgba(59, 31, 14, 0.92), rgba(16, 10, 7, 0.94)),
-        radial-gradient(circle at top, rgba(255, 209, 137, 0.16), transparent 55%);
-      box-shadow:
-        0 0 0 2px rgba(20, 10, 3, 0.9),
-        0 10px 28px rgba(0,0,0,0.65),
-        inset 0 0 25px rgba(255, 174, 72, 0.08);
+      flex-wrap: wrap;
     }
 
-    #topBar::before,
-    #topBar::after {
-      content: "⚔";
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 30px;
-      color: #d7a54f;
-      text-shadow: 0 2px 6px #000;
-    }
-
-    #topBar::before {
-      left: -24px;
-    }
-
-    #topBar::after {
-      right: -24px;
-    }
-
-    .healthBox {
-      width: 380px;
-      max-width: 42vw;
-    }
-
-    .label {
-      font-size: 15px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-      color: #ffe7ad;
-      text-shadow: 0 2px 4px #000;
-      font-weight: 900;
-      min-height: 19px;
-    }
-
-    .barOuter {
-      height: 22px;
-      border: 2px solid #b88a44;
-      background: linear-gradient(#160c07, #2a170d);
-      border-radius: 4px;
-      overflow: hidden;
-      box-shadow:
-        0 0 0 2px rgba(28, 15, 7, 0.9),
-        inset 0 2px 8px rgba(0,0,0,0.85),
-        0 2px 12px rgba(0,0,0,0.55);
-      position: relative;
-    }
-
-    .barOuter::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.11) 50%, transparent 100%);
-      pointer-events: none;
-    }
-
-    .barInner {
-      height: 100%;
-      width: 100%;
-      transition: width 0.15s ease;
-    }
-
-    #playerHealth {
-      background: linear-gradient(90deg, #2f8f31, #9ccc42, #f4d35e);
-    }
-
-    #enemyHealth {
-      background: linear-gradient(90deg, #7a0b0b, #c62828, #ff8a2b);
-    }
-
-    #bloodCoinsWrap {
-      position: absolute;
-      top: 108px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 9px 18px;
-      border: 2px solid #b98437;
+    #healthWrap {
+      width: 260px;
+      height: 24px;
+      background: rgba(0,0,0,0.45);
       border-radius: 999px;
-      background:
-        radial-gradient(circle at top, rgba(255, 215, 115, 0.2), transparent 65%),
-        linear-gradient(135deg, rgba(58, 29, 12, 0.92), rgba(14, 8, 5, 0.92));
-      box-shadow:
-        0 0 0 2px rgba(30, 13, 4, 0.85),
-        0 8px 22px rgba(0,0,0,0.55),
-        inset 0 0 16px rgba(255, 190, 58, 0.12);
-      font-size: 16px;
-      font-weight: 900;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-      color: #ffd86f;
-      text-shadow: 0 2px 5px #000;
+      border: 3px solid rgba(255,255,255,0.35);
+      overflow: hidden;
+      margin-top: 10px;
     }
 
-    #messagePanel {
-      position: absolute;
-      left: 50%;
-      top: 48%;
-      transform: translate(-50%, -50%) scale(0.96);
-      min-width: min(520px, 86vw);
-      padding: 28px 30px 26px;
-      text-align: center;
-      opacity: 0;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      background:
-        radial-gradient(circle at top, rgba(255, 214, 132, 0.18), transparent 55%),
-        linear-gradient(135deg, rgba(65, 34, 14, 0.96), rgba(19, 11, 6, 0.98));
-      border: 4px ridge #b98437;
-      border-radius: 16px;
-      box-shadow:
-        0 0 0 3px rgba(34, 16, 5, 0.95),
-        0 18px 50px rgba(0,0,0,0.75),
-        inset 0 0 26px rgba(255, 177, 63, 0.12);
+    #healthBar {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #54ff72, #e5ff45);
+      border-radius: 999px;
+      transition: width 0.15s;
+    }
+
+    #minimap {
+      position: fixed;
+      right: 18px;
+      top: 18px;
+      width: 230px;
+      height: 130px;
+      background: rgba(0, 15, 35, 0.6);
+      border: 3px solid rgba(255,255,255,0.25);
+      border-radius: 18px;
+      z-index: 4;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
       pointer-events: none;
-    }
-
-    #messagePanel.show {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-      pointer-events: auto;
     }
 
     #message {
-      font-size: clamp(42px, 8vw, 92px);
-      font-weight: 900;
-      letter-spacing: 5px;
-      text-transform: uppercase;
-      color: #ffe1a1;
-      text-shadow:
-        0 4px 0 #4a1b0a,
-        0 8px 18px #000;
-      margin-bottom: 10px;
-    }
-
-    #subMessage {
-      font-size: 17px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      color: #f7d894;
-      text-shadow: 0 2px 5px #000;
-      margin-bottom: 20px;
-      text-transform: uppercase;
-    }
-
-    #restartBtn {
-      pointer-events: auto;
-      cursor: pointer;
-      border: 3px solid #d6a14a;
-      border-radius: 8px;
-      background: linear-gradient(#8d5520, #4d260d);
-      color: #ffe7ad;
-      font-family: "Cinzel", Georgia, serif;
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      padding: 13px 24px;
-      box-shadow:
-        0 5px 0 #251006,
-        0 10px 18px rgba(0,0,0,0.5),
-        inset 0 2px 0 rgba(255,255,255,0.16);
-    }
-
-    #restartBtn:hover {
-      filter: brightness(1.18);
-      transform: translateY(-1px);
-    }
-
-    #restartBtn:active {
-      transform: translateY(3px);
-      box-shadow:
-        0 2px 0 #251006,
-        0 5px 12px rgba(0,0,0,0.5),
-        inset 0 2px 0 rgba(255,255,255,0.16);
-    }
-
-    #staminaWrap {
-      position: absolute;
+      position: fixed;
       left: 50%;
-      bottom: 24px;
+      top: 18px;
       transform: translateX(-50%);
-      width: 280px;
-      padding: 10px 12px;
-      background: linear-gradient(135deg, rgba(50, 27, 13, 0.88), rgba(14, 9, 6, 0.88));
-      border: 2px solid #8f6029;
-      border-radius: 8px;
-      box-shadow:
-        0 0 0 2px rgba(28, 13, 5, 0.8),
-        0 8px 22px rgba(0,0,0,0.45);
+      z-index: 6;
+      color: white;
+      font-weight: 900;
+      font-size: 26px;
+      text-shadow: 0 4px 0 rgba(0,0,0,0.35);
+      background: rgba(0, 30, 60, 0.5);
+      padding: 12px 24px;
+      border-radius: 999px;
+      border: 3px solid rgba(255,255,255,0.25);
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
     }
 
-    #stamina {
-      background: linear-gradient(90deg, #276ca8, #60d3ff, #f8ffff);
+    #message.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(4px);
     }
 
-    #blockText {
-      text-align: center;
-      margin-top: 8px;
-      font-size: 12px;
-      opacity: 0.95;
-      letter-spacing: 1.5px;
-      text-shadow: 0 2px 4px black;
-      color: #f7e5bd;
-      text-transform: uppercase;
-      font-weight: 700;
-    }
-
-    #damageFlash {
+    #overlay {
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle, rgba(255,0,0,0.18), rgba(120,0,0,0.4));
-      opacity: 0;
-      transition: opacity 0.12s ease;
+      background: radial-gradient(circle, rgba(18, 83, 135, 0.62), rgba(0,0,0,0.82));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      color: white;
+    }
+
+    #menu {
+      width: min(620px, 92vw);
+      text-align: center;
+      padding: 34px;
+      border-radius: 30px;
+      border: 4px solid rgba(255,255,255,0.28);
+      background: rgba(0, 25, 50, 0.82);
+      box-shadow: 0 25px 80px rgba(0,0,0,0.55);
+      backdrop-filter: blur(8px);
+    }
+
+    #menu h1 {
+      margin: 0;
+      font-size: clamp(42px, 7vw, 76px);
+      letter-spacing: -3px;
+      text-shadow: 0 7px 0 rgba(0,0,0,0.32);
+    }
+
+    #menu p {
+      font-size: 18px;
+      line-height: 1.45;
+      color: #dff6ff;
+      margin: 16px auto 24px;
+      max-width: 500px;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      color: #073049;
+      background: linear-gradient(#ffe96b, #ffb533);
+      border-bottom: 7px solid #b97712;
+      padding: 16px 28px;
+      font-size: 22px;
+      font-weight: 900;
+      border-radius: 18px;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.25);
+      transition: transform 0.12s, border-bottom-width 0.12s;
+    }
+
+    button:hover {
+      transform: translateY(-2px) scale(1.04);
+    }
+
+    button:active {
+      transform: translateY(4px);
+      border-bottom-width: 2px;
+    }
+
+    #cursorDot {
+      position: fixed;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.85);
+      box-shadow: 0 0 18px rgba(99,221,255,0.9);
       pointer-events: none;
-      z-index: 9;
+      z-index: 20;
+      transform: translate(-50%, -50%);
     }
   </style>
 </head>
 <body>
-  <div id="damageFlash"></div>
+  <canvas id="game"></canvas>
+  <canvas id="minimap"></canvas>
 
   <div id="ui">
-    <div id="topBar">
-      <div class="healthBox">
-        <div class="label">Gladiator</div>
-        <div class="barOuter">
-          <div id="playerHealth" class="barInner"></div>
-        </div>
+    <div class="panel">
+      <div id="stats">
+        <span id="scoreText">Score: 0</span>
+        <span id="coinsText">Coins: 0</span>
+        <span id="levelText">Size: Pup</span>
       </div>
-
-      <div class="healthBox">
-        <div id="enemyNameLabel" class="label" style="text-align:right;">Opponent</div>
-        <div class="barOuter">
-          <div id="enemyHealth" class="barInner"></div>
-        </div>
+      <div id="healthWrap">
+        <div id="healthBar"></div>
       </div>
-    </div>
-
-    <div id="bloodCoinsWrap">BloodCoins: <span id="bloodCoinsCount">0</span></div>
-
-    <div id="staminaWrap">
-      <div class="barOuter">
-        <div id="stamina" class="barInner"></div>
-      </div>
-      <div id="blockText">Shield stamina</div>
-    </div>
-
-    <div id="messagePanel">
-      <div id="message"></div>
-      <div id="subMessage"></div>
-      <button id="restartBtn">Fight Again</button>
     </div>
   </div>
 
-  <script type="module">
-    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+  <div id="message">YUMMY!</div>
+  <div id="cursorDot"></div>
 
-    let scene, camera, renderer, clock;
-    let player, enemy;
-    let sword, shield;
-    let enemySword, enemyShield;
-    let keys = {};
-    let mouseLocked = false;
+  <div id="overlay">
+    <div id="menu">
+      <h1>Hungry Shark</h1>
+      <p>
+        Swim around the giant ocean, eat fish, turtles, jelly snacks and coins.
+        Avoid bombs and dangerous jellyfish. Larger prey unlocks as your shark grows.
+      </p>
+      <button id="startButton">START HUNTING</button>
+    </div>
+  </div>
 
-    let yaw = 0;
-    let pitch = 0;
-    let cameraRoll = 0;
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
 
-    let playerHP = 100;
-    let enemyHP = 100;
-    let stamina = 100;
-    let bloodCoins = 0;
+    const mapCanvas = document.getElementById("minimap");
+    const mapCtx = mapCanvas.getContext("2d");
 
-    let playerAttackTimer = 0;
-    let playerAttackCooldown = 0;
-    let enemyAttackTimer = 0;
-    let enemyAttackCooldown = 1.2;
-    let enemyHitDone = false;
-    let playerHitDone = false;
+    const scoreText = document.getElementById("scoreText");
+    const coinsText = document.getElementById("coinsText");
+    const levelText = document.getElementById("levelText");
+    const healthBar = document.getElementById("healthBar");
+    const message = document.getElementById("message");
+    const cursorDot = document.getElementById("cursorDot");
+    const overlay = document.getElementById("overlay");
+    const startButton = document.getElementById("startButton");
 
-    let isBlocking = false;
-    let gameOver = false;
-    let currentEnemyName = "";
+    let W = window.innerWidth;
+    let H = window.innerHeight;
 
-    let enemyDeathTimer = 0;
-    let enemyDeathDuration = 1.55;
-    let pendingVictoryText = "";
-    let pendingVictoryDetail = "";
+    canvas.width = W;
+    canvas.height = H;
+    mapCanvas.width = 230;
+    mapCanvas.height = 130;
 
-    const opponentNames = [
-      "Marcus Bloodfang",
-      "Titus Ironjaw",
-      "Cassius the Cruel",
-      "Brutus Stormblade",
-      "Lucius Skullsplitter",
-      "Gaius Redmane",
-      "Drusus the Unbroken",
-      "Flavius Nightwolf",
-      "Octavius Bonebreaker",
-      "Aurelius Ashborn",
-      "Valerius Doomhand",
-      "Severus the Savage",
-      "Maximus Blackshield",
-      "Nero Flameheart",
-      "Magnus the Merciless",
-      "Rufus Steelborn",
-      "Corvus Sandstrider",
-      "Decimus the Viper",
-      "Atticus Grimblade",
-      "Varrus Thunderfist"
+    window.addEventListener("resize", () => {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = W;
+      canvas.height = H;
+    });
+
+    const WORLD = {
+      w: 5200,
+      h: 2300,
+      surface: 160,
+      floor: 2140
+    };
+
+    const pointer = {
+      x: W / 2,
+      y: H / 2,
+      worldX: WORLD.w / 2,
+      worldY: WORLD.h / 2
+    };
+
+    window.addEventListener("mousemove", e => {
+      pointer.x = e.clientX;
+      pointer.y = e.clientY;
+      cursorDot.style.left = e.clientX + "px";
+      cursorDot.style.top = e.clientY + "px";
+    });
+
+    let gameRunning = false;
+    let score = 0;
+    let coins = 0;
+    let lastTime = 0;
+    let camera = { x: 0, y: 0 };
+    let shake = 0;
+    let messageTimer = 0;
+
+    const shark = {
+      x: WORLD.w / 2,
+      y: WORLD.h / 2,
+      vx: 0,
+      vy: 0,
+      angle: 0,
+      size: 52,
+      baseSize: 52,
+      health: 100,
+      maxHealth: 100,
+      tail: 0,
+      mouth: 0,
+      blink: 0,
+      blinkTimer: 0,
+      invincible: 0,
+      eaten: 0
+    };
+
+    const foods = [];
+    const coinsArr = [];
+    const bubbles = [];
+    const particles = [];
+    const rocks = [];
+    const coral = [];
+    const plants = [];
+    const decorations = [];
+    const hazards = [];
+    const schools = [];
+
+    const foodTypes = [
+      {
+        name: "Tiny Fish",
+        color: "#ffcc4d",
+        accent: "#ff7b4d",
+        size: 18,
+        speed: 80,
+        value: 10,
+        health: 7,
+        minEatSize: 0,
+        rarity: 0.34
+      },
+      {
+        name: "Blue Fish",
+        color: "#45d5ff",
+        accent: "#2b79ff",
+        size: 24,
+        speed: 95,
+        value: 18,
+        health: 10,
+        minEatSize: 0,
+        rarity: 0.24
+      },
+      {
+        name: "Squid",
+        color: "#c37cff",
+        accent: "#733eff",
+        size: 30,
+        speed: 110,
+        value: 28,
+        health: 13,
+        minEatSize: 58,
+        rarity: 0.14
+      },
+      {
+        name: "Turtle",
+        color: "#77df67",
+        accent: "#2b8c44",
+        size: 38,
+        speed: 50,
+        value: 42,
+        health: 17,
+        minEatSize: 67,
+        rarity: 0.11
+      },
+      {
+        name: "Stingray",
+        color: "#a5b4c7",
+        accent: "#596579",
+        size: 48,
+        speed: 75,
+        value: 65,
+        health: 21,
+        minEatSize: 78,
+        rarity: 0.08
+      },
+      {
+        name: "Big Tuna",
+        color: "#9ee6ff",
+        accent: "#3978a6",
+        size: 58,
+        speed: 115,
+        value: 90,
+        health: 26,
+        minEatSize: 92,
+        rarity: 0.055
+      },
+      {
+        name: "Golden Fish",
+        color: "#ffe65c",
+        accent: "#ff961f",
+        size: 34,
+        speed: 135,
+        value: 150,
+        health: 35,
+        minEatSize: 65,
+        rarity: 0.035
+      }
     ];
 
-    const particles = [];
-    const floatingTexts = [];
-    const bloodDecals = [];
-
-    const ARENA_RADIUS = 28;
-    const PLAYER_SPEED = 7.2;
-    const ENEMY_SPEED = 3.36;
-    const ENEMY_ATTACK_DURATION = 1.25;
-    const PLAYER_ATTACK_DURATION = 0.624;
-
-    const uiPlayerHealth = document.getElementById("playerHealth");
-    const uiEnemyHealth = document.getElementById("enemyHealth");
-    const uiStamina = document.getElementById("stamina");
-    const uiBloodCoins = document.getElementById("bloodCoinsCount");
-    const enemyNameLabel = document.getElementById("enemyNameLabel");
-    const msg = document.getElementById("message");
-    const subMessage = document.getElementById("subMessage");
-    const messagePanel = document.getElementById("messagePanel");
-    const restartBtn = document.getElementById("restartBtn");
-    const damageFlash = document.getElementById("damageFlash");
-
-    init();
-    animate();
-
-    function randomOpponentName() {
-      return opponentNames[Math.floor(Math.random() * opponentNames.length)];
+    function rand(min, max) {
+      return min + Math.random() * (max - min);
     }
 
-    function setNewOpponentName() {
-      currentEnemyName = randomOpponentName();
-      enemyNameLabel.textContent = currentEnemyName;
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
     }
 
-    function toonMaterial(color, extra = {}) {
-      return new THREE.MeshToonMaterial({
-        color,
-        gradientMap: createToonGradient(),
-        ...extra
+    function dist(a, b, c, d) {
+      return Math.hypot(a - c, b - d);
+    }
+
+    function chooseFoodType() {
+      const total = foodTypes.reduce((sum, f) => sum + f.rarity, 0);
+      let r = Math.random() * total;
+      for (const f of foodTypes) {
+        r -= f.rarity;
+        if (r <= 0) return f;
+      }
+      return foodTypes[0];
+    }
+
+    function showMessage(text) {
+      message.textContent = text;
+      message.classList.add("show");
+      messageTimer = 1.3;
+    }
+
+    function spawnFood(x = rand(100, WORLD.w - 100), y = rand(WORLD.surface + 120, WORLD.floor - 140)) {
+      const type = chooseFoodType();
+      const direction = Math.random() < 0.5 ? -1 : 1;
+      foods.push({
+        type,
+        x,
+        y,
+        vx: direction * rand(type.speed * 0.35, type.speed),
+        vy: rand(-20, 20),
+        dir: direction,
+        wobble: rand(0, Math.PI * 2),
+        life: 1,
+        scared: 0
       });
     }
 
-    function createToonGradient() {
-      const canvas = document.createElement("canvas");
-      canvas.width = 4;
-      canvas.height = 1;
-      const ctx = canvas.getContext("2d");
-
-      ctx.fillStyle = "#222";
-      ctx.fillRect(0, 0, 1, 1);
-
-      ctx.fillStyle = "#777";
-      ctx.fillRect(1, 0, 1, 1);
-
-      ctx.fillStyle = "#bbb";
-      ctx.fillRect(2, 0, 1, 1);
-
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(3, 0, 1, 1);
-
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.minFilter = THREE.NearestFilter;
-      texture.magFilter = THREE.NearestFilter;
-      return texture;
+    function spawnCoin(x, y, amount = 1) {
+      for (let i = 0; i < amount; i++) {
+        coinsArr.push({
+          x: x + rand(-25, 25),
+          y: y + rand(-25, 25),
+          vx: rand(-80, 80),
+          vy: rand(-120, -30),
+          spin: rand(0, Math.PI * 2),
+          value: Math.random() < 0.08 ? 5 : 1,
+          life: 18
+        });
+      }
     }
 
-    function createSandyTexture() {
-      const canvas = document.createElement("canvas");
-      canvas.width = 512;
-      canvas.height = 512;
-      const ctx = canvas.getContext("2d");
-
-      const baseGradient = ctx.createRadialGradient(256, 256, 20, 256, 256, 390);
-      baseGradient.addColorStop(0, "#b98248");
-      baseGradient.addColorStop(0.45, "#9d6838");
-      baseGradient.addColorStop(1, "#6f4428");
-
-      ctx.fillStyle = baseGradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      for (let i = 0; i < 9000; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const r = Math.random() * 1.55 + 0.25;
-        const shade = Math.floor(105 + Math.random() * 95);
-        const alpha = 0.08 + Math.random() * 0.18;
-
-        ctx.fillStyle = `rgba(${shade + 22}, ${shade + 2}, ${Math.max(25, shade - 36)}, ${alpha})`;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fill();
+    function spawnBubble(x, y, amount = 1) {
+      for (let i = 0; i < amount; i++) {
+        bubbles.push({
+          x: x + rand(-20, 20),
+          y: y + rand(-10, 10),
+          r: rand(2, 8),
+          vx: rand(-12, 12),
+          vy: rand(-55, -15),
+          life: rand(1.4, 3.8),
+          maxLife: 3.8
+        });
       }
-
-      for (let i = 0; i < 185; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const length = 18 + Math.random() * 55;
-        const width = 1 + Math.random() * 2.5;
-        const angle = Math.random() * Math.PI * 2;
-
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(angle);
-        ctx.strokeStyle = Math.random() > 0.5
-          ? "rgba(62, 36, 21, 0.18)"
-          : "rgba(225, 170, 100, 0.14)";
-        ctx.lineWidth = width;
-        ctx.beginPath();
-        ctx.moveTo(-length * 0.5, 0);
-        ctx.quadraticCurveTo(0, Math.random() * 12 - 6, length * 0.5, 0);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      for (let i = 0; i < 75; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const w = 20 + Math.random() * 70;
-        const h = 8 + Math.random() * 28;
-
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(Math.random() * Math.PI * 2);
-        ctx.fillStyle = "rgba(72, 43, 24, 0.12)";
-        ctx.beginPath();
-        ctx.ellipse(0, 0, w, h, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.wrapS = THREE.RepeatWrapping;
-      texture.wrapT = THREE.RepeatWrapping;
-      texture.repeat.set(8, 8);
-      texture.magFilter = THREE.NearestFilter;
-      texture.minFilter = THREE.NearestMipmapNearestFilter;
-      texture.colorSpace = THREE.SRGBColorSpace;
-
-      return texture;
     }
 
-    function createStoneTexture() {
-      const canvas = document.createElement("canvas");
-      canvas.width = 512;
-      canvas.height = 512;
-      const ctx = canvas.getContext("2d");
+    function spawnParticles(x, y, color, amount = 12, power = 1) {
+      for (let i = 0; i < amount; i++) {
+        const a = rand(0, Math.PI * 2);
+        const s = rand(30, 210) * power;
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(a) * s,
+          vy: Math.sin(a) * s,
+          r: rand(2, 7) * power,
+          color,
+          life: rand(0.35, 0.9),
+          maxLife: 0.9
+        });
+      }
+    }
 
-      const gradient = ctx.createLinearGradient(0, 0, 512, 512);
-      gradient.addColorStop(0, "#8f806d");
-      gradient.addColorStop(0.45, "#625846");
-      gradient.addColorStop(1, "#3d3329");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, 512, 512);
+    function spawnHazard() {
+      const isBomb = Math.random() < 0.45;
+      hazards.push({
+        type: isBomb ? "bomb" : "jelly",
+        x: rand(150, WORLD.w - 150),
+        y: rand(WORLD.surface + 200, WORLD.floor - 180),
+        r: isBomb ? rand(26, 36) : rand(28, 42),
+        vx: rand(-35, 35),
+        vy: rand(-20, 20),
+        wobble: rand(0, Math.PI * 2),
+        pulse: 0
+      });
+    }
 
-      for (let i = 0; i < 6500; i++) {
-        const x = Math.random() * 512;
-        const y = Math.random() * 512;
-        const shade = Math.floor(70 + Math.random() * 95);
-        const alpha = 0.06 + Math.random() * 0.22;
+    function generateWorld() {
+      rocks.length = 0;
+      coral.length = 0;
+      plants.length = 0;
+      decorations.length = 0;
+      hazards.length = 0;
+      schools.length = 0;
 
-        ctx.fillStyle = `rgba(${shade}, ${shade - 4}, ${Math.max(35, shade - 12)}, ${alpha})`;
-        ctx.fillRect(x, y, 1 + Math.random() * 3, 1 + Math.random() * 3);
+      for (let i = 0; i < 70; i++) {
+        rocks.push({
+          x: rand(100, WORLD.w - 100),
+          y: WORLD.floor + rand(-30, 65),
+          w: rand(95, 300),
+          h: rand(60, 230),
+          points: Math.floor(rand(6, 11)),
+          shade: rand(0.75, 1.1)
+        });
+      }
+
+      for (let i = 0; i < 20; i++) {
+        rocks.push({
+          x: rand(220, WORLD.w - 220),
+          y: rand(650, 1850),
+          w: rand(160, 430),
+          h: rand(110, 340),
+          points: Math.floor(rand(6, 12)),
+          shade: rand(0.6, 0.95),
+          floating: true
+        });
       }
 
       for (let i = 0; i < 90; i++) {
-        const x = Math.random() * 512;
-        const y = Math.random() * 512;
-        const length = 35 + Math.random() * 140;
-        const angle = Math.random() * Math.PI * 2;
-
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(angle);
-        ctx.strokeStyle = Math.random() > 0.5
-          ? "rgba(20, 17, 14, 0.22)"
-          : "rgba(210, 198, 176, 0.13)";
-        ctx.lineWidth = 1 + Math.random() * 3;
-        ctx.beginPath();
-        ctx.moveTo(-length / 2, 0);
-        ctx.quadraticCurveTo(0, Math.random() * 18 - 9, length / 2, Math.random() * 12 - 6);
-        ctx.stroke();
-        ctx.restore();
+        coral.push({
+          x: rand(60, WORLD.w - 60),
+          y: WORLD.floor - rand(0, 80),
+          size: rand(18, 55),
+          color: ["#ff6fae", "#ff9f43", "#b36bff", "#55efc4", "#feca57"][Math.floor(rand(0, 5))]
+        });
       }
 
-      for (let i = 0; i < 26; i++) {
-        const x = Math.random() * 512;
-        const y = Math.random() * 512;
-        const radius = 18 + Math.random() * 55;
-
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(Math.random() * Math.PI);
-        ctx.fillStyle = Math.random() > 0.5
-          ? "rgba(24, 21, 18, 0.14)"
-          : "rgba(205, 196, 178, 0.09)";
-        ctx.beginPath();
-        ctx.ellipse(0, 0, radius, radius * (0.25 + Math.random() * 0.45), 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+      for (let i = 0; i < 160; i++) {
+        plants.push({
+          x: rand(20, WORLD.w - 20),
+          y: WORLD.floor - rand(0, 40),
+          h: rand(45, 160),
+          sway: rand(0, Math.PI * 2),
+          color: Math.random() < 0.5 ? "#1abc7c" : "#16a085"
+        });
       }
 
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.wrapS = THREE.RepeatWrapping;
-      texture.wrapT = THREE.RepeatWrapping;
-      texture.repeat.set(1.4, 1.9);
-      texture.magFilter = THREE.NearestFilter;
-      texture.minFilter = THREE.NearestMipmapNearestFilter;
-      texture.colorSpace = THREE.SRGBColorSpace;
-
-      return texture;
-    }
-
-    function addOutline(mesh, scale = 1.045) {
-      if (!mesh.geometry) return;
-
-      const outline = new THREE.Mesh(
-        mesh.geometry,
-        new THREE.MeshBasicMaterial({
-          color: 0x160a05,
-          side: THREE.BackSide
-        })
-      );
-
-      outline.position.copy(mesh.position);
-      outline.rotation.copy(mesh.rotation);
-      outline.scale.copy(mesh.scale).multiplyScalar(scale);
-      outline.castShadow = false;
-      outline.receiveShadow = false;
-
-      mesh.add(outline);
-      outline.position.set(0, 0, 0);
-      outline.rotation.set(0, 0, 0);
-    }
-
-    function init() {
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x120b08);
-      scene.fog = new THREE.Fog(0x120b08, 26, 70);
-
-      clock = new THREE.Clock();
-
-      camera = new THREE.PerspectiveCamera(
-        70,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        1000
-      );
-
-      renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-      document.body.appendChild(renderer.domElement);
-
-      setNewOpponentName();
-      addLights();
-      createArena();
-
-      player = createGladiator({
-        bodyColor: 0xb87848,
-        armorColor: 0xd7d7d7,
-        clothColor: 0x9e1b1b,
-        skinColor: 0xd49a6a,
-        x: 0,
-        z: 8
-      });
-
-      enemy = createGladiator({
-        bodyColor: 0x6b3421,
-        armorColor: 0x8e8e8e,
-        clothColor: 0x273f8f,
-        skinColor: 0xb9784a,
-        x: 0,
-        z: -8
-      });
-
-      scene.add(player.group);
-      scene.add(enemy.group);
-
-      sword = player.sword;
-      shield = player.shield;
-
-      enemySword = enemy.sword;
-      enemyShield = enemy.shield;
-
-      setupEvents();
-      updateCamera(0);
-      updateUI();
-    }
-
-    function addLights() {
-      const hemi = new THREE.HemisphereLight(0xffddbb, 0x21110b, 2.1);
-      scene.add(hemi);
-
-      const sun = new THREE.DirectionalLight(0xffd19a, 3.4);
-      sun.position.set(10, 22, 13);
-      sun.castShadow = true;
-      sun.shadow.mapSize.width = 2048;
-      sun.shadow.mapSize.height = 2048;
-      sun.shadow.camera.near = 0.5;
-      sun.shadow.camera.far = 80;
-      sun.shadow.camera.left = -38;
-      sun.shadow.camera.right = 38;
-      sun.shadow.camera.top = 38;
-      sun.shadow.camera.bottom = -38;
-      scene.add(sun);
-
-      const fireLight1 = new THREE.PointLight(0xff4c1a, 3.5, 18);
-      fireLight1.position.set(-18, 5, -16);
-      scene.add(fireLight1);
-
-      const fireLight2 = new THREE.PointLight(0xff4c1a, 3.5, 18);
-      fireLight2.position.set(18, 5, 16);
-      scene.add(fireLight2);
-    }
-
-    function createArena() {
-      const sandyTexture = createSandyTexture();
-      const stoneTextureA = createStoneTexture();
-      const stoneTextureB = createStoneTexture();
-
-      const groundMat = toonMaterial(0xc58a4c, {
-        map: sandyTexture
-      });
-
-      const ground = new THREE.Mesh(
-        new THREE.CircleGeometry(ARENA_RADIUS, 128),
-        groundMat
-      );
-      ground.rotation.x = -Math.PI / 2;
-      ground.receiveShadow = true;
-      scene.add(ground);
-
-      const ringMat = toonMaterial(0x3b2115);
-
-      const wall = new THREE.Mesh(
-        new THREE.TorusGeometry(ARENA_RADIUS, 0.55, 12, 128),
-        ringMat
-      );
-      wall.rotation.x = Math.PI / 2;
-      wall.position.y = 0.25;
-      wall.castShadow = true;
-      wall.receiveShadow = true;
-      scene.add(wall);
-      addOutline(wall, 1.035);
-
-      const pillarMatA = toonMaterial(0x847661, { map: stoneTextureA });
-      const pillarMatB = toonMaterial(0x6f6454, { map: stoneTextureB });
-
-      for (let i = 0; i < 48; i++) {
-        const angle = (i / 48) * Math.PI * 2;
-        const x = Math.cos(angle) * ARENA_RADIUS;
-        const z = Math.sin(angle) * ARENA_RADIUS;
-        const h = 2.7 + Math.random() * 1.4;
-
-        const block = new THREE.Mesh(
-          new THREE.BoxGeometry(1.5, h, 1.2),
-          i % 2 ? pillarMatA : pillarMatB
-        );
-
-        block.position.set(x, h / 2 - 0.15, z);
-        block.rotation.y = -angle;
-        block.castShadow = true;
-        block.receiveShadow = true;
-        scene.add(block);
-        addOutline(block, 1.035);
-
-        const cap = new THREE.Mesh(
-          new THREE.BoxGeometry(1.78, 0.22, 1.45),
-          i % 2 ? pillarMatB : pillarMatA
-        );
-        cap.position.set(x, h - 0.02, z);
-        cap.rotation.y = -angle;
-        cap.castShadow = true;
-        cap.receiveShadow = true;
-        scene.add(cap);
-        addOutline(cap, 1.035);
+      for (let i = 0; i < 80; i++) {
+        decorations.push({
+          type: Math.random() < 0.5 ? "star" : "shell",
+          x: rand(80, WORLD.w - 80),
+          y: WORLD.floor + rand(-20, 30),
+          s: rand(8, 18),
+          rot: rand(0, Math.PI * 2)
+        });
       }
 
-      for (let i = 0; i < 150; i++) {
-        const a = Math.random() * Math.PI * 2;
-        const r = Math.random() * ARENA_RADIUS * 0.92;
+      for (let i = 0; i < 28; i++) spawnHazard();
 
-        const stone = new THREE.Mesh(
-          new THREE.DodecahedronGeometry(0.055 + Math.random() * 0.16),
-          toonMaterial(Math.random() > 0.5 ? 0x6b4328 : 0x8b6038)
-        );
-
-        stone.position.set(Math.cos(a) * r, 0.06, Math.sin(a) * r);
-        stone.rotation.set(Math.random(), Math.random(), Math.random());
-        stone.receiveShadow = true;
-        stone.castShadow = true;
-        scene.add(stone);
-        addOutline(stone, 1.08);
-      }
-
-      createTorches();
-    }
-
-    function createTorches() {
-      const positions = [
-        [-20, -20],
-        [20, -20],
-        [-20, 20],
-        [20, 20]
-      ];
-
-      for (const [x, z] of positions) {
-        const pole = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.18, 0.25, 4.5, 12),
-          toonMaterial(0x2b160d)
-        );
-        pole.position.set(x, 2.25, z);
-        pole.castShadow = true;
-        scene.add(pole);
-        addOutline(pole, 1.04);
-
-        const bowl = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.62, 0.4, 0.35, 12),
-          toonMaterial(0x1d0d07)
-        );
-        bowl.position.set(x, 4.48, z);
-        bowl.castShadow = true;
-        scene.add(bowl);
-        addOutline(bowl, 1.04);
-
-        const flame = new THREE.Group();
-        flame.position.set(x, 4.75, z);
-        scene.add(flame);
-
-        const outerFlame = new THREE.Mesh(
-          new THREE.ConeGeometry(0.55, 1.35, 8),
-          new THREE.MeshBasicMaterial({ color: 0xff5a14 })
-        );
-        outerFlame.position.y = 0.25;
-        flame.add(outerFlame);
-
-        const innerFlame = new THREE.Mesh(
-          new THREE.ConeGeometry(0.32, 0.95, 8),
-          new THREE.MeshBasicMaterial({ color: 0xffe16b })
-        );
-        innerFlame.position.y = 0.22;
-        flame.add(innerFlame);
-
-        flame.userData.baseY = flame.position.y;
-        flame.userData.flicker = Math.random() * 10;
-        flame.userData.outer = outerFlame;
-        flame.userData.inner = innerFlame;
-
-        particles.push({
-          mesh: flame,
-          velocity: new THREE.Vector3(),
-          life: Infinity,
-          maxLife: Infinity,
-          type: "flame"
+      for (let i = 0; i < 11; i++) {
+        schools.push({
+          x: rand(200, WORLD.w - 200),
+          y: rand(300, 1700),
+          count: Math.floor(rand(8, 20)),
+          color: ["#ffcc4d", "#45d5ff", "#ff6b6b"][Math.floor(rand(0, 3))],
+          phase: rand(0, Math.PI * 2)
         });
       }
     }
 
-    function createGladiator(opts) {
-      const group = new THREE.Group();
-      group.position.set(opts.x, 0, opts.z);
+    function resetGame() {
+      gameRunning = true;
+      overlay.style.display = "none";
 
-      const skin = toonMaterial(opts.skinColor);
-      const armor = toonMaterial(opts.armorColor);
-      const cloth = toonMaterial(opts.clothColor);
-      const leather = toonMaterial(opts.bodyColor);
+      score = 0;
+      coins = 0;
+      lastTime = performance.now();
 
-      const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.7, 1.15, 8, 16), skin);
-      body.position.y = 1.75;
-      body.castShadow = true;
-      group.add(body);
-      addOutline(body, 1.045);
+      shark.x = WORLD.w / 2;
+      shark.y = WORLD.h / 2;
+      shark.vx = 0;
+      shark.vy = 0;
+      shark.size = shark.baseSize;
+      shark.health = shark.maxHealth;
+      shark.tail = 0;
+      shark.mouth = 0;
+      shark.blink = 0;
+      shark.blinkTimer = 0;
+      shark.invincible = 0;
+      shark.eaten = 0;
 
-      const chest = new THREE.Mesh(
-        new THREE.BoxGeometry(1.25, 1.1, 0.5),
-        new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, visible: false })
-      );
-      chest.position.y = 2.08;
-      chest.visible = false;
-      group.add(chest);
+      foods.length = 0;
+      coinsArr.length = 0;
+      bubbles.length = 0;
+      particles.length = 0;
 
-      const belt = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.78, 0.82, 0.22, 18),
-        armor
-      );
-      belt.position.y = 1.43;
-      belt.castShadow = true;
-      group.add(belt);
-      addOutline(belt, 1.035);
+      generateWorld();
 
-      const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 1.02, 0.65, 12), cloth);
-      skirt.position.y = 1.18;
-      skirt.castShadow = true;
-      group.add(skirt);
-      addOutline(skirt, 1.04);
+      for (let i = 0; i < 95; i++) spawnFood();
+      for (let i = 0; i < 80; i++) spawnCoin(rand(100, WORLD.w - 100), rand(WORLD.surface + 100, WORLD.floor - 100), 1);
 
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 24), skin);
-      head.position.y = 3.05;
-      head.castShadow = true;
-      group.add(head);
-      addOutline(head, 1.045);
+      showMessage("GO HUNT!");
+      requestAnimationFrame(loop);
+    }
 
-      const helmet = new THREE.Mesh(
-        new THREE.SphereGeometry(0.45, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
-        armor
-      );
-      helmet.position.y = 3.13;
-      helmet.castShadow = true;
-      group.add(helmet);
-      addOutline(helmet, 1.035);
+    startButton.addEventListener("click", resetGame);
 
-      const crestBase = new THREE.Mesh(
-        new THREE.BoxGeometry(0.13, 0.16, 0.82),
-        armor
-      );
-      crestBase.position.y = 3.49;
-      crestBase.castShadow = true;
-      group.add(crestBase);
-      addOutline(crestBase, 1.04);
+    function update(dt) {
+      if (!gameRunning) return;
 
-      for (let i = 0; i < 7; i++) {
-        const plume = new THREE.Mesh(
-          new THREE.BoxGeometry(0.08, 0.5 + i * 0.012, 0.08),
-          cloth
-        );
+      pointer.worldX = pointer.x + camera.x;
+      pointer.worldY = pointer.y + camera.y;
 
-        plume.position.set(0, 3.72, -0.36 + i * 0.12);
-        plume.rotation.x = -0.32 + i * 0.085;
-        plume.castShadow = true;
-        group.add(plume);
-        addOutline(plume, 1.08);
+      const targetX = clamp(pointer.worldX, 40, WORLD.w - 40);
+      const targetY = clamp(pointer.worldY, WORLD.surface + 35, WORLD.floor - 80);
+
+      const dx = targetX - shark.x;
+      const dy = targetY - shark.y;
+      const d = Math.hypot(dx, dy) || 1;
+
+      const speed = clamp(d * 2.3, 150, 520);
+      const accel = 5.5;
+
+      shark.vx += (dx / d * speed - shark.vx) * accel * dt;
+      shark.vy += (dy / d * speed - shark.vy) * accel * dt;
+
+      shark.x += shark.vx * dt;
+      shark.y += shark.vy * dt;
+
+      shark.x = clamp(shark.x, 30, WORLD.w - 30);
+      shark.y = clamp(shark.y, WORLD.surface + 25, WORLD.floor - 60);
+
+      shark.angle = Math.atan2(shark.vy, shark.vx);
+      shark.tail += dt * (7 + Math.hypot(shark.vx, shark.vy) / 45);
+      shark.mouth = Math.max(0, shark.mouth - dt * 4);
+      shark.invincible = Math.max(0, shark.invincible - dt);
+
+      shark.blinkTimer -= dt;
+      if (shark.blinkTimer <= 0) {
+        shark.blink = 1;
+        shark.blinkTimer = rand(2, 5);
+      }
+      shark.blink = Math.max(0, shark.blink - dt * 8);
+
+      shark.health -= dt * 1.25;
+      if (shark.health <= 0) endGame();
+
+      const desiredCamX = clamp(shark.x - W * 0.48, 0, WORLD.w - W);
+      const desiredCamY = clamp(shark.y - H * 0.52, 0, WORLD.h - H);
+
+      camera.x += (desiredCamX - camera.x) * 4.5 * dt;
+      camera.y += (desiredCamY - camera.y) * 4.5 * dt;
+
+      if (shake > 0) {
+        shake -= dt * 12;
+        camera.x += rand(-shake, shake);
+        camera.y += rand(-shake, shake);
       }
 
-      const eyeGroup = new THREE.Group();
-      eyeGroup.position.set(0, 3.08, 0.37);
-      group.add(eyeGroup);
-
-      const leftEye = createCartoonEye();
-      const rightEye = createCartoonEye();
-
-      leftEye.position.set(-0.17, 0.02, 0);
-      rightEye.position.set(0.17, 0.02, 0);
-
-      eyeGroup.add(leftEye);
-      eyeGroup.add(rightEye);
-
-      const leftArmPivot = new THREE.Group();
-      const rightArmPivot = new THREE.Group();
-
-      leftArmPivot.position.set(-0.84, 2.48, 0);
-      rightArmPivot.position.set(0.84, 2.48, 0);
-
-      group.add(leftArmPivot, rightArmPivot);
-
-      const armGeo = new THREE.CapsuleGeometry(0.17, 0.82, 6, 12);
-
-      const leftArm = new THREE.Mesh(armGeo, skin);
-      leftArm.position.y = -0.48;
-      leftArm.castShadow = true;
-      leftArmPivot.add(leftArm);
-      addOutline(leftArm, 1.05);
-
-      const rightArm = new THREE.Mesh(armGeo, skin);
-      rightArm.position.y = -0.48;
-      rightArm.castShadow = true;
-      rightArmPivot.add(rightArm);
-      addOutline(rightArm, 1.05);
-
-      const shieldPivot = new THREE.Group();
-      shieldPivot.position.set(0, -0.84, 0.12);
-      leftArmPivot.add(shieldPivot);
-
-      const shieldRadius = 0.696;
-
-      const shield = new THREE.Mesh(
-        new THREE.CylinderGeometry(shieldRadius, shieldRadius, 0.16, 36),
-        toonMaterial(0x5b2619)
-      );
-      shield.rotation.x = Math.PI / 2;
-      shield.castShadow = true;
-      shieldPivot.add(shield);
-      addOutline(shield, 1.04);
-
-      const shieldRim = new THREE.Mesh(
-        new THREE.TorusGeometry(shieldRadius, 0.05, 10, 56),
-        armor
-      );
-      shieldRim.position.z = 0.095;
-      shieldRim.rotation.set(0, 0, 0);
-      shieldRim.castShadow = true;
-      shieldPivot.add(shieldRim);
-      addOutline(shieldRim, 1.035);
-
-      const innerShieldRing = new THREE.Mesh(
-        new THREE.TorusGeometry(0.372, 0.03, 8, 44),
-        armor
-      );
-      innerShieldRing.position.z = 0.105;
-      innerShieldRing.rotation.set(0, 0, 0);
-      innerShieldRing.castShadow = true;
-      shieldPivot.add(innerShieldRing);
-      addOutline(innerShieldRing, 1.035);
-
-      const shieldBoss = new THREE.Mesh(
-        new THREE.SphereGeometry(0.216, 16, 16),
-        armor
-      );
-      shieldBoss.position.z = 0.145;
-      shieldBoss.scale.z = 0.55;
-      shieldBoss.castShadow = true;
-      shieldPivot.add(shieldBoss);
-      addOutline(shieldBoss, 1.04);
-
-      const swordPivot = new THREE.Group();
-      swordPivot.position.set(0.04, -0.78, 0.02);
-      rightArmPivot.add(swordPivot);
-
-      const blade = new THREE.Mesh(
-        new THREE.BoxGeometry(0.13, 1.55, 0.07),
-        toonMaterial(0xdedede)
-      );
-      blade.position.y = -0.98;
-      blade.castShadow = true;
-      swordPivot.add(blade);
-      addOutline(blade, 1.08);
-
-      const tip = new THREE.Mesh(
-        new THREE.ConeGeometry(0.09, 0.24, 4),
-        blade.material
-      );
-      tip.position.y = -1.87;
-      tip.rotation.y = Math.PI / 4;
-      tip.castShadow = true;
-      swordPivot.add(tip);
-      addOutline(tip, 1.08);
-
-      const guard = new THREE.Mesh(
-        new THREE.BoxGeometry(0.52, 0.09, 0.12),
-        armor
-      );
-      guard.position.y = -0.18;
-      guard.castShadow = true;
-      swordPivot.add(guard);
-      addOutline(guard, 1.05);
-
-      const handle = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.07, 0.07, 0.45, 12),
-        leather
-      );
-      handle.position.y = 0.05;
-      handle.castShadow = true;
-      swordPivot.add(handle);
-      addOutline(handle, 1.06);
-
-      const leftLegPivot = new THREE.Group();
-      const rightLegPivot = new THREE.Group();
-
-      leftLegPivot.position.set(-0.34, 0.98, 0);
-      rightLegPivot.position.set(0.34, 0.98, 0);
-
-      group.add(leftLegPivot, rightLegPivot);
-
-      const legGeo = new THREE.CapsuleGeometry(0.18, 0.95, 6, 12);
-
-      const leftLeg = new THREE.Mesh(legGeo, skin);
-      leftLeg.position.y = -0.6;
-      leftLeg.castShadow = true;
-      leftLegPivot.add(leftLeg);
-      addOutline(leftLeg, 1.05);
-
-      const rightLeg = new THREE.Mesh(legGeo, skin);
-      rightLeg.position.y = -0.6;
-      rightLeg.castShadow = true;
-      rightLegPivot.add(rightLeg);
-      addOutline(rightLeg, 1.05);
-
-      const sandalGeo = new THREE.BoxGeometry(0.38, 0.12, 0.65);
-
-      const leftSandal = new THREE.Mesh(sandalGeo, leather);
-      leftSandal.position.set(0, -1.15, 0.08);
-      leftSandal.castShadow = true;
-      leftLegPivot.add(leftSandal);
-      addOutline(leftSandal, 1.05);
-
-      const rightSandal = new THREE.Mesh(sandalGeo, leather);
-      rightSandal.position.set(0, -1.15, 0.08);
-      rightSandal.castShadow = true;
-      rightLegPivot.add(rightSandal);
-      addOutline(rightSandal, 1.05);
-
-      return {
-        group,
-        body,
-        chest,
-        head,
-        eyeGroup,
-        leftEye,
-        rightEye,
-        leftArmPivot,
-        rightArmPivot,
-        leftLegPivot,
-        rightLegPivot,
-        swordPivot,
-        shieldPivot,
-        sword: blade,
-        shield,
-        velocity: new THREE.Vector3(),
-        walkTime: 0,
-        idleTime: Math.random() * 100,
-        dustTimer: 0,
-        hurtTimer: 0,
-        blinkTimer: Math.random() * 2,
-        blinkDuration: 0,
-        moveLocalX: 0,
-        moveLocalZ: 0,
-        targetSway: 0,
-        currentSway: 0
-      };
-    }
-
-    function createCartoonEye() {
-      const eye = new THREE.Group();
-
-      const whitePart = new THREE.Mesh(
-        new THREE.SphereGeometry(0.115, 20, 20),
-        toonMaterial(0xffffff)
-      );
-      whitePart.scale.set(1.1, 1.35, 0.35);
-      eye.add(whitePart);
-
-      const pupil = new THREE.Mesh(
-        new THREE.SphereGeometry(0.042, 12, 12),
-        new THREE.MeshBasicMaterial({ color: 0x050505 })
-      );
-      pupil.position.set(0, -0.005, 0.085);
-      pupil.scale.set(1, 1.2, 0.35);
-      eye.add(pupil);
-
-      const shine = new THREE.Mesh(
-        new THREE.SphereGeometry(0.014, 8, 8),
-        new THREE.MeshBasicMaterial({ color: 0xffffff })
-      );
-      shine.position.set(-0.018, 0.03, 0.112);
-      eye.add(shine);
-
-      const outline = new THREE.Mesh(
-        new THREE.SphereGeometry(0.12, 20, 20),
-        new THREE.MeshBasicMaterial({
-          color: 0x120704,
-          side: THREE.BackSide
-        })
-      );
-      outline.scale.set(1.18, 1.43, 0.39);
-      eye.add(outline);
-      outline.renderOrder = -1;
-
-      eye.userData.white = whitePart;
-      eye.userData.pupil = pupil;
-      eye.userData.shine = shine;
-      eye.userData.originalScaleY = 1;
-
-      return eye;
-    }
-
-    function setupEvents() {
-      document.addEventListener("keydown", e => {
-        keys[e.code] = true;
-
-        if (e.code === "KeyR") {
-          restartGame();
-        }
-      });
-
-      document.addEventListener("keyup", e => {
-        keys[e.code] = false;
-      });
-
-      document.body.addEventListener("click", e => {
-        if (e.target === restartBtn) return;
-
-        if (!mouseLocked && !gameOver) {
-          renderer.domElement.requestPointerLock();
-        }
-      });
-
-      restartBtn.addEventListener("click", e => {
-        e.stopPropagation();
-        restartGame();
-      });
-
-      document.addEventListener("pointerlockchange", () => {
-        mouseLocked = document.pointerLockElement === renderer.domElement;
-      });
-
-      document.addEventListener("mousemove", e => {
-        if (!mouseLocked || gameOver) return;
-
-        yaw -= e.movementX * 0.0022;
-        pitch -= e.movementY * 0.0022;
-        pitch = THREE.MathUtils.clamp(pitch, -0.7, 0.45);
-      });
-
-      document.addEventListener("mousedown", e => {
-        if (gameOver) return;
-
-        if (e.button === 0) {
-          playerAttack();
-        }
-
-        if (e.button === 2) {
-          isBlocking = true;
-        }
-      });
-
-      document.addEventListener("mouseup", e => {
-        if (e.button === 2) {
-          isBlocking = false;
-        }
-      });
-
-      document.addEventListener("contextmenu", e => e.preventDefault());
-
-      window.addEventListener("resize", () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
-    }
-
-    function playerAttack() {
-      if (playerAttackCooldown > 0 || stamina < 15 || isBlocking) return;
-
-      playerAttackTimer = PLAYER_ATTACK_DURATION;
-      playerAttackCooldown = 0.82;
-      playerHitDone = false;
-      stamina -= 15;
-    }
-
-    function animate() {
-      requestAnimationFrame(animate);
-
-      const dt = Math.min(clock.getDelta(), 0.033);
-
-      updatePlayer(dt);
-      updateEnemy(dt);
-      updateAnimations(dt);
-      updateEnemyDeath(dt);
-
-      checkEnemySwordDamage();
-
+      updateFood(dt);
+      updateCoins(dt);
+      updateHazards(dt);
+      updateBubbles(dt);
       updateParticles(dt);
-      updateFloatingTexts(dt);
-      updateBloodDecals(dt);
-      updateCamera(dt);
+
+      if (foods.length < 115) {
+        for (let i = 0; i < 3; i++) spawnFood();
+      }
+
+      if (coinsArr.length < 80 && Math.random() < dt * 4) {
+        spawnCoin(rand(100, WORLD.w - 100), rand(WORLD.surface + 80, WORLD.floor - 120), 1);
+      }
+
+      if (hazards.length < 30 && Math.random() < dt * 0.8) {
+        spawnHazard();
+      }
+
+      if (Math.random() < dt * 3) {
+        spawnBubble(shark.x - Math.cos(shark.angle) * shark.size, shark.y - Math.sin(shark.angle) * shark.size, 1);
+      }
+
+      messageTimer -= dt;
+      if (messageTimer <= 0) message.classList.remove("show");
+
       updateUI();
-
-      renderer.render(scene, camera);
     }
 
-    function updatePlayer(dt) {
-      if (gameOver) return;
-
-      playerAttackCooldown = Math.max(0, playerAttackCooldown - dt);
-      playerAttackTimer = Math.max(0, playerAttackTimer - dt);
-
-      const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
-      const right = new THREE.Vector3(-Math.cos(yaw), 0, Math.sin(yaw));
-
-      const move = new THREE.Vector3();
-
-      if (keys.KeyW) move.add(forward);
-      if (keys.KeyS) move.sub(forward);
-      if (keys.KeyD) move.add(right);
-      if (keys.KeyA) move.sub(right);
-
-      if (move.lengthSq() > 0) {
-        move.normalize();
-
-        player.moveLocalX = THREE.MathUtils.lerp(player.moveLocalX, move.dot(right), dt * 12);
-        player.moveLocalZ = THREE.MathUtils.lerp(player.moveLocalZ, move.dot(forward), dt * 12);
-
-        const speed = isBlocking ? PLAYER_SPEED * 0.45 : PLAYER_SPEED;
-        player.group.position.addScaledVector(move, speed * dt);
-
-        player.walkTime += dt * 10.5;
-        player.dustTimer -= dt;
-
-        if (player.dustTimer <= 0) {
-          createDustPuff(player.group.position.clone(), move.clone().multiplyScalar(-1));
-          player.dustTimer = 0.09;
-        }
-      } else {
-        player.idleTime += dt;
-        player.dustTimer = 0;
-        player.moveLocalX = THREE.MathUtils.lerp(player.moveLocalX, 0, dt * 8);
-        player.moveLocalZ = THREE.MathUtils.lerp(player.moveLocalZ, 0, dt * 8);
-      }
-
-      keepInsideArena(player.group.position);
-
-      player.group.rotation.y = yaw;
-
-      if (isBlocking && stamina > 0) {
-        stamina -= 18 * dt;
-      } else {
-        stamina += 28 * dt;
-      }
-
-      stamina = THREE.MathUtils.clamp(stamina, 0, 100);
-
-      if (stamina <= 1) {
-        isBlocking = false;
-      }
-
-      if (playerAttackTimer > 0 && !playerHitDone) {
-        const dist = player.group.position.distanceTo(enemy.group.position);
-
-        if (dist < 3.15 && playerAttackTimer < PLAYER_ATTACK_DURATION * 0.65) {
-          const toEnemy = enemy.group.position.clone().sub(player.group.position).normalize();
-          const facing = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
-          const dot = facing.dot(toEnemy);
-
-          if (dot > 0.35) {
-            damageEnemy(18 + Math.random() * 10);
-            playerHitDone = true;
-          }
-        }
-      }
-    }
-
-    function updateEnemy(dt) {
-      if (gameOver) return;
-
-      enemyAttackCooldown -= dt;
-      enemyAttackTimer = Math.max(0, enemyAttackTimer - dt);
-
-      const toPlayer = player.group.position.clone().sub(enemy.group.position);
-      const dist = toPlayer.length();
-
-      if (dist > 0.001) {
-        toPlayer.normalize();
-      }
-
-      const targetYaw = Math.atan2(toPlayer.x, toPlayer.z);
-      enemy.group.rotation.y = lerpAngle(enemy.group.rotation.y, targetYaw, dt * 8);
-
-      const enemyStopDistance = 1.55;
-      const enemyAttackStartDistance = 2.25;
-
-      if (dist > enemyStopDistance && enemyAttackTimer <= 0) {
-        enemy.group.position.addScaledVector(toPlayer, ENEMY_SPEED * dt);
-        enemy.walkTime += dt * 9.2;
-
-        const enemyForward = new THREE.Vector3(Math.sin(enemy.group.rotation.y), 0, Math.cos(enemy.group.rotation.y));
-        const enemyRight = new THREE.Vector3(-Math.cos(enemy.group.rotation.y), 0, Math.sin(enemy.group.rotation.y));
-
-        enemy.moveLocalX = THREE.MathUtils.lerp(enemy.moveLocalX, toPlayer.dot(enemyRight), dt * 8);
-        enemy.moveLocalZ = THREE.MathUtils.lerp(enemy.moveLocalZ, toPlayer.dot(enemyForward), dt * 8);
-
-        enemy.dustTimer -= dt;
-
-        if (enemy.dustTimer <= 0) {
-          createDustPuff(enemy.group.position.clone(), toPlayer.clone().multiplyScalar(-1));
-          enemy.dustTimer = 0.12;
-        }
-      } else {
-        enemy.idleTime += dt;
-        enemy.walkTime += dt * 1.2;
-        enemy.dustTimer = 0;
-        enemy.moveLocalX = THREE.MathUtils.lerp(enemy.moveLocalX, 0, dt * 8);
-        enemy.moveLocalZ = THREE.MathUtils.lerp(enemy.moveLocalZ, 0, dt * 8);
-
-        if (enemyAttackCooldown <= 0 && enemyAttackTimer <= 0 && dist < enemyAttackStartDistance) {
-          enemyAttackTimer = ENEMY_ATTACK_DURATION;
-          enemyAttackCooldown = 1.25 + Math.random() * 0.75;
-          enemyHitDone = false;
-        }
-      }
-
-      keepInsideArena(enemy.group.position);
-    }
-
-    function updateEnemyDeath(dt) {
-      if (enemyDeathTimer <= 0) return;
-
-      enemyDeathTimer = Math.max(0, enemyDeathTimer - dt);
-      const t = 1 - enemyDeathTimer / enemyDeathDuration;
-      const p = easeInOut(t);
-
-      enemy.group.position.y = Math.sin(Math.min(1, t) * Math.PI) * 0.08;
-      enemy.group.rotation.x = -p * 1.38;
-      enemy.group.rotation.z = Math.sin(p * Math.PI) * 0.18;
-      enemy.rightArmPivot.rotation.x = -0.4 + p * 1.35;
-      enemy.rightArmPivot.rotation.z = 0.2 - p * 0.65;
-      enemy.leftArmPivot.rotation.x = -0.2 + p * 0.85;
-      enemy.leftArmPivot.rotation.z = 0.25 + p * 0.45;
-      enemy.swordPivot.rotation.z = 0.35 - p * 1.2;
-      enemy.shieldPivot.rotation.z = p * 0.75;
-
-      if (enemyDeathTimer <= 0) {
-        enemy.group.position.y = 0;
-        enemy.group.rotation.x = -1.38;
-        endGame(pendingVictoryText, pendingVictoryDetail);
-      }
-    }
-
-    function checkEnemySwordDamage() {
-      if (gameOver || enemyHitDone || enemyAttackTimer <= 0) return;
-
-      const progress = 1 - enemyAttackTimer / ENEMY_ATTACK_DURATION;
-
-      if (progress < 0.4 || progress > 0.88) return;
-
-      const toPlayer = player.group.position.clone().sub(enemy.group.position).normalize();
-      const enemyFacing = new THREE.Vector3(
-        Math.sin(enemy.group.rotation.y),
-        0,
-        Math.cos(enemy.group.rotation.y)
-      );
-
-      if (enemyFacing.dot(toPlayer) < 0.2) return;
-
-      if (enemySwordTouchesPlayer()) {
-        damagePlayer(16 + Math.random() * 8);
-        enemyHitDone = true;
-      }
-    }
-
-    function enemySwordTouchesPlayer() {
-      scene.updateMatrixWorld(true);
-
-      const swordSamples = [
-        new THREE.Vector3(0, -0.55, 0),
-        new THREE.Vector3(0, -0.85, 0),
-        new THREE.Vector3(0, -1.15, 0),
-        new THREE.Vector3(0, -1.45, 0),
-        new THREE.Vector3(0, -1.75, 0),
-        new THREE.Vector3(0, -2.05, 0),
-        new THREE.Vector3(0, -2.28, 0)
-      ];
-
-      const playerBase = player.group.position.clone();
-
-      for (const sample of swordSamples) {
-        const p = sample.clone().applyMatrix4(enemy.swordPivot.matrixWorld);
-
-        const closestY = THREE.MathUtils.clamp(p.y, playerBase.y + 0.65, playerBase.y + 2.95);
-        const closest = new THREE.Vector3(playerBase.x, closestY, playerBase.z);
-        const dist = p.distanceTo(closest);
-
-        if (dist < 1.22) {
-          return true;
-        }
-      }
-
-      return false;
-    }
-
-    function updateAnimations(dt) {
-      animateGladiator(player, dt, true);
-      animateGladiator(enemy, dt, false);
-      updateBlinking(player, dt);
-      updateBlinking(enemy, dt);
-      updateEyeFocus(player, enemy.group.position);
-      updateEyeFocus(enemy, player.group.position);
-
-      if (player.hurtTimer > 0) player.hurtTimer -= dt;
-      if (enemy.hurtTimer > 0) enemy.hurtTimer -= dt;
-
-      if (player.body.material.emissive) {
-        player.body.material.emissive.set(player.hurtTimer > 0 ? 0x550000 : 0x000000);
-      }
-
-      if (enemy.body.material.emissive) {
-        enemy.body.material.emissive.set(enemy.hurtTimer > 0 ? 0x550000 : 0x000000);
-      }
-    }
-
-    function updateBlinking(g, dt) {
-      g.blinkTimer -= dt;
-
-      if (g.blinkTimer <= 0 && g.blinkDuration <= 0) {
-        g.blinkDuration = 0.15;
-        g.blinkTimer = 1.6 + Math.random() * 2.8;
-      }
-
-      let eyeScaleY = 1;
-
-      if (g.blinkDuration > 0) {
-        g.blinkDuration -= dt;
-        const t = 1 - Math.max(0, g.blinkDuration) / 0.15;
-        eyeScaleY = 1 - Math.sin(t * Math.PI) * 0.9;
-      }
-
-      g.leftEye.scale.y = eyeScaleY;
-      g.rightEye.scale.y = eyeScaleY;
-    }
-
-    function updateEyeFocus(g, targetPosition) {
-      const localTarget = g.group.worldToLocal(targetPosition.clone());
-      const xLook = THREE.MathUtils.clamp(localTarget.x * 0.035, -0.025, 0.025);
-      const yLook = THREE.MathUtils.clamp((localTarget.y - 2.4) * 0.02, -0.015, 0.025);
-
-      for (const eye of [g.leftEye, g.rightEye]) {
-        eye.userData.pupil.position.x = xLook;
-        eye.userData.pupil.position.y = yLook - 0.005;
-        eye.userData.shine.position.x = xLook - 0.018;
-        eye.userData.shine.position.y = yLook + 0.03;
-      }
-    }
-
-    function animateGladiator(g, dt, isPlayer) {
-      const moving = isPlayer
-        ? keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD
-        : enemy.group.position.distanceTo(player.group.position) > 1.65 && enemyAttackTimer <= 0;
-
-      const walkSwing = moving ? Math.sin(g.walkTime) * 0.48 : 0;
-      const stepBob = moving ? Math.abs(Math.sin(g.walkTime * 1.05)) * 0.075 : 0;
-      const forwardLean = moving ? -g.moveLocalZ * 0.04 : 0;
-
-      /*
-        Fixed: sway direction inverted and reduced.
-        It now leans into the movement direction more naturally.
-      */
-      g.targetSway = g.moveLocalX * 0.11;
-      g.currentSway = THREE.MathUtils.lerp(g.currentSway, g.targetSway, dt * 9);
-
-      const shoulderSway = g.currentSway * 0.6;
-
-      g.group.position.y = stepBob;
-
-      if (enemyDeathTimer <= 0 || isPlayer) {
-        g.body.rotation.z = g.currentSway;
-        g.body.rotation.x = forwardLean;
-        g.head.rotation.z = g.currentSway * -0.35;
-        g.head.rotation.x = moving ? Math.sin(g.walkTime) * 0.035 + forwardLean * 0.4 : 0;
-      }
-
-      g.leftLegPivot.rotation.x = walkSwing;
-      g.rightLegPivot.rotation.x = -walkSwing;
-
-      g.leftArmPivot.rotation.x = -walkSwing * 0.28 - 0.08;
-      g.rightArmPivot.rotation.x = walkSwing * 0.24 - 0.1;
-
-      g.leftArmPivot.rotation.y = shoulderSway * 0.35;
-      g.rightArmPivot.rotation.y = -shoulderSway * 0.35;
-
-      if (isPlayer) {
-        if (isBlocking) {
-          g.leftArmPivot.rotation.x = -0.88;
-          g.leftArmPivot.rotation.z = -0.38 + g.currentSway * 0.18;
-          g.leftArmPivot.rotation.y = 0.18;
-          g.shieldPivot.rotation.x = -0.05;
-          g.shieldPivot.rotation.y = 0.18;
-          g.shieldPivot.rotation.z = Math.sin(clock.elapsedTime * 5) * 0.025;
-          g.shieldPivot.position.z = 0.5;
+    function updateFood(dt) {
+      for (let i = foods.length - 1; i >= 0; i--) {
+        const f = foods[i];
+        f.wobble += dt * 5;
+
+        const away = dist(f.x, f.y, shark.x, shark.y);
+        if (away < 260) {
+          f.scared = 1;
+          const a = Math.atan2(f.y - shark.y, f.x - shark.x);
+          f.vx += Math.cos(a) * 180 * dt;
+          f.vy += Math.sin(a) * 130 * dt;
         } else {
-          g.leftArmPivot.rotation.z = -0.18 + g.currentSway * 0.18;
-          g.shieldPivot.position.z = 0.12;
-          g.shieldPivot.rotation.set(-0.06, 0.06, g.currentSway * 0.06);
+          f.scared = Math.max(0, f.scared - dt);
         }
 
-        if (playerAttackTimer > 0) {
-          const t = 1 - playerAttackTimer / PLAYER_ATTACK_DURATION;
+        f.vx += Math.sin(f.wobble) * 18 * dt;
+        f.vy += Math.cos(f.wobble * 0.8) * 15 * dt;
 
-          if (t < 0.28) {
-            const p = easeOut(t / 0.28);
-            g.rightArmPivot.rotation.x = -0.45 - p * 1.15;
-            g.rightArmPivot.rotation.z = -0.2 - p * 0.95;
-            g.rightArmPivot.rotation.y = -0.15 - p * 0.25;
-            g.swordPivot.rotation.x = -0.45 - p * 0.65;
-            g.swordPivot.rotation.y = -0.1;
-            g.swordPivot.rotation.z = -0.35 - p * 1.45;
-          } else if (t < 0.68) {
-            const p = easeInOut((t - 0.28) / 0.4);
-            g.rightArmPivot.rotation.x = -1.6 + p * 2.15;
-            g.rightArmPivot.rotation.z = -1.15 + p * 1.95;
-            g.rightArmPivot.rotation.y = -0.35 + p * 0.45;
-            g.swordPivot.rotation.x = -1.1 + p * 1.25;
-            g.swordPivot.rotation.y = -0.1 + p * 0.18;
-            g.swordPivot.rotation.z = -1.8 + p * 3.05;
+        const max = f.type.speed * (f.scared ? 1.8 : 1);
+        const sp = Math.hypot(f.vx, f.vy);
+        if (sp > max) {
+          f.vx = f.vx / sp * max;
+          f.vy = f.vy / sp * max;
+        }
+
+        f.x += f.vx * dt;
+        f.y += f.vy * dt;
+
+        if (f.x < 40 || f.x > WORLD.w - 40) f.vx *= -1;
+        if (f.y < WORLD.surface + 45 || f.y > WORLD.floor - 95) f.vy *= -1;
+
+        f.x = clamp(f.x, 40, WORLD.w - 40);
+        f.y = clamp(f.y, WORLD.surface + 45, WORLD.floor - 95);
+        f.dir = f.vx >= 0 ? 1 : -1;
+
+        const biteDistance = shark.size * 0.85 + f.type.size * 0.55;
+        if (dist(shark.x, shark.y, f.x, f.y) < biteDistance) {
+          if (shark.size >= f.type.minEatSize) {
+            eatFood(f, i);
           } else {
-            const p = easeOut((t - 0.68) / 0.32);
-            g.rightArmPivot.rotation.x = 0.55 - p * 0.78;
-            g.rightArmPivot.rotation.z = 0.8 - p * 1.0;
-            g.rightArmPivot.rotation.y = 0.1 - p * 0.1;
-            g.swordPivot.rotation.x = 0.15 - p * 0.8;
-            g.swordPivot.rotation.y = 0.08 - p * 0.18;
-            g.swordPivot.rotation.z = 1.25 - p * 1.6;
+            damageShark(6, f.x, f.y);
+            f.vx *= -1.4;
+            f.vy += rand(-100, 100);
           }
-        } else {
-          g.rightArmPivot.rotation.x += -0.18;
-          g.rightArmPivot.rotation.z = 0.14 + g.currentSway * 0.08;
-          g.swordPivot.rotation.set(-0.62, -0.1, -0.38 + g.currentSway * 0.06);
         }
-      } else {
-        if (enemyDeathTimer > 0) return;
+      }
+    }
 
-        if (enemyAttackTimer > 0) {
-          const t = 1 - enemyAttackTimer / ENEMY_ATTACK_DURATION;
+    function eatFood(f, index) {
+      foods.splice(index, 1);
+      score += f.type.value;
+      shark.health = clamp(shark.health + f.type.health, 0, shark.maxHealth);
+      shark.eaten++;
+      shark.mouth = 1;
 
-          if (t < 0.38) {
-            const p = easeOut(t / 0.38);
-            g.rightArmPivot.rotation.x = -0.3 - p * 1.25;
-            g.rightArmPivot.rotation.z = 0.18 + p * 1.18;
-            g.rightArmPivot.rotation.y = 0.08 + p * 0.22;
-            g.swordPivot.rotation.x = -0.48 - p * 0.72;
-            g.swordPivot.rotation.y = 0.08;
-            g.swordPivot.rotation.z = 0.35 + p * 1.55;
-          } else if (t < 0.78) {
-            const p = easeInOut((t - 0.38) / 0.4);
-            g.rightArmPivot.rotation.x = -1.55 + p * 2.25;
-            g.rightArmPivot.rotation.z = 1.36 - p * 2.2;
-            g.rightArmPivot.rotation.y = 0.3 - p * 0.48;
-            g.swordPivot.rotation.x = -1.2 + p * 1.35;
-            g.swordPivot.rotation.y = 0.08 - p * 0.2;
-            g.swordPivot.rotation.z = 1.9 - p * 3.25;
+      const growth = 0.45 + f.type.value / 150;
+      shark.size = clamp(shark.size + growth, shark.baseSize, 122);
+
+      spawnParticles(f.x, f.y, f.type.color, 18, 1);
+      spawnBubble(f.x, f.y, 8);
+
+      if (Math.random() < 0.35 || f.type.name === "Golden Fish") {
+        spawnCoin(f.x, f.y, f.type.name === "Golden Fish" ? 8 : 3);
+      }
+
+      if (shark.eaten % 10 === 0) showMessage("FEEDING FRENZY!");
+      else if (f.type.name === "Golden Fish") showMessage("GOLDEN SNACK!");
+    }
+
+    function updateCoins(dt) {
+      for (let i = coinsArr.length - 1; i >= 0; i--) {
+        const c = coinsArr[i];
+        c.life -= dt;
+        c.spin += dt * 8;
+        c.vy += 55 * dt;
+
+        const d = dist(c.x, c.y, shark.x, shark.y);
+        if (d < shark.size * 3.2) {
+          const a = Math.atan2(shark.y - c.y, shark.x - c.x);
+          c.vx += Math.cos(a) * 850 * dt;
+          c.vy += Math.sin(a) * 850 * dt;
+        }
+
+        c.x += c.vx * dt;
+        c.y += c.vy * dt;
+
+        if (c.y > WORLD.floor - 30) {
+          c.y = WORLD.floor - 30;
+          c.vy *= -0.45;
+          c.vx *= 0.96;
+        }
+
+        if (d < shark.size * 0.75) {
+          coins += c.value;
+          score += c.value * 4;
+          spawnParticles(c.x, c.y, "#ffd84d", 10, 0.7);
+          coinsArr.splice(i, 1);
+        } else if (c.life <= 0) {
+          coinsArr.splice(i, 1);
+        }
+      }
+    }
+
+    function updateHazards(dt) {
+      for (let i = hazards.length - 1; i >= 0; i--) {
+        const h = hazards[i];
+        h.wobble += dt * 2;
+        h.pulse += dt * 5;
+
+        h.x += h.vx * dt + Math.sin(h.wobble) * 8 * dt;
+        h.y += h.vy * dt + Math.cos(h.wobble * 1.3) * 10 * dt;
+
+        if (h.x < 80 || h.x > WORLD.w - 80) h.vx *= -1;
+        if (h.y < WORLD.surface + 100 || h.y > WORLD.floor - 150) h.vy *= -1;
+
+        const d = dist(h.x, h.y, shark.x, shark.y);
+        if (d < shark.size * 0.72 + h.r) {
+          if (h.type === "bomb") {
+            damageShark(28, h.x, h.y);
+            spawnParticles(h.x, h.y, "#ff6b3d", 35, 1.4);
+            spawnParticles(h.x, h.y, "#3a3a3a", 24, 1.5);
+            hazards.splice(i, 1);
+            shake = 18;
           } else {
-            const p = easeOut((t - 0.78) / 0.22);
-            g.rightArmPivot.rotation.x = 0.7 - p * 0.9;
-            g.rightArmPivot.rotation.z = -0.84 + p * 1.08;
-            g.rightArmPivot.rotation.y = -0.18 + p * 0.18;
-            g.swordPivot.rotation.x = 0.15 - p * 0.77;
-            g.swordPivot.rotation.y = -0.12 + p * 0.22;
-            g.swordPivot.rotation.z = -1.35 + p * 1.73;
+            damageShark(11, h.x, h.y);
+            const a = Math.atan2(shark.y - h.y, shark.x - h.x);
+            shark.vx += Math.cos(a) * 270;
+            shark.vy += Math.sin(a) * 270;
           }
-        } else {
-          g.swordPivot.rotation.set(-0.62, 0.1, 0.38 - g.currentSway * 0.06);
-          g.leftArmPivot.rotation.x = -0.28;
-          g.leftArmPivot.rotation.z = 0.32 + g.currentSway * 0.1;
-          g.shieldPivot.rotation.set(-0.04, -0.08, g.currentSway * 0.06);
         }
       }
     }
 
-    function easeOut(t) {
-      t = THREE.MathUtils.clamp(t, 0, 1);
-      return 1 - Math.pow(1 - t, 3);
+    function damageShark(amount, x, y) {
+      if (shark.invincible > 0) return;
+      shark.health -= amount;
+      shark.invincible = 0.45;
+      shark.mouth = 0.4;
+      shake = 9;
+      spawnParticles(x, y, "#ff334f", 14, 0.9);
+      showMessage("OUCH!");
     }
 
-    function easeInOut(t) {
-      t = THREE.MathUtils.clamp(t, 0, 1);
-      return t < 0.5
-        ? 4 * t * t * t
-        : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    }
-
-    function updateCamera(dt) {
-      const target = player.group.position.clone();
-      target.y += 1.8;
-
-      const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
-      const right = new THREE.Vector3(-Math.cos(yaw), 0, Math.sin(yaw));
-
-      const shoulderSide = right.clone().multiplyScalar(1.85);
-      const backOffset = forward.clone().multiplyScalar(-5.8);
-      const heightOffset = new THREE.Vector3(0, 2.45 + Math.sin(pitch) * 1.3, 0);
-
-      const desiredPosition = target
-        .clone()
-        .add(shoulderSide)
-        .add(backOffset)
-        .add(heightOffset);
-
-      const aimTarget = target
-        .clone()
-        .add(forward.clone().multiplyScalar(8))
-        .add(new THREE.Vector3(0, pitch * 4.2 + 0.35, 0));
-
-      camera.position.copy(desiredPosition);
-      camera.lookAt(aimTarget);
-
-      const targetRoll = -player.moveLocalX * 0.055;
-      cameraRoll = THREE.MathUtils.lerp(cameraRoll, targetRoll, dt * 8);
-      camera.rotateZ(cameraRoll);
-    }
-
-    function damageEnemy(amount) {
-      if (gameOver || enemyDeathTimer > 0) return;
-
-      enemyHP = Math.max(0, enemyHP - amount);
-      enemy.hurtTimer = 0.18;
-
-      const hitPos = enemy.group.position.clone().add(new THREE.Vector3(0, 2.1, 0));
-      createBloodBurst(hitPos, player.group.position);
-      createFloatingText("-" + Math.round(amount), hitPos, 0xff3b30);
-      shakeCamera(0.16);
-
-      enemy.group.position.add(
-        enemy.group.position.clone()
-          .sub(player.group.position)
-          .normalize()
-          .multiplyScalar(0.45)
-      );
-
-      if (enemyHP <= 0) {
-        const earned = 25;
-        bloodCoins += earned;
-        updateUI();
-
-        gameOver = true;
-        isBlocking = false;
-        enemyAttackTimer = 0;
-        enemyDeathTimer = enemyDeathDuration;
-
-        pendingVictoryText = "Victory";
-        pendingVictoryDetail = currentEnemyName + " has fallen. +" + earned + " BloodCoins.";
-
-        createFloatingText("+" + earned + " BloodCoins", enemy.group.position.clone().add(new THREE.Vector3(0, 3.1, 0)), 0xffd86f);
-
-        if (document.pointerLockElement) {
-          document.exitPointerLock();
-        }
-      }
-    }
-
-    function damagePlayer(amount) {
-      if (gameOver) return;
-
-      let finalDamage = amount;
-
-      if (isBlocking && stamina > 5) {
-        finalDamage *= 0.25;
-        stamina = Math.max(0, stamina - 22);
-        createShieldBlockEffect(player.group.position.clone().add(new THREE.Vector3(0, 2.0, 0)));
-        createFloatingText("BLOCK", player.group.position.clone().add(new THREE.Vector3(0, 2.8, 0)), 0x9de7ff);
-      } else {
-        createBloodBurst(player.group.position.clone().add(new THREE.Vector3(0, 2.1, 0)), enemy.group.position);
-        flashDamage();
-      }
-
-      playerHP = Math.max(0, playerHP - finalDamage);
-      player.hurtTimer = 0.18;
-
-      player.group.position.add(
-        player.group.position.clone()
-          .sub(enemy.group.position)
-          .normalize()
-          .multiplyScalar(0.35)
-      );
-
-      shakeCamera(0.12);
-      createFloatingText("-" + Math.round(finalDamage), player.group.position.clone().add(new THREE.Vector3(0, 2.4, 0)), 0xff3b30);
-
-      if (playerHP <= 0) {
-        endGame("Defeat", currentEnemyName + " claims victory.");
-      }
-    }
-
-    function createBloodBurst(position, attackerPosition) {
-      const dir = position.clone().sub(attackerPosition).normalize();
-
-      for (let i = 0; i < 58; i++) {
-        const dropletSize = 0.075 + Math.random() * 0.12;
-
-        const mesh = new THREE.Mesh(
-          new THREE.SphereGeometry(dropletSize, 10, 10),
-          new THREE.MeshBasicMaterial({
-            color: Math.random() > 0.28 ? 0xb30000 : 0xff1717,
-            transparent: true,
-            opacity: 1
-          })
-        );
-
-        mesh.scale.set(
-          1 + Math.random() * 0.9,
-          0.65 + Math.random() * 0.7,
-          1 + Math.random() * 0.9
-        );
-
-        mesh.position.copy(position);
-        scene.add(mesh);
-
-        const spread = new THREE.Vector3(
-          (Math.random() - 0.5) * 2.15,
-          Math.random() * 1.85,
-          (Math.random() - 0.5) * 2.15
-        );
-
-        const velocity = dir.clone()
-          .multiplyScalar(4.8 + Math.random() * 7.5)
-          .add(spread);
-
-        particles.push({
-          mesh,
-          velocity,
-          life: 0.9 + Math.random() * 0.5,
-          maxLife: 1.4,
-          gravity: 9.5,
-          type: "blood",
-          startScale: mesh.scale.clone()
-        });
-      }
-
-      createBloodDecal(position);
-    }
-
-    function createBloodDecal(position) {
-      const splat = new THREE.Mesh(
-        new THREE.CircleGeometry(0.25 + Math.random() * 0.45, 18),
-        new THREE.MeshBasicMaterial({
-          color: 0x5d0000,
-          transparent: true,
-          opacity: 0.75,
-          depthWrite: false
-        })
-      );
-
-      splat.rotation.x = -Math.PI / 2;
-      splat.rotation.z = Math.random() * Math.PI * 2;
-      splat.position.set(
-        position.x + (Math.random() - 0.5) * 1.2,
-        0.012,
-        position.z + (Math.random() - 0.5) * 1.2
-      );
-      splat.scale.set(1, 0.55 + Math.random() * 0.8, 1);
-      scene.add(splat);
-
-      bloodDecals.push({
-        mesh: splat,
-        life: 8,
-        maxLife: 8
-      });
-    }
-
-    function createDustPuff(position, direction) {
-      for (let i = 0; i < 7; i++) {
-        const mesh = new THREE.Mesh(
-          new THREE.SphereGeometry(0.055 + Math.random() * 0.085, 8, 8),
-          new THREE.MeshBasicMaterial({
-            color: Math.random() > 0.5 ? 0xc5965a : 0x9f7143,
-            transparent: true,
-            opacity: 0.45,
-            depthWrite: false
-          })
-        );
-
-        mesh.position.set(
-          position.x + (Math.random() - 0.5) * 0.55,
-          0.09 + Math.random() * 0.08,
-          position.z + (Math.random() - 0.5) * 0.55
-        );
-
-        scene.add(mesh);
-
-        const side = new THREE.Vector3(-direction.z, 0, direction.x).multiplyScalar((Math.random() - 0.5) * 1.2);
-        const velocity = direction.clone()
-          .multiplyScalar(0.6 + Math.random() * 1.0)
-          .add(side);
-
-        velocity.y = 0.18 + Math.random() * 0.35;
-
-        particles.push({
-          mesh,
-          velocity,
-          life: 0.42 + Math.random() * 0.25,
-          maxLife: 0.67,
-          gravity: 0.55,
-          type: "dust",
-          startScale: mesh.scale.clone()
-        });
-      }
-    }
-
-    function createShieldBlockEffect(position) {
-      for (let i = 0; i < 22; i++) {
-        const mesh = new THREE.Mesh(
-          new THREE.SphereGeometry(0.045, 8, 8),
-          new THREE.MeshBasicMaterial({ color: 0x9de7ff })
-        );
-
-        mesh.position.copy(position);
-        scene.add(mesh);
-
-        const angle = Math.random() * Math.PI * 2;
-
-        particles.push({
-          mesh,
-          velocity: new THREE.Vector3(
-            Math.cos(angle) * (2 + Math.random() * 3),
-            (Math.random() - 0.2) * 2.5,
-            Math.sin(angle) * (2 + Math.random() * 3)
-          ),
-          life: 0.45,
-          maxLife: 0.45,
-          gravity: 1,
-          type: "shield"
-        });
+    function updateBubbles(dt) {
+      for (let i = bubbles.length - 1; i >= 0; i--) {
+        const b = bubbles[i];
+        b.life -= dt;
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+        b.vx += Math.sin(b.y * 0.02) * 4 * dt;
+        if (b.life <= 0 || b.y < 20) bubbles.splice(i, 1);
       }
     }
 
     function updateParticles(dt) {
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
-
-        if (p.type === "flame") {
-          p.mesh.userData.flicker += dt * 12;
-
-          const s = 1 + Math.sin(p.mesh.userData.flicker) * 0.18 + Math.random() * 0.08;
-          p.mesh.scale.set(0.85 * s, 1.05 * s, 0.85 * s);
-          p.mesh.position.y = p.mesh.userData.baseY + Math.sin(p.mesh.userData.flicker * 1.7) * 0.08;
-          p.mesh.rotation.y += dt * 1.4;
-
-          p.mesh.userData.outer.rotation.z = Math.sin(p.mesh.userData.flicker * 0.7) * 0.12;
-          p.mesh.userData.inner.rotation.z = -Math.sin(p.mesh.userData.flicker * 0.9) * 0.16;
-          continue;
-        }
-
         p.life -= dt;
-
-        p.velocity.y -= (p.gravity || 0) * dt;
-        p.mesh.position.addScaledVector(p.velocity, dt);
-
-        p.mesh.rotation.x += dt * 8;
-        p.mesh.rotation.y += dt * 7;
-
-        const alpha = Math.max(0, p.life / p.maxLife);
-
-        if ((p.type === "blood" || p.type === "dust") && p.startScale) {
-          p.mesh.scale.copy(p.startScale).multiplyScalar(Math.max(0.18, alpha));
-        } else {
-          p.mesh.scale.setScalar(Math.max(0.05, alpha));
-        }
-
-        if (p.mesh.material.transparent !== undefined) {
-          p.mesh.material.transparent = true;
-          p.mesh.material.opacity = p.type === "dust" ? alpha * 0.45 : alpha;
-        }
-
-        if (p.mesh.position.y < 0.05 && p.type === "blood") {
-          createBloodDecal(p.mesh.position);
-          scene.remove(p.mesh);
-          particles.splice(i, 1);
-          continue;
-        }
-
-        if (p.life <= 0) {
-          scene.remove(p.mesh);
-          particles.splice(i, 1);
-        }
-      }
-    }
-
-    function createFloatingText(text, position, color) {
-      const canvas = document.createElement("canvas");
-      canvas.width = 512;
-      canvas.height = 160;
-
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = "bold 54px Georgia";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.lineWidth = 8;
-      ctx.strokeStyle = "rgba(0,0,0,0.85)";
-      ctx.strokeText(text, 256, 80);
-      ctx.fillStyle = "#" + color.toString(16).padStart(6, "0");
-      ctx.fillText(text, 256, 80);
-
-      const texture = new THREE.CanvasTexture(canvas);
-
-      const sprite = new THREE.Sprite(
-        new THREE.SpriteMaterial({
-          map: texture,
-          transparent: true,
-          depthWrite: false
-        })
-      );
-
-      sprite.position.copy(position);
-      sprite.scale.set(3.2, 1.0, 1);
-      scene.add(sprite);
-
-      floatingTexts.push({
-        sprite,
-        life: 0.9,
-        maxLife: 0.9
-      });
-    }
-
-    function updateFloatingTexts(dt) {
-      for (let i = floatingTexts.length - 1; i >= 0; i--) {
-        const t = floatingTexts[i];
-        t.life -= dt;
-        t.sprite.position.y += dt * 1.2;
-        t.sprite.material.opacity = Math.max(0, t.life / t.maxLife);
-
-        if (t.life <= 0) {
-          scene.remove(t.sprite);
-          floatingTexts.splice(i, 1);
-        }
-      }
-    }
-
-    function updateBloodDecals(dt) {
-      for (let i = bloodDecals.length - 1; i >= 0; i--) {
-        const d = bloodDecals[i];
-        d.life -= dt;
-        d.mesh.material.opacity = 0.75 * Math.max(0, d.life / d.maxLife);
-
-        if (d.life <= 0) {
-          scene.remove(d.mesh);
-          bloodDecals.splice(i, 1);
-        }
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vx *= 0.96;
+        p.vy *= 0.96;
+        p.r *= 0.985;
+        if (p.life <= 0) particles.splice(i, 1);
       }
     }
 
     function updateUI() {
-      uiPlayerHealth.style.width = playerHP + "%";
-      uiEnemyHealth.style.width = enemyHP + "%";
-      uiStamina.style.width = stamina + "%";
-      uiBloodCoins.textContent = bloodCoins;
+      scoreText.textContent = "Score: " + Math.floor(score);
+      coinsText.textContent = "Coins: " + coins;
 
-      if (stamina < 20) {
-        uiStamina.style.filter = "brightness(0.75)";
+      let rank = "Pup";
+      if (shark.size > 64) rank = "Hunter";
+      if (shark.size > 80) rank = "Bruiser";
+      if (shark.size > 98) rank = "Mega";
+      if (shark.size > 116) rank = "Apex";
+
+      levelText.textContent = "Size: " + rank;
+      healthBar.style.width = clamp(shark.health / shark.maxHealth * 100, 0, 100) + "%";
+    }
+
+    function endGame() {
+      gameRunning = false;
+      overlay.style.display = "flex";
+
+      document.querySelector("#menu h1").textContent = "Shark Down!";
+      document.querySelector("#menu p").innerHTML =
+        "Final score: <b>" + Math.floor(score) + "</b><br>" +
+        "Coins collected: <b>" + coins + "</b><br><br>" +
+        "Eat constantly to keep your health up and grow big enough for larger prey.";
+      startButton.textContent = "PLAY AGAIN";
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      drawWaterBackground();
+      ctx.save();
+      ctx.translate(-camera.x, -camera.y);
+
+      drawSunRays();
+      drawSurface();
+      drawDistantTerrain();
+      drawSchools();
+      drawPlants();
+      drawRocks();
+      drawDecorations();
+      drawCoral();
+      drawCoins();
+      drawFood();
+      drawHazards();
+      drawBubbles();
+      drawParticles();
+      drawShark();
+
+      ctx.restore();
+
+      drawVignette();
+      drawMiniMap();
+    }
+
+    function drawWaterBackground() {
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, "#1da8d8");
+      g.addColorStop(0.22, "#0e78b5");
+      g.addColorStop(0.55, "#0c426f");
+      g.addColorStop(1, "#061a32");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.globalAlpha = 0.08;
+      for (let i = 0; i < 14; i++) {
+        ctx.beginPath();
+        const y = ((i * 130 - camera.y * 0.14) % H) + 40;
+        ctx.moveTo(0, y);
+        for (let x = 0; x <= W; x += 80) {
+          ctx.lineTo(x, y + Math.sin(x * 0.015 + performance.now() * 0.001 + i) * 12);
+        }
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawSunRays() {
+      ctx.save();
+      ctx.globalAlpha = 0.08;
+      const t = performance.now() * 0.0005;
+      for (let i = 0; i < 9; i++) {
+        const x = camera.x + i * 620 + Math.sin(t + i) * 80;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + 220, WORLD.h);
+        ctx.lineTo(x + 430, WORLD.h);
+        ctx.lineTo(x + 80, 0);
+        ctx.closePath();
+        ctx.fillStyle = "white";
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawSurface() {
+      const t = performance.now() * 0.002;
+
+      ctx.save();
+      ctx.globalAlpha = 0.75;
+      ctx.fillStyle = "#8beaff";
+      ctx.beginPath();
+      ctx.moveTo(0, WORLD.surface);
+      for (let x = 0; x <= WORLD.w; x += 40) {
+        ctx.lineTo(x, WORLD.surface + Math.sin(x * 0.015 + t) * 14);
+      }
+      ctx.lineTo(WORLD.w, 0);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.globalAlpha = 0.45;
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      for (let x = 0; x <= WORLD.w; x += 35) {
+        const y = WORLD.surface + Math.sin(x * 0.015 + t) * 14;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawDistantTerrain() {
+      ctx.save();
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = "#00182b";
+      ctx.beginPath();
+      ctx.moveTo(0, WORLD.floor - 250);
+      for (let x = 0; x <= WORLD.w; x += 160) {
+        ctx.lineTo(x, WORLD.floor - 250 + Math.sin(x * 0.006) * 110 + Math.sin(x * 0.018) * 45);
+      }
+      ctx.lineTo(WORLD.w, WORLD.h);
+      ctx.lineTo(0, WORLD.h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      ctx.fillStyle = "#08243c";
+      ctx.fillRect(0, WORLD.floor, WORLD.w, WORLD.h - WORLD.floor);
+    }
+
+    function drawPlants() {
+      const t = performance.now() * 0.002;
+      for (const p of plants) {
+        const sway = Math.sin(t + p.sway) * 18;
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 5;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.quadraticCurveTo(p.x + sway * 0.4, p.y - p.h * 0.5, p.x + sway, p.y - p.h);
+        ctx.stroke();
+
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.ellipse(p.x + sway, p.y - p.h, 8, 18, sway * 0.03, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawRocks() {
+      for (const r of rocks) {
+        ctx.save();
+        ctx.translate(r.x, r.y);
+
+        const grd = ctx.createLinearGradient(0, -r.h, 0, r.h);
+        grd.addColorStop(0, `rgba(${70*r.shade}, ${91*r.shade}, ${105*r.shade}, 1)`);
+        grd.addColorStop(1, `rgba(${28*r.shade}, ${43*r.shade}, ${55*r.shade}, 1)`);
+        ctx.fillStyle = grd;
+
+        ctx.beginPath();
+        for (let i = 0; i < r.points; i++) {
+          const a = -Math.PI + (i / r.points) * Math.PI * 2;
+          const rr = 0.68 + Math.sin(i * 12.989 + r.x) * 0.15;
+          const x = Math.cos(a) * r.w * 0.5 * rr;
+          const y = Math.sin(a) * r.h * 0.5 * rr;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(255,255,255,0.13)";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.25;
+        ctx.fillStyle = "#000";
+        ctx.beginPath();
+        ctx.ellipse(0, r.h * 0.2, r.w * 0.22, r.h * 0.15, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+    }
+
+    function drawCoral() {
+      for (const c of coral) {
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.strokeStyle = c.color;
+        ctx.lineWidth = 6;
+        ctx.lineCap = "round";
+
+        for (let i = 0; i < 4; i++) {
+          const a = -Math.PI / 2 + (i - 1.5) * 0.35;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(Math.cos(a) * c.size * 0.75, Math.sin(a) * c.size);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(a) * c.size * 0.38, Math.sin(a) * c.size * 0.5);
+          ctx.lineTo(Math.cos(a - 0.65) * c.size * 0.6, Math.sin(a - 0.65) * c.size * 0.8);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+    }
+
+    function drawDecorations() {
+      for (const d of decorations) {
+        ctx.save();
+        ctx.translate(d.x, d.y);
+        ctx.rotate(d.rot);
+
+        if (d.type === "star") {
+          ctx.fillStyle = "#ffcf63";
+          ctx.beginPath();
+          for (let i = 0; i < 10; i++) {
+            const a = i / 10 * Math.PI * 2;
+            const r = i % 2 === 0 ? d.s : d.s * 0.45;
+            const x = Math.cos(a) * r;
+            const y = Math.sin(a) * r;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          ctx.fillStyle = "#ffd6a6";
+          ctx.beginPath();
+          ctx.arc(0, 0, d.s, 0, Math.PI, true);
+          ctx.lineTo(-d.s, d.s * 0.55);
+          ctx.lineTo(d.s, d.s * 0.55);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.strokeStyle = "rgba(120, 75, 45, 0.35)";
+          ctx.lineWidth = 2;
+          for (let i = -2; i <= 2; i++) {
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(i * d.s * 0.25, d.s * 0.5);
+            ctx.stroke();
+          }
+        }
+
+        ctx.restore();
+      }
+    }
+
+    function drawSchools() {
+      const t = performance.now() * 0.002;
+      for (const s of schools) {
+        for (let i = 0; i < s.count; i++) {
+          const x = s.x + Math.sin(t + s.phase + i) * 95 + (i % 5) * 26;
+          const y = s.y + Math.cos(t * 1.4 + i) * 38 + Math.floor(i / 5) * 20;
+          drawTinyFish(x, y, 12, s.color, Math.sin(t + i) > 0 ? 1 : -1);
+        }
+      }
+    }
+
+    function drawFood() {
+      for (const f of foods) {
+        drawCreature(f);
+      }
+    }
+
+    function drawCreature(f) {
+      const type = f.type;
+      ctx.save();
+      ctx.translate(f.x, f.y);
+
+      const angle = Math.atan2(f.vy, f.vx);
+      ctx.rotate(angle);
+      if (f.dir < 0) ctx.scale(1, -1);
+
+      if (type.name === "Squid") {
+        drawSquid(type.size, type.color, type.accent, f.wobble);
+      } else if (type.name === "Turtle") {
+        drawTurtle(type.size, type.color, type.accent, f.wobble);
+      } else if (type.name === "Stingray") {
+        drawStingray(type.size, type.color, type.accent, f.wobble);
       } else {
-        uiStamina.style.filter = "brightness(1)";
+        drawFishBody(type.size, type.color, type.accent, f.wobble);
+      }
+
+      ctx.restore();
+    }
+
+    function drawFishBody(size, color, accent, wobble) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, size, size * 0.48, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = accent;
+      ctx.beginPath();
+      ctx.moveTo(-size * 0.78, 0);
+      ctx.lineTo(-size * 1.45, -size * 0.45 + Math.sin(wobble) * 3);
+      ctx.lineTo(-size * 1.35, size * 0.45 + Math.sin(wobble) * 3);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "white";
+      ctx.beginPath();
+      ctx.arc(size * 0.45, -size * 0.12, size * 0.13, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#08111a";
+      ctx.beginPath();
+      ctx.arc(size * 0.49, -size * 0.12, size * 0.06, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(0,0,0,0.18)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(size * 0.62, size * 0.05, size * 0.16, 0.2, 1.4);
+      ctx.stroke();
+    }
+
+    function drawTinyFish(x, y, size, color, dir) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(dir, 1);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, size, size * 0.45, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(-size * 0.8, 0);
+      ctx.lineTo(-size * 1.35, -size * 0.42);
+      ctx.lineTo(-size * 1.35, size * 0.42);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "white";
+      ctx.beginPath();
+      ctx.arc(size * 0.45, -size * 0.08, size * 0.11, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#111";
+      ctx.beginPath();
+      ctx.arc(size * 0.48, -size * 0.08, size * 0.045, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawSquid(size, color, accent, wobble) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, size * 0.7, size, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = accent;
+      for (let i = -2; i <= 2; i++) {
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.3, i * size * 0.15);
+        ctx.quadraticCurveTo(
+          -size * 1.0,
+          i * size * 0.2 + Math.sin(wobble + i) * 8,
+          -size * 1.4,
+          i * size * 0.15
+        );
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = accent;
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "white";
+      ctx.beginPath();
+      ctx.arc(size * 0.23, -size * 0.25, size * 0.13, 0, Math.PI * 2);
+      ctx.arc(size * 0.23, size * 0.25, size * 0.13, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#111";
+      ctx.beginPath();
+      ctx.arc(size * 0.27, -size * 0.25, size * 0.06, 0, Math.PI * 2);
+      ctx.arc(size * 0.27, size * 0.25, size * 0.06, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawTurtle(size, color, accent, wobble) {
+      ctx.fillStyle = accent;
+      for (let i = 0; i < 4; i++) {
+        const a = i * Math.PI / 2 + Math.sin(wobble) * 0.15;
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(a) * size * 0.62, Math.sin(a) * size * 0.42, size * 0.22, size * 0.12, a, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, size * 0.85, size * 0.55, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(0,0,0,0.25)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, size * 0.5, size * 0.32, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(size * 0.8, 0, size * 0.23, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "white";
+      ctx.beginPath();
+      ctx.arc(size * 0.9, -size * 0.08, size * 0.07, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#111";
+      ctx.beginPath();
+      ctx.arc(size * 0.93, -size * 0.08, size * 0.035, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawStingray(size, color, accent, wobble) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(size * 0.95, 0);
+      ctx.quadraticCurveTo(0, -size * 0.85, -size * 0.9, 0);
+      ctx.quadraticCurveTo(0, size * 0.85, size * 0.95, 0);
+      ctx.fill();
+
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(-size * 0.75, 0);
+      ctx.quadraticCurveTo(-size * 1.4, Math.sin(wobble) * 20, -size * 2.0, 0);
+      ctx.stroke();
+
+      ctx.fillStyle = "#111";
+      ctx.beginPath();
+      ctx.arc(size * 0.28, -size * 0.16, size * 0.055, 0, Math.PI * 2);
+      ctx.arc(size * 0.28, size * 0.16, size * 0.055, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawCoins() {
+      for (const c of coinsArr) {
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.scale(Math.abs(Math.cos(c.spin)), 1);
+        ctx.fillStyle = c.value > 1 ? "#fff36a" : "#ffd13d";
+        ctx.beginPath();
+        ctx.arc(0, 0, c.value > 1 ? 14 : 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "#b97912";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.fillStyle = "#b97912";
+        ctx.font = "bold 12px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("$", 0, 1);
+
+        ctx.restore();
       }
     }
 
-    function flashDamage() {
-      damageFlash.style.opacity = "1";
-      setTimeout(() => {
-        damageFlash.style.opacity = "0";
-      }, 90);
-    }
+    function drawHazards() {
+      for (const h of hazards) {
+        ctx.save();
+        ctx.translate(h.x, h.y);
 
-    function shakeCamera(amount) {
-      camera.position.x += (Math.random() - 0.5) * amount;
-      camera.position.y += (Math.random() - 0.5) * amount;
-      camera.position.z += (Math.random() - 0.5) * amount;
-    }
+        if (h.type === "bomb") {
+          ctx.fillStyle = "#20242e";
+          ctx.beginPath();
+          ctx.arc(0, 0, h.r, 0, Math.PI * 2);
+          ctx.fill();
 
-    function endGame(text, detail) {
-      gameOver = true;
-      isBlocking = false;
-      msg.textContent = text;
-      subMessage.textContent = detail || "";
-      messagePanel.classList.add("show");
+          ctx.strokeStyle = "#5a6270";
+          ctx.lineWidth = 4;
+          ctx.stroke();
 
-      if (document.pointerLockElement) {
-        document.exitPointerLock();
+          ctx.fillStyle = "#ff5a3d";
+          ctx.beginPath();
+          ctx.arc(h.r * 0.35, -h.r * 0.35, h.r * 0.18 + Math.sin(h.pulse) * 2, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = "#191919";
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(0, -h.r);
+          ctx.quadraticCurveTo(h.r * 0.4, -h.r * 1.5, h.r * 0.9, -h.r * 1.25);
+          ctx.stroke();
+        } else {
+          const pulse = Math.sin(h.pulse) * 4;
+
+          ctx.fillStyle = "rgba(255, 120, 230, 0.72)";
+          ctx.beginPath();
+          ctx.arc(0, 0, h.r + pulse, Math.PI, 0);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.strokeStyle = "rgba(255,255,255,0.45)";
+          ctx.lineWidth = 3;
+          ctx.stroke();
+
+          ctx.strokeStyle = "rgba(255, 120, 230, 0.85)";
+          ctx.lineWidth = 4;
+          for (let i = -3; i <= 3; i++) {
+            ctx.beginPath();
+            ctx.moveTo(i * h.r * 0.22, 0);
+            ctx.quadraticCurveTo(
+              i * h.r * 0.24 + Math.sin(h.pulse + i) * 10,
+              h.r * 0.9,
+              i * h.r * 0.12,
+              h.r * 1.55
+            );
+            ctx.stroke();
+          }
+        }
+
+        ctx.restore();
       }
     }
 
-    function restartGame() {
-      playerHP = 100;
-      enemyHP = 100;
-      stamina = 100;
-      gameOver = false;
-      isBlocking = false;
+    function drawBubbles() {
+      for (const b of bubbles) {
+        ctx.save();
+        ctx.globalAlpha = clamp(b.life / b.maxLife, 0, 1) * 0.75;
+        ctx.strokeStyle = "rgba(220,250,255,0.9)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.stroke();
 
-      setNewOpponentName();
+        ctx.fillStyle = "rgba(255,255,255,0.35)";
+        ctx.beginPath();
+        ctx.arc(b.x - b.r * 0.25, b.y - b.r * 0.25, b.r * 0.22, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
 
-      player.group.position.set(0, 0, 8);
-      enemy.group.position.set(0, 0, -8);
-      enemy.group.rotation.set(0, 0, 0);
-
-      playerAttackTimer = 0;
-      playerAttackCooldown = 0;
-      enemyAttackTimer = 0;
-      enemyAttackCooldown = 1.2;
-      playerHitDone = false;
-      enemyHitDone = false;
-
-      enemyDeathTimer = 0;
-      pendingVictoryText = "";
-      pendingVictoryDetail = "";
-
-      player.blinkTimer = Math.random() * 2;
-      enemy.blinkTimer = Math.random() * 2;
-      player.blinkDuration = 0;
-      enemy.blinkDuration = 0;
-
-      player.moveLocalX = 0;
-      player.moveLocalZ = 0;
-      player.currentSway = 0;
-      player.targetSway = 0;
-
-      enemy.moveLocalX = 0;
-      enemy.moveLocalZ = 0;
-      enemy.currentSway = 0;
-      enemy.targetSway = 0;
-
-      cameraRoll = 0;
-
-      player.body.rotation.set(0, 0, 0);
-      enemy.body.rotation.set(0, 0, 0);
-      player.head.rotation.set(0, 0, 0);
-      enemy.head.rotation.set(0, 0, 0);
-      player.rightArmPivot.rotation.set(0, 0, 0);
-      enemy.rightArmPivot.rotation.set(0, 0, 0);
-      player.leftArmPivot.rotation.set(0, 0, 0);
-      enemy.leftArmPivot.rotation.set(0, 0, 0);
-      player.swordPivot.rotation.set(0, 0, 0);
-      enemy.swordPivot.rotation.set(0, 0, 0);
-      player.shieldPivot.rotation.set(0, 0, 0);
-      enemy.shieldPivot.rotation.set(0, 0, 0);
-
-      messagePanel.classList.remove("show");
-
+    function drawParticles() {
       for (const p of particles) {
-        if (p.mesh && p.type !== "flame") scene.remove(p.mesh);
-      }
-
-      for (const t of floatingTexts) {
-        scene.remove(t.sprite);
-      }
-
-      for (const d of bloodDecals) {
-        scene.remove(d.mesh);
-      }
-
-      particles.splice(0, particles.length, ...particles.filter(p => p.type === "flame"));
-      floatingTexts.length = 0;
-      bloodDecals.length = 0;
-
-      updateUI();
-    }
-
-    function keepInsideArena(pos) {
-      const r = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
-      const max = ARENA_RADIUS - 2;
-
-      if (r > max) {
-        pos.x = (pos.x / r) * max;
-        pos.z = (pos.z / r) * max;
+        ctx.save();
+        ctx.globalAlpha = clamp(p.life / p.maxLife, 0, 1);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       }
     }
 
-    function lerpAngle(a, b, t) {
-      const diff = Math.atan2(Math.sin(b - a), Math.cos(b - a));
-      return a + diff * THREE.MathUtils.clamp(t, 0, 1);
+    function drawShark() {
+      ctx.save();
+      ctx.translate(shark.x, shark.y);
+      ctx.rotate(shark.angle);
+
+      const flip = Math.cos(shark.angle) < 0 ? -1 : 1;
+      ctx.scale(1, flip);
+
+      if (shark.invincible > 0 && Math.floor(performance.now() / 80) % 2 === 0) {
+        ctx.globalAlpha = 0.5;
+      }
+
+      const s = shark.size;
+      const tailSwing = Math.sin(shark.tail) * s * 0.28;
+      const bodySquash = 1 + Math.sin(shark.tail * 0.5) * 0.025;
+
+      ctx.save();
+      ctx.scale(1, bodySquash);
+
+      ctx.fillStyle = "#7089a8";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, s * 1.25, s * 0.55, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#d7f1ff";
+      ctx.beginPath();
+      ctx.ellipse(s * 0.12, s * 0.23, s * 0.72, s * 0.25, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#4b6584";
+      ctx.beginPath();
+      ctx.moveTo(-s * 0.2, -s * 0.45);
+      ctx.lineTo(-s * 0.52, -s * 1.05);
+      ctx.lineTo(s * 0.18, -s * 0.46);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(-s * 0.12, s * 0.43);
+      ctx.lineTo(-s * 0.48, s * 0.88);
+      ctx.lineTo(s * 0.24, s * 0.44);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.save();
+      ctx.translate(-s * 1.17, 0);
+      ctx.rotate(Math.sin(shark.tail) * 0.4);
+      ctx.fillStyle = "#4b6584";
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-s * 0.75, -s * 0.58 + tailSwing * 0.1);
+      ctx.lineTo(-s * 0.42, 0);
+      ctx.lineTo(-s * 0.75, s * 0.58 + tailSwing * 0.1);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      const mouthOpen = shark.mouth * s * 0.18;
+
+      ctx.fillStyle = "#20212a";
+      ctx.beginPath();
+      ctx.ellipse(s * 0.83, s * 0.18, s * 0.28, s * 0.12 + mouthOpen, 0.05, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "white";
+      for (let i = 0; i < 6; i++) {
+        ctx.beginPath();
+        const tx = s * 0.62 + i * s * 0.075;
+        ctx.moveTo(tx, s * 0.1);
+        ctx.lineTo(tx + s * 0.035, s * 0.22 + mouthOpen * 0.4);
+        ctx.lineTo(tx + s * 0.07, s * 0.1);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "white";
+      ctx.beginPath();
+      ctx.arc(s * 0.62, -s * 0.18, s * 0.13, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#07121c";
+      const eyeScale = shark.blink > 0 ? 0.15 : 1;
+      ctx.beginPath();
+      ctx.ellipse(s * 0.66, -s * 0.18, s * 0.055, s * 0.055 * eyeScale, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255,255,255,0.75)";
+      ctx.beginPath();
+      ctx.arc(s * 0.68, -s * 0.2, s * 0.018, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(0,0,0,0.23)";
+      ctx.lineWidth = 4;
+      for (let i = 0; i < 4; i++) {
+        ctx.beginPath();
+        ctx.arc(s * 0.28 - i * s * 0.08, -s * 0.05, s * 0.18, -0.4, 0.45);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+      ctx.restore();
     }
+
+    function drawVignette() {
+      const g = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.2, W / 2, H / 2, Math.max(W, H) * 0.72);
+      g.addColorStop(0, "rgba(0,0,0,0)");
+      g.addColorStop(1, "rgba(0,0,0,0.35)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    function drawMiniMap() {
+      const mw = mapCanvas.width;
+      const mh = mapCanvas.height;
+      const sx = mw / WORLD.w;
+      const sy = mh / WORLD.h;
+
+      mapCtx.clearRect(0, 0, mw, mh);
+
+      const g = mapCtx.createLinearGradient(0, 0, 0, mh);
+      g.addColorStop(0, "#1da8d8");
+      g.addColorStop(1, "#06213b");
+      mapCtx.fillStyle = g;
+      mapCtx.fillRect(0, 0, mw, mh);
+
+      mapCtx.fillStyle = "rgba(0,0,0,0.35)";
+      mapCtx.fillRect(0, WORLD.floor * sy, mw, mh - WORLD.floor * sy);
+
+      mapCtx.fillStyle = "rgba(115, 130, 143, 0.8)";
+      for (const r of rocks) {
+        mapCtx.beginPath();
+        mapCtx.arc(r.x * sx, r.y * sy, Math.max(1.5, r.w * sx * 0.18), 0, Math.PI * 2);
+        mapCtx.fill();
+      }
+
+      mapCtx.fillStyle = "#ffdd4d";
+      for (let i = 0; i < coinsArr.length; i += 4) {
+        const c = coinsArr[i];
+        mapCtx.fillRect(c.x * sx - 1, c.y * sy - 1, 2, 2);
+      }
+
+      mapCtx.fillStyle = "#ff6878";
+      for (const h of hazards) {
+        mapCtx.beginPath();
+        mapCtx.arc(h.x * sx, h.y * sy, 2, 0, Math.PI * 2);
+        mapCtx.fill();
+      }
+
+      mapCtx.fillStyle = "#ffffff";
+      mapCtx.beginPath();
+      mapCtx.arc(shark.x * sx, shark.y * sy, 4, 0, Math.PI * 2);
+      mapCtx.fill();
+
+      mapCtx.strokeStyle = "rgba(255,255,255,0.55)";
+      mapCtx.lineWidth = 1.5;
+      mapCtx.strokeRect(camera.x * sx, camera.y * sy, W * sx, H * sy);
+    }
+
+    function loop(now) {
+      if (!gameRunning) return;
+
+      const dt = Math.min(0.033, (now - lastTime) / 1000);
+      lastTime = now;
+
+      update(dt);
+      draw();
+
+      requestAnimationFrame(loop);
+    }
+
+    draw();
+
+    setInterval(() => {
+      if (gameRunning) {
+        spawnBubble(rand(camera.x, camera.x + W), camera.y + H + 30, 2);
+      }
+    }, 450);
   </script>
 </body>
 </html>
