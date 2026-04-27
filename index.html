@@ -225,36 +225,6 @@
         inset 0 2px 0 rgba(255,255,255,0.16);
     }
 
-    #staminaWrap {
-      position: absolute;
-      left: 50%;
-      bottom: 24px;
-      transform: translateX(-50%);
-      width: 280px;
-      padding: 10px 12px;
-      background: linear-gradient(135deg, rgba(50, 27, 13, 0.88), rgba(14, 9, 6, 0.88));
-      border: 2px solid #8f6029;
-      border-radius: 8px;
-      box-shadow:
-        0 0 0 2px rgba(28, 13, 5, 0.8),
-        0 8px 22px rgba(0,0,0,0.45);
-    }
-
-    #stamina {
-      background: linear-gradient(90deg, #276ca8, #60d3ff, #f8ffff);
-    }
-
-    #blockText {
-      text-align: center;
-      margin-top: 8px;
-      font-size: 12px;
-      opacity: 0.95;
-      letter-spacing: 1.5px;
-      text-shadow: 0 2px 4px black;
-      color: #f7e5bd;
-      text-transform: uppercase;
-      font-weight: 700;
-    }
 
     #damageFlash {
       position: fixed;
@@ -265,6 +235,133 @@
       pointer-events: none;
       z-index: 9;
     }
+
+
+    /* Extra medieval texture pass */
+    #topBar,
+    #bloodCoinsWrap,
+    #messagePanel {
+      background-image:
+        repeating-linear-gradient(45deg, rgba(255, 213, 124, 0.035) 0 2px, transparent 2px 7px),
+        repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.16) 0 3px, transparent 3px 10px),
+        radial-gradient(circle at 18% 0%, rgba(255, 223, 145, 0.22), transparent 42%),
+        linear-gradient(135deg, rgba(67, 35, 14, 0.96), rgba(18, 9, 4, 0.98));
+      border-color: #c39143;
+      image-rendering: pixelated;
+    }
+
+    #topBar {
+      border-style: ridge;
+      border-width: 5px;
+      border-radius: 10px 18px 10px 18px;
+      box-shadow:
+        0 0 0 3px rgba(25, 11, 3, 0.95),
+        0 0 0 6px rgba(115, 70, 22, 0.42),
+        0 14px 34px rgba(0, 0, 0, 0.72),
+        inset 0 3px 0 rgba(255, 224, 150, 0.12),
+        inset 0 -8px 18px rgba(0, 0, 0, 0.35);
+    }
+
+    .healthBox {
+      position: relative;
+      padding: 8px 10px 10px;
+      background:
+        linear-gradient(90deg, rgba(255, 218, 141, 0.045), transparent 24%, transparent 76%, rgba(0, 0, 0, 0.13)),
+        rgba(18, 8, 3, 0.22);
+      border: 1px solid rgba(214, 161, 74, 0.35);
+      box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.28);
+    }
+
+    .healthBox::before,
+    .healthBox::after {
+      content: "";
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #f3d58d, #7c4a19 62%, #251006 100%);
+      top: 7px;
+      box-shadow: 0 1px 2px #000;
+    }
+
+    .healthBox::before { left: 7px; }
+    .healthBox::after { right: 7px; }
+
+    .label {
+      color: #ffe6a3;
+      text-shadow:
+        0 2px 0 #341305,
+        0 0 9px rgba(255, 183, 76, 0.28),
+        0 2px 5px #000;
+    }
+
+    .barOuter {
+      height: 24px;
+      border: 3px ridge #c39143;
+      border-radius: 2px;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 4px, rgba(0,0,0,0.12) 4px 8px),
+        linear-gradient(#0f0703, #301608);
+      box-shadow:
+        0 0 0 2px rgba(22, 8, 2, 0.95),
+        inset 0 3px 9px rgba(0,0,0,0.95),
+        inset 0 -2px 0 rgba(255, 225, 144, 0.08),
+        0 3px 12px rgba(0,0,0,0.6);
+    }
+
+    .barInner {
+      box-shadow:
+        inset 0 5px 8px rgba(255, 255, 255, 0.18),
+        inset 0 -6px 10px rgba(0, 0, 0, 0.26);
+    }
+
+    #playerHealth {
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.14) 0 5px, transparent 5px 12px),
+        linear-gradient(90deg, #155b20, #719d2b, #e0bf48);
+    }
+
+    #enemyHealth {
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.11) 0 5px, transparent 5px 12px),
+        linear-gradient(90deg, #510505, #a91515, #e57423);
+    }
+
+    #bloodCoinsWrap {
+      border: 4px ridge #c39143;
+      border-radius: 3px;
+      color: #ffd86f;
+      box-shadow:
+        0 0 0 3px rgba(25, 11, 3, 0.92),
+        0 10px 24px rgba(0,0,0,0.62),
+        inset 0 2px 0 rgba(255, 238, 173, 0.13),
+        inset 0 -8px 16px rgba(0,0,0,0.25);
+    }
+
+    #messagePanel {
+      border: 7px ridge #bd8b37;
+      border-radius: 6px 22px 6px 22px;
+      box-shadow:
+        0 0 0 4px rgba(27, 10, 2, 0.96),
+        0 0 0 8px rgba(119, 73, 23, 0.4),
+        0 22px 55px rgba(0,0,0,0.78),
+        inset 0 4px 0 rgba(255, 224, 150, 0.12),
+        inset 0 -14px 25px rgba(0,0,0,0.32);
+    }
+
+    #restartBtn {
+      border: 4px ridge #d6a14a;
+      border-radius: 3px;
+      background:
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 3px, transparent 3px 8px),
+        linear-gradient(#9b6328, #55270b);
+      box-shadow:
+        0 5px 0 #251006,
+        0 10px 18px rgba(0,0,0,0.5),
+        inset 0 3px 0 rgba(255,255,255,0.16),
+        inset 0 -8px 12px rgba(0,0,0,0.24);
+    }
+
   </style>
 </head>
 <body>
@@ -289,12 +386,6 @@
 
     <div id="bloodCoinsWrap">BloodCoins: <span id="bloodCoinsCount">0</span></div>
 
-    <div id="staminaWrap">
-      <div class="barOuter">
-        <div id="stamina" class="barInner"></div>
-      </div>
-      <div id="blockText">Shield stamina</div>
-    </div>
 
     <div id="messagePanel">
       <div id="message"></div>
@@ -319,8 +410,12 @@
 
     let playerHP = 100;
     let enemyHP = 100;
-    let stamina = 100;
     let bloodCoins = 0;
+
+    let playerAttackType = "sideRight";
+    let previousPlayerAttackType = "";
+    let timeScale = 1;
+    let finisherSlowMoTimer = 0;
 
     let playerAttackTimer = 0;
     let playerAttackCooldown = 0;
@@ -369,11 +464,13 @@
     const PLAYER_SPEED = 7.2;
     const ENEMY_SPEED = 3.36;
     const ENEMY_ATTACK_DURATION = 1.25;
-    const PLAYER_ATTACK_DURATION = 0.624;
+    const PLAYER_ATTACK_DURATION = 0.7488;
+    const PLAYER_ATTACK_TYPES = ["overhead", "sideRight", "sideLeft", "stab"];
+    const FINISHER_SLOWMO_DURATION = 0.82;
+    const FINISHER_SLOWMO_SCALE = 0.24;
 
     const uiPlayerHealth = document.getElementById("playerHealth");
     const uiEnemyHealth = document.getElementById("enemyHealth");
-    const uiStamina = document.getElementById("stamina");
     const uiBloodCoins = document.getElementById("bloodCoinsCount");
     const enemyNameLabel = document.getElementById("enemyNameLabel");
     const msg = document.getElementById("message");
@@ -858,29 +955,35 @@
       group.add(skirt);
       addOutline(skirt, 1.04);
 
+      const headPivot = new THREE.Group();
+      headPivot.position.set(0, 3.05, 0);
+      group.add(headPivot);
+
       const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 24), skin);
-      head.position.y = 3.05;
+      head.position.set(0, 0, 0);
       head.castShadow = true;
-      group.add(head);
+      headPivot.add(head);
       addOutline(head, 1.045);
 
       const helmet = new THREE.Mesh(
         new THREE.SphereGeometry(0.45, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
         armor
       );
-      helmet.position.y = 3.13;
+      helmet.position.set(0, 0.08, 0);
       helmet.castShadow = true;
-      group.add(helmet);
+      headPivot.add(helmet);
       addOutline(helmet, 1.035);
 
       const crestBase = new THREE.Mesh(
         new THREE.BoxGeometry(0.13, 0.16, 0.82),
         armor
       );
-      crestBase.position.y = 3.49;
+      crestBase.position.set(0, 0.44, 0);
       crestBase.castShadow = true;
-      group.add(crestBase);
+      headPivot.add(crestBase);
       addOutline(crestBase, 1.04);
+
+      const plumes = [];
 
       for (let i = 0; i < 7; i++) {
         const plume = new THREE.Mesh(
@@ -888,16 +991,17 @@
           cloth
         );
 
-        plume.position.set(0, 3.72, -0.36 + i * 0.12);
+        plume.position.set(0, 0.67, -0.36 + i * 0.12);
         plume.rotation.x = -0.32 + i * 0.085;
         plume.castShadow = true;
-        group.add(plume);
+        headPivot.add(plume);
         addOutline(plume, 1.08);
+        plumes.push(plume);
       }
 
       const eyeGroup = new THREE.Group();
-      eyeGroup.position.set(0, 3.08, 0.37);
-      group.add(eyeGroup);
+      eyeGroup.position.set(0, 0.03, 0.37);
+      headPivot.add(eyeGroup);
 
       const leftEye = createCartoonEye();
       const rightEye = createCartoonEye();
@@ -907,6 +1011,8 @@
 
       eyeGroup.add(leftEye);
       eyeGroup.add(rightEye);
+
+      headPivot.userData.baseRotation = headPivot.rotation.clone();
 
       const leftArmPivot = new THREE.Group();
       const rightArmPivot = new THREE.Group();
@@ -1056,6 +1162,7 @@
         group,
         body,
         chest,
+        headPivot,
         head,
         eyeGroup,
         leftEye,
@@ -1078,7 +1185,11 @@
         moveLocalX: 0,
         moveLocalZ: 0,
         targetSway: 0,
-        currentSway: 0
+        currentSway: 0,
+        headLookYaw: 0,
+        headLookPitch: 0,
+        baseHeadPitch: 0,
+        baseHeadRoll: 0
       };
     }
 
@@ -1192,18 +1303,20 @@
     }
 
     function playerAttack() {
-      if (playerAttackCooldown > 0 || stamina < 15 || isBlocking) return;
+      if (playerAttackCooldown > 0 || isBlocking) return;
 
+      playerAttackType = choosePlayerAttackType();
       playerAttackTimer = PLAYER_ATTACK_DURATION;
-      playerAttackCooldown = 0.82;
+      playerAttackCooldown = 0.984;
       playerHitDone = false;
-      stamina -= 15;
     }
 
     function animate() {
       requestAnimationFrame(animate);
 
-      const dt = Math.min(clock.getDelta(), 0.033);
+      const rawDt = Math.min(clock.getDelta(), 0.033);
+      updateSlowMotion(rawDt);
+      const dt = rawDt * timeScale;
 
       updatePlayer(dt);
       updateEnemy(dt);
@@ -1264,27 +1377,19 @@
 
       player.group.rotation.y = yaw;
 
-      if (isBlocking && stamina > 0) {
-        stamina -= 18 * dt;
-      } else {
-        stamina += 28 * dt;
-      }
-
-      stamina = THREE.MathUtils.clamp(stamina, 0, 100);
-
-      if (stamina <= 1) {
-        isBlocking = false;
-      }
 
       if (playerAttackTimer > 0 && !playerHitDone) {
         const dist = player.group.position.distanceTo(enemy.group.position);
+        const attackProgress = 1 - playerAttackTimer / PLAYER_ATTACK_DURATION;
+        const reach = playerAttackType === "stab" ? 3.55 : 3.15;
 
-        if (dist < 3.15 && playerAttackTimer < PLAYER_ATTACK_DURATION * 0.65) {
+        if (dist < reach && isPlayerAttackInDamageWindow(attackProgress, playerAttackType)) {
           const toEnemy = enemy.group.position.clone().sub(player.group.position).normalize();
           const facing = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
           const dot = facing.dot(toEnemy);
+          const requiredFacing = playerAttackType === "sideLeft" || playerAttackType === "sideRight" ? 0.24 : 0.35;
 
-          if (dot > 0.35) {
+          if (dot > requiredFacing) {
             damageEnemy(18 + Math.random() * 10);
             playerHitDone = true;
           }
@@ -1425,8 +1530,9 @@
       animateGladiator(enemy, dt, false);
       updateBlinking(player, dt);
       updateBlinking(enemy, dt);
-      updateEyeFocus(player, enemy.group.position);
-      updateEyeFocus(enemy, player.group.position);
+      updatePlayerHeadTracking(dt);
+      updateEyeFocus(player, enemy.group.position.clone().add(new THREE.Vector3(0, 2.45, 0)));
+      updateEyeFocus(enemy, player.group.position.clone().add(new THREE.Vector3(0, 2.45, 0)));
 
       if (player.hurtTimer > 0) player.hurtTimer -= dt;
       if (enemy.hurtTimer > 0) enemy.hurtTimer -= dt;
@@ -1473,6 +1579,192 @@
       }
     }
 
+    function setHeadPose(g, pitchAmount = 0, yawAmount = 0, rollAmount = 0) {
+      if (!g.headPivot) return;
+
+      const base = g.headPivot.userData.baseRotation || new THREE.Euler();
+      g.headPivot.rotation.set(
+        base.x + pitchAmount,
+        base.y + yawAmount,
+        base.z + rollAmount
+      );
+    }
+
+    function updatePlayerHeadTracking(dt) {
+      if (!player || !enemy || !player.headPivot) return;
+
+      const target = enemy.group.position.clone().add(new THREE.Vector3(0, 2.65, 0));
+      const localTarget = player.group.worldToLocal(target);
+      const headLocal = player.headPivot.position.clone();
+      const toTarget = localTarget.sub(headLocal);
+      const horizontalDistance = Math.max(0.001, Math.hypot(toTarget.x, toTarget.z));
+
+      let wantedYaw = Math.atan2(toTarget.x, toTarget.z);
+      let wantedPitch = -Math.atan2(toTarget.y, horizontalDistance);
+
+      // Never let the head twist around to look behind the player.
+      // If the opponent is behind, the head only gives a small side glance.
+      if (toTarget.z < 0.15) {
+        wantedYaw = THREE.MathUtils.clamp(toTarget.x * 0.16, -0.42, 0.42);
+        wantedPitch = 0;
+      } else {
+        wantedYaw = THREE.MathUtils.clamp(wantedYaw, -0.78, 0.78);
+        wantedPitch = THREE.MathUtils.clamp(wantedPitch, -0.26, 0.34);
+      }
+
+      player.headLookYaw = THREE.MathUtils.lerp(player.headLookYaw, wantedYaw, dt * 9);
+      player.headLookPitch = THREE.MathUtils.lerp(player.headLookPitch, wantedPitch, dt * 9);
+
+      setHeadPose(
+        player,
+        player.baseHeadPitch + player.headLookPitch,
+        player.headLookYaw,
+        player.baseHeadRoll
+      );
+    }
+
+    function choosePlayerAttackType() {
+      let next = PLAYER_ATTACK_TYPES[Math.floor(Math.random() * PLAYER_ATTACK_TYPES.length)];
+
+      if (PLAYER_ATTACK_TYPES.length > 1) {
+        let guard = 0;
+        while (next === previousPlayerAttackType && guard < 8) {
+          next = PLAYER_ATTACK_TYPES[Math.floor(Math.random() * PLAYER_ATTACK_TYPES.length)];
+          guard++;
+        }
+      }
+
+      previousPlayerAttackType = next;
+      return next;
+    }
+
+    function isPlayerAttackInDamageWindow(progress, type) {
+      if (type === "stab") return progress > 0.36 && progress < 0.68;
+      if (type === "overhead") return progress > 0.42 && progress < 0.76;
+      return progress > 0.34 && progress < 0.72;
+    }
+
+    function animatePlayerAttack(g, t, type) {
+      g.swordPivot.position.set(0.04, -0.78, 0.02);
+
+      if (type === "overhead") {
+        if (t < 0.34) {
+          const p = easeOut(t / 0.34);
+          g.rightArmPivot.rotation.x = -0.35 - p * 1.8;
+          g.rightArmPivot.rotation.z = -0.06 - p * 0.22;
+          g.rightArmPivot.rotation.y = -0.1;
+          g.swordPivot.rotation.x = -0.5 - p * 0.9;
+          g.swordPivot.rotation.y = -0.05;
+          g.swordPivot.rotation.z = -0.2 - p * 0.35;
+        } else if (t < 0.74) {
+          const p = easeInOut((t - 0.34) / 0.4);
+          g.rightArmPivot.rotation.x = -2.15 + p * 2.75;
+          g.rightArmPivot.rotation.z = -0.28 + p * 0.28;
+          g.rightArmPivot.rotation.y = -0.1 + p * 0.12;
+          g.swordPivot.rotation.x = -1.4 + p * 1.85;
+          g.swordPivot.rotation.y = -0.05;
+          g.swordPivot.rotation.z = -0.55 + p * 0.35;
+        } else {
+          const p = easeOut((t - 0.74) / 0.26);
+          g.rightArmPivot.rotation.x = 0.6 - p * 0.82;
+          g.rightArmPivot.rotation.z = 0.0 - p * 0.08;
+          g.rightArmPivot.rotation.y = 0.02 - p * 0.12;
+          g.swordPivot.rotation.x = 0.45 - p * 1.07;
+          g.swordPivot.rotation.y = -0.05;
+          g.swordPivot.rotation.z = -0.2 - p * 0.18;
+        }
+        return;
+      }
+
+      if (type === "sideLeft") {
+        if (t < 0.28) {
+          const p = easeOut(t / 0.28);
+          g.rightArmPivot.rotation.x = -0.35 - p * 0.85;
+          g.rightArmPivot.rotation.z = 0.18 + p * 1.08;
+          g.rightArmPivot.rotation.y = 0.08 + p * 0.3;
+          g.swordPivot.rotation.x = -0.55 - p * 0.45;
+          g.swordPivot.rotation.y = 0.08 + p * 0.18;
+          g.swordPivot.rotation.z = 0.36 + p * 1.62;
+        } else if (t < 0.68) {
+          const p = easeInOut((t - 0.28) / 0.4);
+          g.rightArmPivot.rotation.x = -1.2 + p * 1.75;
+          g.rightArmPivot.rotation.z = 1.26 - p * 2.08;
+          g.rightArmPivot.rotation.y = 0.38 - p * 0.56;
+          g.swordPivot.rotation.x = -1.0 + p * 1.18;
+          g.swordPivot.rotation.y = 0.26 - p * 0.34;
+          g.swordPivot.rotation.z = 1.98 - p * 3.25;
+        } else {
+          const p = easeOut((t - 0.68) / 0.32);
+          g.rightArmPivot.rotation.x = 0.55 - p * 0.78;
+          g.rightArmPivot.rotation.z = -0.82 + p * 0.96;
+          g.rightArmPivot.rotation.y = -0.18 + p * 0.08;
+          g.swordPivot.rotation.x = 0.18 - p * 0.8;
+          g.swordPivot.rotation.y = -0.08 - p * 0.02;
+          g.swordPivot.rotation.z = -1.27 + p * 0.89;
+        }
+        return;
+      }
+
+      if (type === "stab") {
+        if (t < 0.32) {
+          const p = easeOut(t / 0.32);
+          g.rightArmPivot.rotation.x = -0.3 - p * 0.42;
+          g.rightArmPivot.rotation.z = 0.12 - p * 0.22;
+          g.rightArmPivot.rotation.y = -0.22 - p * 0.28;
+          g.swordPivot.rotation.x = -0.74 + p * 0.35;
+          g.swordPivot.rotation.y = -0.18;
+          g.swordPivot.rotation.z = -0.45 + p * 0.16;
+          g.swordPivot.position.z = 0.02 - p * 0.34;
+        } else if (t < 0.66) {
+          const p = easeInOut((t - 0.32) / 0.34);
+          g.rightArmPivot.rotation.x = -0.72 + p * 0.38;
+          g.rightArmPivot.rotation.z = -0.1 + p * 0.12;
+          g.rightArmPivot.rotation.y = -0.5 + p * 0.18;
+          g.swordPivot.rotation.x = -0.39 + p * 0.12;
+          g.swordPivot.rotation.y = -0.18 + p * 0.08;
+          g.swordPivot.rotation.z = -0.29;
+          g.swordPivot.position.z = -0.32 + p * 1.1;
+        } else {
+          const p = easeOut((t - 0.66) / 0.34);
+          g.rightArmPivot.rotation.x = -0.34 - p * 0.02;
+          g.rightArmPivot.rotation.z = 0.02 + p * 0.12;
+          g.rightArmPivot.rotation.y = -0.32 + p * 0.22;
+          g.swordPivot.rotation.x = -0.27 - p * 0.35;
+          g.swordPivot.rotation.y = -0.1;
+          g.swordPivot.rotation.z = -0.29 - p * 0.09;
+          g.swordPivot.position.z = 0.78 - p * 0.76;
+        }
+        return;
+      }
+
+      // sideRight default
+      if (t < 0.28) {
+        const p = easeOut(t / 0.28);
+        g.rightArmPivot.rotation.x = -0.45 - p * 1.15;
+        g.rightArmPivot.rotation.z = -0.2 - p * 0.95;
+        g.rightArmPivot.rotation.y = -0.15 - p * 0.25;
+        g.swordPivot.rotation.x = -0.45 - p * 0.65;
+        g.swordPivot.rotation.y = -0.1;
+        g.swordPivot.rotation.z = -0.35 - p * 1.45;
+      } else if (t < 0.68) {
+        const p = easeInOut((t - 0.28) / 0.4);
+        g.rightArmPivot.rotation.x = -1.6 + p * 2.15;
+        g.rightArmPivot.rotation.z = -1.15 + p * 1.95;
+        g.rightArmPivot.rotation.y = -0.35 + p * 0.45;
+        g.swordPivot.rotation.x = -1.1 + p * 1.25;
+        g.swordPivot.rotation.y = -0.1 + p * 0.18;
+        g.swordPivot.rotation.z = -1.8 + p * 3.05;
+      } else {
+        const p = easeOut((t - 0.68) / 0.32);
+        g.rightArmPivot.rotation.x = 0.55 - p * 0.78;
+        g.rightArmPivot.rotation.z = 0.8 - p * 1.0;
+        g.rightArmPivot.rotation.y = 0.1 - p * 0.1;
+        g.swordPivot.rotation.x = 0.15 - p * 0.8;
+        g.swordPivot.rotation.y = 0.08 - p * 0.18;
+        g.swordPivot.rotation.z = 1.25 - p * 1.6;
+      }
+    }
+
     function animateGladiator(g, dt, isPlayer) {
       const moving = isPlayer
         ? keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD
@@ -1496,8 +1788,12 @@
       if (enemyDeathTimer <= 0 || isPlayer) {
         g.body.rotation.z = g.currentSway;
         g.body.rotation.x = forwardLean;
-        g.head.rotation.z = g.currentSway * -0.35;
-        g.head.rotation.x = moving ? Math.sin(g.walkTime) * 0.035 + forwardLean * 0.4 : 0;
+
+        const headPitch = moving ? Math.sin(g.walkTime) * 0.035 + forwardLean * 0.4 : 0;
+        const headRoll = g.currentSway * -0.35;
+        g.baseHeadPitch = headPitch;
+        g.baseHeadRoll = headRoll;
+        setHeadPose(g, headPitch, 0, headRoll);
       }
 
       g.leftLegPivot.rotation.x = walkSwing;
@@ -1526,35 +1822,11 @@
 
         if (playerAttackTimer > 0) {
           const t = 1 - playerAttackTimer / PLAYER_ATTACK_DURATION;
-
-          if (t < 0.28) {
-            const p = easeOut(t / 0.28);
-            g.rightArmPivot.rotation.x = -0.45 - p * 1.15;
-            g.rightArmPivot.rotation.z = -0.2 - p * 0.95;
-            g.rightArmPivot.rotation.y = -0.15 - p * 0.25;
-            g.swordPivot.rotation.x = -0.45 - p * 0.65;
-            g.swordPivot.rotation.y = -0.1;
-            g.swordPivot.rotation.z = -0.35 - p * 1.45;
-          } else if (t < 0.68) {
-            const p = easeInOut((t - 0.28) / 0.4);
-            g.rightArmPivot.rotation.x = -1.6 + p * 2.15;
-            g.rightArmPivot.rotation.z = -1.15 + p * 1.95;
-            g.rightArmPivot.rotation.y = -0.35 + p * 0.45;
-            g.swordPivot.rotation.x = -1.1 + p * 1.25;
-            g.swordPivot.rotation.y = -0.1 + p * 0.18;
-            g.swordPivot.rotation.z = -1.8 + p * 3.05;
-          } else {
-            const p = easeOut((t - 0.68) / 0.32);
-            g.rightArmPivot.rotation.x = 0.55 - p * 0.78;
-            g.rightArmPivot.rotation.z = 0.8 - p * 1.0;
-            g.rightArmPivot.rotation.y = 0.1 - p * 0.1;
-            g.swordPivot.rotation.x = 0.15 - p * 0.8;
-            g.swordPivot.rotation.y = 0.08 - p * 0.18;
-            g.swordPivot.rotation.z = 1.25 - p * 1.6;
-          }
+          animatePlayerAttack(g, t, playerAttackType);
         } else {
           g.rightArmPivot.rotation.x += -0.18;
           g.rightArmPivot.rotation.z = 0.14 + g.currentSway * 0.08;
+          g.swordPivot.position.set(0.04, -0.78, 0.02);
           g.swordPivot.rotation.set(-0.62, -0.1, -0.38 + g.currentSway * 0.06);
         }
       } else {
@@ -1639,6 +1911,25 @@
       camera.rotateZ(cameraRoll);
     }
 
+    function triggerFinisherSlowMotion() {
+      finisherSlowMoTimer = FINISHER_SLOWMO_DURATION;
+      timeScale = FINISHER_SLOWMO_SCALE;
+    }
+
+    function updateSlowMotion(rawDt) {
+      if (finisherSlowMoTimer > 0) {
+        finisherSlowMoTimer = Math.max(0, finisherSlowMoTimer - rawDt);
+        const remaining = finisherSlowMoTimer / FINISHER_SLOWMO_DURATION;
+        timeScale = THREE.MathUtils.lerp(1, FINISHER_SLOWMO_SCALE, easeOut(remaining));
+      } else if (timeScale !== 1) {
+        timeScale = THREE.MathUtils.lerp(timeScale, 1, rawDt * 8);
+
+        if (Math.abs(timeScale - 1) < 0.002) {
+          timeScale = 1;
+        }
+      }
+    }
+
     function damageEnemy(amount) {
       if (gameOver || enemyDeathTimer > 0) return;
 
@@ -1658,6 +1949,8 @@
       );
 
       if (enemyHP <= 0) {
+        triggerFinisherSlowMotion();
+
         const earned = 25;
         bloodCoins += earned;
         updateUI();
@@ -1683,9 +1976,8 @@
 
       let finalDamage = amount;
 
-      if (isBlocking && stamina > 5) {
+      if (isBlocking) {
         finalDamage *= 0.25;
-        stamina = Math.max(0, stamina - 22);
         createShieldBlockEffect(player.group.position.clone().add(new THREE.Vector3(0, 2.0, 0)));
         createFloatingText("BLOCK", player.group.position.clone().add(new THREE.Vector3(0, 2.8, 0)), 0x9de7ff);
       } else {
@@ -1782,8 +2074,8 @@
 
       bloodDecals.push({
         mesh: splat,
-        life: 8,
-        maxLife: 8
+        life: 13,
+        maxLife: 13
       });
     }
 
@@ -1972,14 +2264,7 @@
     function updateUI() {
       uiPlayerHealth.style.width = playerHP + "%";
       uiEnemyHealth.style.width = enemyHP + "%";
-      uiStamina.style.width = stamina + "%";
       uiBloodCoins.textContent = bloodCoins;
-
-      if (stamina < 20) {
-        uiStamina.style.filter = "brightness(0.75)";
-      } else {
-        uiStamina.style.filter = "brightness(1)";
-      }
     }
 
     function flashDamage() {
@@ -2010,7 +2295,6 @@
     function restartGame() {
       playerHP = 100;
       enemyHP = 100;
-      stamina = 100;
       gameOver = false;
       isBlocking = false;
 
@@ -2022,6 +2306,10 @@
 
       playerAttackTimer = 0;
       playerAttackCooldown = 0;
+      playerAttackType = "sideRight";
+      previousPlayerAttackType = "";
+      timeScale = 1;
+      finisherSlowMoTimer = 0;
       enemyAttackTimer = 0;
       enemyAttackCooldown = 1.2;
       playerHitDone = false;
@@ -2040,22 +2328,32 @@
       player.moveLocalZ = 0;
       player.currentSway = 0;
       player.targetSway = 0;
+      player.headLookYaw = 0;
+      player.headLookPitch = 0;
+      player.baseHeadPitch = 0;
+      player.baseHeadRoll = 0;
 
       enemy.moveLocalX = 0;
       enemy.moveLocalZ = 0;
       enemy.currentSway = 0;
       enemy.targetSway = 0;
+      enemy.headLookYaw = 0;
+      enemy.headLookPitch = 0;
+      enemy.baseHeadPitch = 0;
+      enemy.baseHeadRoll = 0;
 
       cameraRoll = 0;
 
       player.body.rotation.set(0, 0, 0);
       enemy.body.rotation.set(0, 0, 0);
-      player.head.rotation.set(0, 0, 0);
-      enemy.head.rotation.set(0, 0, 0);
+      setHeadPose(player, 0, 0, 0);
+      setHeadPose(enemy, 0, 0, 0);
       player.rightArmPivot.rotation.set(0, 0, 0);
       enemy.rightArmPivot.rotation.set(0, 0, 0);
       player.leftArmPivot.rotation.set(0, 0, 0);
       enemy.leftArmPivot.rotation.set(0, 0, 0);
+      player.swordPivot.position.set(0.04, -0.78, 0.02);
+      enemy.swordPivot.position.set(0.04, -0.78, 0.02);
       player.swordPivot.rotation.set(0, 0, 0);
       enemy.swordPivot.rotation.set(0, 0, 0);
       player.shieldPivot.rotation.set(0, 0, 0);
