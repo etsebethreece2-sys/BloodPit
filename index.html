@@ -33,7 +33,7 @@
         text-shadow: 2px 2px 0 #1b2b24;
         font-weight: 900;
         font-size: 18px;
-        line-height: 1.6;
+        line-height: 1.55;
         pointer-events: none;
     }
 
@@ -44,6 +44,7 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
+        z-index: 5;
     }
 
     button {
@@ -55,7 +56,7 @@
         font-weight: 900;
         cursor: pointer;
         box-shadow: 0 5px 0 #b88128;
-        transition: transform 0.08s, box-shadow 0.08s;
+        transition: transform 0.08s, box-shadow 0.08s, background 0.08s;
     }
 
     button:hover {
@@ -79,6 +80,7 @@
         padding: 10px 18px;
         font-weight: 900;
         text-align: center;
+        z-index: 5;
     }
 </style>
 </head>
@@ -95,23 +97,19 @@
 </div>
 
 <div id="help">
-    WASD / Arrows: Move &nbsp; | &nbsp; Mouse: Aim &nbsp; | &nbsp; Click: Shoot Net &nbsp; | &nbsp; Bring zombies to the factory to make juice
+    WASD / Arrows: Move &nbsp; | &nbsp; Mouse: Aim &nbsp; | &nbsp; Click: Shoot Net in Forest &nbsp; | &nbsp; Walk right from base to enter forest
 </div>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const ui = document.getElementById("ui");
+const shop = document.getElementById("shop");
 
-let W = 0;
-let H = 0;
-
-function resize() {
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-}
-window.addEventListener("resize", resize);
-resize();
+let W = window.innerWidth;
+let H = window.innerHeight;
+canvas.width = W;
+canvas.height = H;
 
 const keys = {};
 const mouse = {
@@ -120,17 +118,110 @@ const mouse = {
     down: false
 };
 
-window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+const game = {
+    screen: "base",
+    fade: 0,
+    transition: null
+};
+
+const world = {
+    money: 0,
+    juice: 0,
+    caught: 0,
+    totalCaught: 0,
+    totalSold: 0,
+    spawnTimer: 0,
+    carTimer: 0,
+    upgrades: {
+        speed: 1,
+        net: 1,
+        tank: 1,
+        factory: 1
+    }
+};
+
+const factory = {
+    x: 135,
+    y: H / 2,
+    w: 180,
+    h: 220,
+    processTimer: 0
+};
+
+const player = {
+    x: W / 2,
+    y: H / 2,
+    r: 22,
+    speed: 3.2,
+    angle: 0,
+    facing: 1,
+    bob: 0,
+    cooldown: 0,
+    carry: [],
+    maxCarry: 3
+};
+
+const zombies = [];
+const nets = [];
+const particles = [];
+const cars = [];
+
+const baseTrees = [];
+const baseRocks = [];
+const baseFlowers = [];
+
+const forestTrees = [];
+const forestRocks = [];
+const forestBushes = [];
+const forestFog = [];
+const fireflies = [];
+
+function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+
+    factory.y = H / 2;
+
+    if (player.x > W - 40) player.x = W - 80;
+    if (player.y > H - 130) player.y = H - 160;
+
+    generateDecor();
+}
+
+window.addEventListener("resize", resize);
+
+window.addEventListener("keydown", e => {
+    keys[e.key.toLowerCase()] = true;
+});
+
+window.addEventListener("keyup", e => {
+    keys[e.key.toLowerCase()] = false;
+});
+
 window.addEventListener("mousemove", e => {
     mouse.x = e.clientX;
     mouse.y = e.clientY;
 });
-window.addEventListener("mousedown", () => {
+
+window.addEventListener("mousedown", e => {
+    if (e.target.closest("#shop")) return;
+    if (game.transition) return;
+
     mouse.down = true;
     shootNet();
 });
-window.addEventListener("mouseup", () => mouse.down = false);
+
+window.addEventListener("mouseup", () => {
+    mouse.down = false;
+});
+
+shop.addEventListener("mousedown", e => {
+    e.stopPropagation();
+});
+
+shop.addEventListener("click", e => {
+    e.stopPropagation();
+});
 
 function rand(min, max) {
     return Math.random() * (max - min) + min;
@@ -148,67 +239,43 @@ function angleTo(a, b) {
     return Math.atan2(b.y - a.y, b.x - a.x);
 }
 
-const world = {
-    money: 0,
-    juice: 0,
-    caught: 0,
-    totalCaught: 0,
-    totalSold: 0,
-    dayTimer: 0,
-    spawnTimer: 0,
-    carTimer: 0,
-    upgrades: {
-        speed: 1,
-        net: 1,
-        tank: 1,
-        factory: 1
-    }
-};
+function shadeColor(hex, percent) {
+    let num = parseInt(hex.replace("#", ""), 16);
 
-const factory = {
-    x: 130,
-    y: H / 2,
-    w: 170,
-    h: 210,
-    processTimer: 0
-};
+    let r = (num >> 16) + percent;
+    let g = ((num >> 8) & 0x00FF) + percent;
+    let b = (num & 0x0000FF) + percent;
 
-const player = {
-    x: W / 2,
-    y: H / 2,
-    r: 22,
-    speed: 3.2,
-    angle: 0,
-    bob: 0,
-    cooldown: 0,
-    carry: [],
-    maxCarry: 3
-};
+    r = clamp(r, 0, 255);
+    g = clamp(g, 0, 255);
+    b = clamp(b, 0, 255);
 
-const zombies = [];
-const nets = [];
-const particles = [];
-const cars = [];
-const trees = [];
-const rocks = [];
-const flowers = [];
+    return "#" + (b | (g << 8) | (r << 16)).toString(16).padStart(6, "0");
+}
 
 function generateDecor() {
-    trees.length = 0;
-    rocks.length = 0;
-    flowers.length = 0;
+    baseTrees.length = 0;
+    baseRocks.length = 0;
+    baseFlowers.length = 0;
 
-    for (let i = 0; i < 45; i++) {
-        trees.push({
-            x: rand(250, W - 70),
+    forestTrees.length = 0;
+    forestRocks.length = 0;
+    forestBushes.length = 0;
+    forestFog.length = 0;
+    fireflies.length = 0;
+
+    for (let i = 0; i < 25; i++) {
+        baseTrees.push({
+            x: rand(260, W - 70),
             y: rand(70, H - 170),
-            s: rand(0.75, 1.45),
-            sway: rand(0, 10)
+            s: rand(0.75, 1.35),
+            sway: rand(0, 10),
+            type: Math.floor(rand(0, 3))
         });
     }
 
-    for (let i = 0; i < 35; i++) {
-        rocks.push({
+    for (let i = 0; i < 25; i++) {
+        baseRocks.push({
             x: rand(260, W - 60),
             y: rand(70, H - 170),
             s: rand(0.7, 1.6),
@@ -216,61 +283,155 @@ function generateDecor() {
         });
     }
 
-    for (let i = 0; i < 80; i++) {
-        flowers.push({
+    for (let i = 0; i < 70; i++) {
+        baseFlowers.push({
             x: rand(230, W - 40),
             y: rand(60, H - 150),
             s: rand(0.7, 1.2),
             c: Math.random() < 0.5 ? "#ff7eb6" : "#ffe66d"
         });
     }
+
+    for (let i = 0; i < 65; i++) {
+        forestTrees.push({
+            x: rand(30, W - 30),
+            y: rand(40, H - 120),
+            s: rand(0.85, 1.9),
+            sway: rand(0, 10),
+            type: Math.floor(rand(0, 4))
+        });
+    }
+
+    for (let i = 0; i < 35; i++) {
+        forestRocks.push({
+            x: rand(40, W - 40),
+            y: rand(60, H - 150),
+            s: rand(0.8, 1.9),
+            rot: rand(0, Math.PI)
+        });
+    }
+
+    for (let i = 0; i < 55; i++) {
+        forestBushes.push({
+            x: rand(30, W - 30),
+            y: rand(70, H - 130),
+            s: rand(0.7, 1.6),
+            c: Math.random() < 0.5 ? "#275f3d" : "#1f4d34"
+        });
+    }
+
+    for (let i = 0; i < 18; i++) {
+        forestFog.push({
+            x: rand(0, W),
+            y: rand(80, H - 130),
+            s: rand(0.8, 2.1),
+            speed: rand(0.08, 0.25)
+        });
+    }
+
+    for (let i = 0; i < 35; i++) {
+        fireflies.push({
+            x: rand(0, W),
+            y: rand(60, H - 130),
+            vx: rand(-0.25, 0.25),
+            vy: rand(-0.2, 0.2),
+            glow: rand(0, Math.PI * 2)
+        });
+    }
 }
+
 generateDecor();
-window.addEventListener("resize", generateDecor);
 
 function spawnZombie() {
     let side = Math.floor(rand(0, 4));
-    let x, y;
+    let x;
+    let y;
 
     if (side === 0) {
-        x = rand(300, W - 40);
-        y = 50;
+        x = rand(80, W - 80);
+        y = 60;
     } else if (side === 1) {
-        x = W - 50;
-        y = rand(80, H - 190);
+        x = W - 60;
+        y = rand(80, H - 170);
     } else if (side === 2) {
-        x = rand(300, W - 40);
-        y = H - 190;
+        x = rand(80, W - 80);
+        y = H - 165;
     } else {
-        x = 300;
-        y = rand(80, H - 190);
+        x = 70;
+        y = rand(80, H - 170);
     }
 
     zombies.push({
         x,
         y,
-        r: rand(18, 25),
+        r: rand(19, 25),
         speed: rand(0.45, 0.9),
         angle: rand(0, Math.PI * 2),
         wander: rand(0, 100),
         scared: 0,
         caught: false,
         squish: rand(0, 10),
-        color: Math.random() < 0.5 ? "#8bd346" : "#a8e063"
+        color: Math.random() < 0.5 ? "#8bd346" : "#a8e063",
+        shirt: Math.random() < 0.5 ? "#6c63ff" : "#ef476f",
+        pants: Math.random() < 0.5 ? "#34495e" : "#4b3f72",
+        hair: Math.random() < 0.5 ? "#26382f" : "#3a2c22",
+        variant: Math.floor(rand(0, 3)),
+        limp: rand(0, Math.PI * 2),
+        facing: Math.random() < 0.5 ? 1 : -1
     });
 }
 
-for (let i = 0; i < 9; i++) spawnZombie();
+for (let i = 0; i < 11; i++) {
+    spawnZombie();
+}
 
 function spawnCar() {
-    const colors = ["#ef476f", "#118ab2", "#ffd166", "#06d6a0", "#9b5de5"];
+    const colors = ["#ef476f", "#118ab2", "#ffd166", "#06d6a0", "#9b5de5", "#f77f00", "#90be6d"];
+    const models = ["compact", "sedan", "van", "pickup", "sports", "taxi"];
+
+    const model = models[Math.floor(rand(0, models.length))];
+
+    let w = 110;
+    let h = 45;
+
+    if (model === "compact") {
+        w = rand(82, 98);
+        h = 42;
+    }
+
+    if (model === "sedan") {
+        w = rand(110, 130);
+        h = 45;
+    }
+
+    if (model === "van") {
+        w = rand(125, 145);
+        h = 58;
+    }
+
+    if (model === "pickup") {
+        w = rand(128, 150);
+        h = 48;
+    }
+
+    if (model === "sports") {
+        w = rand(118, 138);
+        h = 36;
+    }
+
+    if (model === "taxi") {
+        w = rand(112, 132);
+        h = 46;
+    }
+
     cars.push({
-        x: W + 120,
+        x: W + 160,
         y: H - 75,
-        w: rand(92, 122),
-        h: 45,
+        w,
+        h,
         speed: rand(1.2, 1.8),
-        color: colors[Math.floor(rand(0, colors.length))],
+        color: model === "taxi" ? "#ffd166" : colors[Math.floor(rand(0, colors.length))],
+        model,
         state: "arriving",
         wait: 0,
         bought: false,
@@ -293,7 +454,51 @@ function addParticle(x, y, color, count = 8, power = 2) {
     }
 }
 
+function startTransition(toScreen) {
+    if (game.transition) return;
+
+    game.transition = {
+        to: toScreen,
+        phase: "out",
+        speed: 0.055
+    };
+}
+
+function updateTransition() {
+    if (!game.transition) return;
+
+    if (game.transition.phase === "out") {
+        game.fade += game.transition.speed;
+
+        if (game.fade >= 1) {
+            game.fade = 1;
+
+            game.screen = game.transition.to;
+
+            if (game.screen === "forest") {
+                player.x = 70;
+                player.y = H / 2;
+                addParticle(player.x, player.y, "#b7ff65", 24, 3);
+            } else {
+                player.x = W - 75;
+                player.y = H / 2;
+                addParticle(player.x, player.y, "#ffe66d", 24, 3);
+            }
+
+            game.transition.phase = "in";
+        }
+    } else {
+        game.fade -= game.transition.speed;
+
+        if (game.fade <= 0) {
+            game.fade = 0;
+            game.transition = null;
+        }
+    }
+}
+
 function shootNet() {
+    if (game.screen !== "forest") return;
     if (player.cooldown > 0) return;
 
     const netLevel = world.upgrades.net;
@@ -310,7 +515,14 @@ function shootNet() {
     });
 
     player.cooldown = Math.max(14, 38 - netLevel * 4);
-    addParticle(player.x + Math.cos(a) * 30, player.y + Math.sin(a) * 30, "#ffffff", 8, 1.5);
+
+    addParticle(
+        player.x + Math.cos(a) * 30,
+        player.y + Math.sin(a) * 30,
+        "#ffffff",
+        8,
+        1.5
+    );
 }
 
 function buyUpgrade(type) {
@@ -337,6 +549,11 @@ function buyUpgrade(type) {
 }
 
 function updatePlayer() {
+    if (game.transition) {
+        if (player.cooldown > 0) player.cooldown--;
+        return;
+    }
+
     let dx = 0;
     let dy = 0;
 
@@ -347,6 +564,7 @@ function updatePlayer() {
 
     if (dx || dy) {
         const len = Math.hypot(dx, dy);
+
         dx /= len;
         dy /= len;
 
@@ -359,23 +577,50 @@ function updatePlayer() {
         player.bob += 0.05;
     }
 
-    player.x = clamp(player.x, 40, W - 40);
-    player.y = clamp(player.y, 40, H - 135);
-
     player.angle = angleTo(player, mouse);
+    player.facing = mouse.x >= player.x ? 1 : -1;
 
-    if (player.cooldown > 0) player.cooldown--;
+    if (game.screen === "base") {
+        if (player.x > W - 32) {
+            startTransition("forest");
+        }
 
+        player.x = clamp(player.x, 35, W - 30);
+        player.y = clamp(player.y, 45, H - 135);
+    } else {
+        if (player.x < 32) {
+            startTransition("base");
+        }
+
+        player.x = clamp(player.x, 30, W - 35);
+        player.y = clamp(player.y, 45, H - 140);
+    }
+
+    if (player.cooldown > 0) {
+        player.cooldown--;
+    }
+
+    updateCarriedZombies();
+    checkFactoryDropoff();
+}
+
+function updateCarriedZombies() {
     for (let i = player.carry.length - 1; i >= 0; i--) {
         const z = player.carry[i];
+
         const offset = i + 1;
-        const targetX = player.x - Math.cos(player.angle) * (28 + offset * 24);
-        const targetY = player.y - Math.sin(player.angle) * (28 + offset * 24);
+        const targetX = player.x - player.facing * (28 + offset * 24);
+        const targetY = player.y + 18 + Math.sin(player.bob + i) * 7;
 
         z.x += (targetX - z.x) * 0.18;
         z.y += (targetY - z.y) * 0.18;
         z.squish += 0.15;
+        z.facing = -player.facing;
     }
+}
+
+function checkFactoryDropoff() {
+    if (game.screen !== "base") return;
 
     const insideFactory =
         player.x > factory.x - factory.w / 2 &&
@@ -385,9 +630,11 @@ function updatePlayer() {
 
     if (insideFactory && player.carry.length > 0) {
         const amount = player.carry.length;
+
         player.carry.length = 0;
         world.caught += amount;
-        addParticle(factory.x, factory.y, "#a8ff60", 35, 4);
+
+        addParticle(factory.x, factory.y, "#a8ff60", 45, 4);
     }
 }
 
@@ -395,20 +642,27 @@ let dustTimer = 0;
 
 function addFootDust() {
     dustTimer--;
+
     if (dustTimer > 0) return;
 
     dustTimer = 7;
 
+    const color = game.screen === "forest"
+        ? "rgba(38, 70, 51, 0.85)"
+        : "rgba(120, 80, 45, 0.7)";
+
     addParticle(
         player.x + rand(-8, 8),
         player.y + player.r + 8,
-        "rgba(120,80,45,0.7)",
+        color,
         4,
         0.8
     );
 }
 
 function updateZombies() {
+    if (game.screen !== "forest") return;
+
     for (let i = zombies.length - 1; i >= 0; i--) {
         const z = zombies[i];
 
@@ -418,7 +672,7 @@ function updateZombies() {
 
         const d = dist(z, player);
 
-        if (d < 160) {
+        if (d < 170) {
             z.scared = 60;
             z.angle = angleTo(player, z);
         }
@@ -433,24 +687,33 @@ function updateZombies() {
         z.x += Math.cos(z.angle) * spd;
         z.y += Math.sin(z.angle) * spd;
 
-        z.x = clamp(z.x, 260, W - 35);
-        z.y = clamp(z.y, 45, H - 165);
+        z.facing = Math.cos(z.angle) >= 0 ? 1 : -1;
 
-        if (z.x <= 260 || z.x >= W - 35) z.angle = Math.PI - z.angle;
-        if (z.y <= 45 || z.y >= H - 165) z.angle = -z.angle;
+        z.x = clamp(z.x, 45, W - 45);
+        z.y = clamp(z.y, 55, H - 150);
+
+        if (z.x <= 45 || z.x >= W - 45) z.angle = Math.PI - z.angle;
+        if (z.y <= 55 || z.y >= H - 150) z.angle = -z.angle;
 
         if (z.scared > 0) {
             z.scared--;
+
             if (Math.random() < 0.05) {
                 addParticle(z.x, z.y, "#c4f06a", 2, 0.9);
             }
         }
 
         z.squish += 0.16;
+        z.limp += 0.16;
     }
 }
 
 function updateNets() {
+    if (game.screen !== "forest") {
+        nets.length = 0;
+        return;
+    }
+
     for (let i = nets.length - 1; i >= 0; i--) {
         const n = nets[i];
 
@@ -475,7 +738,7 @@ function updateNets() {
                     player.carry.push(z);
                     world.totalCaught++;
 
-                    addParticle(z.x, z.y, "#eaff80", 34, 3.5);
+                    addParticle(z.x, z.y, "#eaff80", 38, 3.8);
                     nets.splice(i, 1);
                     break;
                 } else {
@@ -500,20 +763,23 @@ function updateFactory() {
             factory.processTimer = 0;
             world.caught--;
             world.juice++;
+
             addParticle(factory.x + 50, factory.y + 30, "#77ff66", 22, 3);
         }
     }
 }
 
 function updateCars() {
+    if (game.screen !== "base") return;
+
     world.carTimer--;
 
     if (world.carTimer <= 0) {
         spawnCar();
-        world.carTimer = rand(220, 360);
+        world.carTimer = rand(210, 330);
     }
 
-    const stopX = 215;
+    const stopX = 225;
 
     for (let i = cars.length - 1; i >= 0; i--) {
         const c = cars[i];
@@ -524,18 +790,19 @@ function updateCars() {
             c.x -= c.speed;
 
             let queueIndex = 0;
+
             for (const other of cars) {
                 if (other !== c && other.state !== "leaving" && other.x < c.x) {
                     queueIndex++;
                 }
             }
 
-            const targetStop = stopX + queueIndex * 135;
+            const targetStop = stopX + queueIndex * 145;
 
             if (c.x <= targetStop) {
                 c.x = targetStop;
                 c.state = "waiting";
-                c.wait = 110;
+                c.wait = 115;
             }
         } else if (c.state === "waiting") {
             c.wait--;
@@ -545,11 +812,12 @@ function updateCars() {
                 world.juice--;
 
                 const pay = 15 + Math.floor(rand(0, 10)) + world.upgrades.factory * 2;
+
                 world.money += pay;
                 world.totalSold++;
 
-                addParticle(c.x, c.y - 30, "#ffe66d", 30, 3.5);
-                addParticle(factory.x + 70, factory.y + 65, "#77ff66", 20, 2.5);
+                addParticle(c.x, c.y - 30, "#ffe66d", 32, 3.5);
+                addParticle(factory.x + 72, factory.y + 65, "#77ff66", 20, 2.5);
 
                 c.wait = 45;
             }
@@ -560,7 +828,7 @@ function updateCars() {
         } else if (c.state === "leaving") {
             c.x -= c.speed * 2.4;
 
-            if (c.x < -180) {
+            if (c.x < -200) {
                 cars.splice(i, 1);
             }
         }
@@ -584,11 +852,28 @@ function updateParticles() {
 }
 
 function updateSpawning() {
+    if (game.screen !== "forest") return;
+
     world.spawnTimer--;
 
-    if (world.spawnTimer <= 0 && zombies.length < 14 + world.totalCaught * 0.05) {
+    if (world.spawnTimer <= 0 && zombies.length < 15 + world.totalCaught * 0.05) {
         spawnZombie();
-        world.spawnTimer = rand(50, 110);
+        world.spawnTimer = rand(45, 105);
+    }
+}
+
+function updateFireflies() {
+    if (game.screen !== "forest") return;
+
+    for (const f of fireflies) {
+        f.x += f.vx;
+        f.y += f.vy;
+        f.glow += 0.08;
+
+        if (f.x < 0) f.x = W;
+        if (f.x > W) f.x = 0;
+        if (f.y < 45) f.y = H - 150;
+        if (f.y > H - 130) f.y = 60;
     }
 }
 
@@ -598,19 +883,30 @@ function roundedRect(x, y, w, h, r) {
 }
 
 function drawWorld() {
+    if (game.screen === "base") {
+        drawBaseWorld();
+    } else {
+        drawForestWorld();
+    }
+}
+
+function drawBaseWorld() {
     const grd = ctx.createLinearGradient(0, 0, 0, H);
     grd.addColorStop(0, "#98e982");
     grd.addColorStop(1, "#58b86c");
+
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, W, H);
 
-    drawHills();
+    drawBaseHills();
     drawRoad();
-    drawDecor();
+    drawBaseDecor();
+    drawPortalSign();
 }
 
-function drawHills() {
+function drawBaseHills() {
     ctx.fillStyle = "#6dcf72";
+
     for (let i = 0; i < 6; i++) {
         const x = i * 260 - 80;
         const y = 110 + Math.sin(i) * 35;
@@ -643,18 +939,176 @@ function drawRoad() {
     ctx.setLineDash([]);
 }
 
-function drawDecor() {
-    for (const f of flowers) {
-        drawFlower(f);
+function drawBaseDecor() {
+    for (const f of baseFlowers) drawFlower(f);
+    for (const r of baseRocks) drawRock(r);
+    for (const t of baseTrees) drawTree(t, false);
+}
+
+function drawPortalSign() {
+    ctx.save();
+    ctx.translate(W - 115, H / 2 - 80);
+
+    ctx.fillStyle = "#7b4f2e";
+    ctx.strokeStyle = "#2f241b";
+    ctx.lineWidth = 4;
+
+    roundedRect(-8, 20, 16, 85, 5);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#26382f";
+    ctx.strokeStyle = "#ffffff";
+
+    roundedRect(-65, -20, 130, 50, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "900 16px Trebuchet MS";
+    ctx.textAlign = "center";
+    ctx.fillText("FOREST", 0, 0);
+    ctx.fillText("→", 0, 20);
+
+    ctx.restore();
+}
+
+function drawForestWorld() {
+    const grd = ctx.createLinearGradient(0, 0, 0, H);
+    grd.addColorStop(0, "#172c2d");
+    grd.addColorStop(0.55, "#1f4035");
+    grd.addColorStop(1, "#102219");
+
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
+
+    drawMoon();
+    drawForestBackTrees();
+
+    for (const b of forestBushes) drawForestBush(b);
+    for (const r of forestRocks) drawRock(r, true);
+    for (const t of forestTrees) drawTree(t, true);
+
+    drawForestFog();
+    drawFireflies();
+    drawForestExitSign();
+    drawVignette();
+}
+
+function drawMoon() {
+    ctx.fillStyle = "rgba(212, 232, 204, 0.55)";
+    ctx.beginPath();
+    ctx.arc(W - 130, 95, 42, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(23, 44, 45, 0.65)";
+    ctx.beginPath();
+    ctx.arc(W - 112, 83, 39, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function drawForestBackTrees() {
+    ctx.fillStyle = "#0f1e1a";
+
+    for (let i = 0; i < 14; i++) {
+        const x = i * 105 - 30;
+        const h = 190 + Math.sin(i * 5) * 50;
+
+        ctx.beginPath();
+        ctx.moveTo(x, H - 125);
+        ctx.lineTo(x + 35, H - 125 - h);
+        ctx.lineTo(x + 70, H - 125);
+        ctx.closePath();
+        ctx.fill();
+    }
+}
+
+function drawForestBush(b) {
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.scale(b.s, b.s);
+
+    ctx.fillStyle = b.c;
+    ctx.strokeStyle = "#102219";
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+    ctx.arc(-16, 5, 18, 0, Math.PI * 2);
+    ctx.arc(0, -5, 22, 0, Math.PI * 2);
+    ctx.arc(19, 6, 17, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+function drawForestFog() {
+    ctx.save();
+
+    for (const f of forestFog) {
+        f.x += f.speed;
+
+        if (f.x > W + 160) f.x = -160;
+
+        ctx.fillStyle = "rgba(210, 230, 215, 0.09)";
+        ctx.beginPath();
+        ctx.ellipse(f.x, f.y, 120 * f.s, 25 * f.s, 0, 0, Math.PI * 2);
+        ctx.fill();
     }
 
-    for (const r of rocks) {
-        drawRock(r);
+    ctx.restore();
+}
+
+function drawFireflies() {
+    ctx.save();
+
+    for (const f of fireflies) {
+        const alpha = 0.35 + Math.sin(f.glow) * 0.25;
+
+        ctx.fillStyle = `rgba(220, 255, 120, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
     }
 
-    for (const t of trees) {
-        drawTree(t);
-    }
+    ctx.restore();
+}
+
+function drawForestExitSign() {
+    ctx.save();
+    ctx.translate(82, H / 2 - 80);
+
+    ctx.fillStyle = "#5e3d27";
+    ctx.strokeStyle = "#151a16";
+    ctx.lineWidth = 4;
+
+    roundedRect(-8, 20, 16, 85, 5);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#24332a";
+    ctx.strokeStyle = "#d8f3dc";
+
+    roundedRect(-58, -20, 116, 50, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#d8f3dc";
+    ctx.font = "900 15px Trebuchet MS";
+    ctx.textAlign = "center";
+    ctx.fillText("BASE", 0, 0);
+    ctx.fillText("←", 0, 20);
+
+    ctx.restore();
+}
+
+function drawVignette() {
+    const grd = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.25, W / 2, H / 2, Math.max(W, H) * 0.75);
+    grd.addColorStop(0, "rgba(0,0,0,0)");
+    grd.addColorStop(1, "rgba(0,0,0,0.45)");
+
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
 }
 
 function drawFlower(f) {
@@ -664,14 +1118,17 @@ function drawFlower(f) {
 
     ctx.strokeStyle = "#356b3d";
     ctx.lineWidth = 2;
+
     ctx.beginPath();
     ctx.moveTo(0, 7);
     ctx.lineTo(0, -3);
     ctx.stroke();
 
     ctx.fillStyle = f.c;
+
     for (let i = 0; i < 5; i++) {
         const a = i / 5 * Math.PI * 2;
+
         ctx.beginPath();
         ctx.arc(Math.cos(a) * 4, Math.sin(a) * 4 - 4, 3, 0, Math.PI * 2);
         ctx.fill();
@@ -685,14 +1142,14 @@ function drawFlower(f) {
     ctx.restore();
 }
 
-function drawRock(r) {
+function drawRock(r, forest = false) {
     ctx.save();
     ctx.translate(r.x, r.y);
     ctx.rotate(r.rot);
     ctx.scale(r.s, r.s);
 
-    ctx.fillStyle = "#607075";
-    ctx.strokeStyle = "#263238";
+    ctx.fillStyle = forest ? "#3d5353" : "#607075";
+    ctx.strokeStyle = forest ? "#111f1f" : "#263238";
     ctx.lineWidth = 3;
 
     ctx.beginPath();
@@ -705,7 +1162,7 @@ function drawRock(r) {
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = "rgba(255,255,255,0.25)";
+    ctx.fillStyle = forest ? "rgba(160,210,190,0.16)" : "rgba(255,255,255,0.25)";
     ctx.beginPath();
     ctx.ellipse(-3, -4, 7, 3, -0.4, 0, Math.PI * 2);
     ctx.fill();
@@ -713,43 +1170,101 @@ function drawRock(r) {
     ctx.restore();
 }
 
-function drawTree(t) {
-    const sway = Math.sin(Date.now() * 0.002 + t.sway) * 2;
+function drawTree(t, forest = false) {
+    const sway = Math.sin(Date.now() * 0.002 + t.sway) * (forest ? 1.3 : 2);
 
     ctx.save();
     ctx.translate(t.x, t.y);
     ctx.scale(t.s, t.s);
 
-    ctx.fillStyle = "#7b4f2e";
-    ctx.strokeStyle = "#2f241b";
+    ctx.fillStyle = forest ? "#3f2a1d" : "#7b4f2e";
+    ctx.strokeStyle = forest ? "#120d09" : "#2f241b";
     ctx.lineWidth = 4;
 
-    roundedRect(-8, 8, 16, 34, 6);
+    roundedRect(-8, 8, 16, forest ? 48 : 34, 6);
     ctx.fill();
     ctx.stroke();
 
     ctx.translate(sway, 0);
 
-    ctx.fillStyle = "#2ecc71";
-    ctx.strokeStyle = "#1f6f43";
+    if (forest) {
+        ctx.fillStyle = t.type === 0 ? "#174a34" : t.type === 1 ? "#1b5a3d" : "#123b2a";
+        ctx.strokeStyle = "#0b1f17";
 
-    ctx.beginPath();
-    ctx.arc(-18, 0, 22, 0, Math.PI * 2);
-    ctx.arc(0, -15, 28, 0, Math.PI * 2);
-    ctx.arc(22, 0, 23, 0, Math.PI * 2);
-    ctx.arc(4, 13, 25, 0, Math.PI * 2);
+        if (t.type === 3) {
+            ctx.beginPath();
+            ctx.moveTo(0, -70);
+            ctx.lineTo(-38, 18);
+            ctx.lineTo(38, 18);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(0, -35);
+            ctx.lineTo(-45, 38);
+            ctx.lineTo(45, 38);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        } else {
+            ctx.beginPath();
+            ctx.arc(-18, 0, 24, 0, Math.PI * 2);
+            ctx.arc(0, -20, 31, 0, Math.PI * 2);
+            ctx.arc(24, 1, 26, 0, Math.PI * 2);
+            ctx.arc(3, 19, 28, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        }
+    } else {
+        ctx.fillStyle = t.type === 0 ? "#2ecc71" : t.type === 1 ? "#48ca77" : "#35b95f";
+        ctx.strokeStyle = "#1f6f43";
+
+        ctx.beginPath();
+        ctx.arc(-18, 0, 22, 0, Math.PI * 2);
+        ctx.arc(0, -15, 28, 0, Math.PI * 2);
+        ctx.arc(22, 0, 23, 0, Math.PI * 2);
+        ctx.arc(4, 13, 25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(255,255,255,0.22)";
+        ctx.beginPath();
+        ctx.arc(-8, -18, 9, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    ctx.restore();
+}
+
+function drawFactoryZone() {
+    if (game.screen !== "base") return;
+
+    ctx.save();
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.14)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.55)";
+    ctx.lineWidth = 4;
+    ctx.setLineDash([12, 8]);
+
+    roundedRect(
+        factory.x - factory.w / 2 - 28,
+        factory.y - factory.h / 2 - 28,
+        factory.w + 56,
+        factory.h + 56,
+        30
+    );
+
     ctx.fill();
     ctx.stroke();
-
-    ctx.fillStyle = "rgba(255,255,255,0.22)";
-    ctx.beginPath();
-    ctx.arc(-8, -18, 9, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.setLineDash([]);
 
     ctx.restore();
 }
 
 function drawFactory() {
+    if (game.screen !== "base") return;
+
     ctx.save();
     ctx.translate(factory.x, factory.y);
 
@@ -762,6 +1277,7 @@ function drawFactory() {
     ctx.stroke();
 
     ctx.fillStyle = "#ff595e";
+
     ctx.beginPath();
     ctx.moveTo(-factory.w / 2 - 12, -factory.h / 2 + 25);
     ctx.lineTo(0, -factory.h / 2 - 55);
@@ -818,289 +1334,9 @@ function drawChimney() {
     ctx.restore();
 }
 
-function drawPlayer() {
-    ctx.save();
-    ctx.translate(player.x, player.y);
-    ctx.rotate(player.angle);
-
-    const bob = Math.sin(player.bob) * 3;
-
-    ctx.fillStyle = "rgba(0,0,0,0.22)";
-    ctx.beginPath();
-    ctx.ellipse(0, 27, 28, 10, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.translate(0, bob);
-
-    ctx.fillStyle = "#ffb703";
-    ctx.strokeStyle = "#1b2b24";
-    ctx.lineWidth = 5;
-
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 24, 20, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = "#fb8500";
-    ctx.beginPath();
-    ctx.moveTo(4, -20);
-    ctx.lineTo(24, -8);
-    ctx.lineTo(13, 0);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.arc(8, -7, 6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = "#101820";
-    ctx.beginPath();
-    ctx.arc(10, -6, 2.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = "#26382f";
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.moveTo(12, 10);
-    ctx.lineTo(32, 18);
-    ctx.stroke();
-
-    ctx.fillStyle = "#d9f99d";
-    ctx.strokeStyle = "#26382f";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(38, 20, 9, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.restore();
-}
-
-function drawZombie(z) {
-    ctx.save();
-    ctx.translate(z.x, z.y);
-
-    const squash = Math.sin(z.squish) * 0.08;
-    ctx.scale(1 + squash, 1 - squash);
-
-    ctx.fillStyle = "rgba(0,0,0,0.22)";
-    ctx.beginPath();
-    ctx.ellipse(0, z.r + 8, z.r * 0.9, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = z.color;
-    ctx.strokeStyle = "#1f3d2b";
-    ctx.lineWidth = 4;
-
-    ctx.beginPath();
-    ctx.arc(0, 0, z.r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = "#6abf3a";
-    ctx.beginPath();
-    ctx.arc(-10, -8, 9, 0, Math.PI * 2);
-    ctx.arc(10, -8, 9, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#fff";
-    ctx.strokeStyle = "#1f3d2b";
-    ctx.lineWidth = 2;
-
-    ctx.beginPath();
-    ctx.arc(-7, -4, 6, 0, Math.PI * 2);
-    ctx.arc(8, -5, 6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = "#101820";
-    ctx.beginPath();
-    ctx.arc(-6, -3, 2, 0, Math.PI * 2);
-    ctx.arc(9, -4, 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = "#26382f";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(0, 9, 8, 0.1, Math.PI - 0.1);
-    ctx.stroke();
-
-    ctx.strokeStyle = "#1f3d2b";
-    ctx.lineWidth = 5;
-
-    ctx.beginPath();
-    ctx.moveTo(-z.r + 2, 5);
-    ctx.lineTo(-z.r - 15, 16);
-    ctx.moveTo(z.r - 2, 5);
-    ctx.lineTo(z.r + 15, 16);
-    ctx.stroke();
-
-    if (z.scared > 0) {
-        ctx.fillStyle = "#fff";
-        ctx.font = "900 18px Trebuchet MS";
-        ctx.textAlign = "center";
-        ctx.fillText("!", 0, -z.r - 12);
-    }
-
-    ctx.restore();
-}
-
-function drawNet(n) {
-    ctx.save();
-    ctx.translate(n.x, n.y);
-    ctx.rotate(n.spin);
-
-    ctx.strokeStyle = "#eaf4f4";
-    ctx.lineWidth = 3;
-
-    ctx.beginPath();
-    ctx.arc(0, 0, n.r, 0, Math.PI * 2);
-    ctx.stroke();
-
-    for (let i = 0; i < 4; i++) {
-        ctx.rotate(Math.PI / 4);
-        ctx.beginPath();
-        ctx.moveTo(-n.r, 0);
-        ctx.lineTo(n.r, 0);
-        ctx.stroke();
-    }
-
-    ctx.restore();
-}
-
-function drawCar(c) {
-    ctx.save();
-
-    const bounce = Math.sin(c.bounce) * 2;
-    ctx.translate(c.x, c.y + bounce);
-
-    ctx.fillStyle = "rgba(0,0,0,0.28)";
-    ctx.beginPath();
-    ctx.ellipse(0, 30, c.w * 0.48, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = c.color;
-    ctx.strokeStyle = "#101820";
-    ctx.lineWidth = 5;
-
-    roundedRect(-c.w / 2, -c.h / 2, c.w, c.h, 16);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = shadeColor(c.color, 25);
-    roundedRect(-c.w / 5, -c.h / 2 - 18, c.w * 0.45, 28, 12);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = "#bde0fe";
-    roundedRect(-c.w / 8, -c.h / 2 - 13, c.w * 0.22, 18, 6);
-    ctx.fill();
-
-    ctx.fillStyle = "#101820";
-    ctx.beginPath();
-    ctx.arc(-c.w / 3, c.h / 2, 10, 0, Math.PI * 2);
-    ctx.arc(c.w / 3, c.h / 2, 10, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#eaf4f4";
-    ctx.beginPath();
-    ctx.arc(-c.w / 3, c.h / 2, 4, 0, Math.PI * 2);
-    ctx.arc(c.w / 3, c.h / 2, 4, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (c.state === "waiting") {
-        ctx.fillStyle = "#fff";
-        ctx.strokeStyle = "#101820";
-        ctx.lineWidth = 3;
-
-        ctx.beginPath();
-        ctx.roundRect(-32, -72, 64, 34, 10);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = "#26382f";
-        ctx.font = "900 15px Trebuchet MS";
-        ctx.textAlign = "center";
-        ctx.fillText(c.bought ? "YUM!" : "JUICE?", 0, -50);
-    }
-
-    ctx.restore();
-}
-
-function shadeColor(hex, percent) {
-    let num = parseInt(hex.replace("#", ""), 16);
-    let r = (num >> 16) + percent;
-    let g = ((num >> 8) & 0x00FF) + percent;
-    let b = (num & 0x0000FF) + percent;
-
-    r = clamp(r, 0, 255);
-    g = clamp(g, 0, 255);
-    b = clamp(b, 0, 255);
-
-    return "#" + (b | (g << 8) | (r << 16)).toString(16).padStart(6, "0");
-}
-
-function drawParticles() {
-    for (const p of particles) {
-        const alpha = p.life / p.maxLife;
-
-        ctx.globalAlpha = alpha;
-        ctx.fillStyle = p.color;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r * alpha, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.globalAlpha = 1;
-    }
-}
-
-function drawCarryZombies() {
-    for (const z of player.carry) {
-        drawZombie(z);
-    }
-}
-
-function drawUI() {
-    const speedCost = 35 + world.upgrades.speed * world.upgrades.speed * 40;
-    const netCost = 35 + world.upgrades.net * world.upgrades.net * 40;
-    const tankCost = 35 + world.upgrades.tank * world.upgrades.tank * 40;
-    const factoryCost = 35 + world.upgrades.factory * world.upgrades.factory * 40;
-
-    ui.innerHTML = `
-        💵 Money: $${world.money}<br>
-        🧃 Juice: ${world.juice}<br>
-        🧟 Zombies in Factory: ${world.caught}<br>
-        🎒 Carrying: ${player.carry.length}/${player.maxCarry}<br>
-        🚗 Sold: ${world.totalSold}<br>
-        <br>
-        Speed Lv.${world.upgrades.speed} - $${speedCost}<br>
-        Net Lv.${world.upgrades.net} - $${netCost}<br>
-        Tank Lv.${world.upgrades.tank} - $${tankCost}<br>
-        Factory Lv.${world.upgrades.factory} - $${factoryCost}
-    `;
-}
-
-function drawFactoryZone() {
-    ctx.save();
-
-    ctx.fillStyle = "rgba(255, 255, 255, 0.14)";
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.55)";
-    ctx.lineWidth = 4;
-    ctx.setLineDash([12, 8]);
-
-    roundedRect(factory.x - factory.w / 2 - 28, factory.y - factory.h / 2 - 28, factory.w + 56, factory.h + 56, 30);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.setLineDash([]);
-    ctx.restore();
-}
-
 function drawDriveThruWindow() {
+    if (game.screen !== "base") return;
+
     ctx.save();
     ctx.translate(factory.x + 120, H - 88);
 
@@ -1127,10 +1363,524 @@ function drawDriveThruWindow() {
     ctx.restore();
 }
 
-function drawAimLine() {
+function drawPlayer() {
+    const bob = Math.sin(player.bob) * 3;
+    const facing = player.facing;
+
     ctx.save();
 
-    ctx.strokeStyle = "rgba(255,255,255,0.45)";
+    ctx.fillStyle = "rgba(0,0,0,0.24)";
+    ctx.beginPath();
+    ctx.ellipse(player.x, player.y + 31, 30, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    drawPlayerArmAndNetGun(bob);
+
+    ctx.translate(player.x, player.y + bob);
+    ctx.scale(facing, 1);
+
+    ctx.strokeStyle = "#1b2b24";
+    ctx.lineWidth = 5;
+
+    ctx.fillStyle = "#29313a";
+    roundedRect(-11, 18, 9, 22, 5);
+    ctx.fill();
+    ctx.stroke();
+
+    roundedRect(4, 18, 9, 22, 5);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffb703";
+    ctx.beginPath();
+    ctx.ellipse(0, 6, 23, 27, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#fb8500";
+    ctx.beginPath();
+    ctx.moveTo(-18, -7);
+    ctx.lineTo(20, -7);
+    ctx.lineTo(12, 20);
+    ctx.lineTo(-10, 24);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#f5c49b";
+    ctx.beginPath();
+    ctx.arc(0, -22, 19, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#26382f";
+    ctx.beginPath();
+    ctx.arc(-4, -35, 18, Math.PI, Math.PI * 2);
+    ctx.lineTo(16, -22);
+    ctx.lineTo(-18, -22);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(7, -24, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#101820";
+    ctx.beginPath();
+    ctx.arc(9, -23, 2.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(5, -14, 6, 0.25, Math.PI - 0.15);
+    ctx.stroke();
+
+    ctx.fillStyle = "#88d8ff";
+    ctx.strokeStyle = "#1b2b24";
+    ctx.lineWidth = 4;
+    roundedRect(-21, -7, 12, 27, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+function drawPlayerArmAndNetGun(bob) {
+    const facing = player.facing;
+
+    const shoulder = {
+        x: player.x + facing * 17,
+        y: player.y + bob + 2
+    };
+
+    const a = Math.atan2(mouse.y - shoulder.y, mouse.x - shoulder.x);
+    const hand = {
+        x: shoulder.x + Math.cos(a) * 27,
+        y: shoulder.y + Math.sin(a) * 27
+    };
+
+    const gunTip = {
+        x: hand.x + Math.cos(a) * 22,
+        y: hand.y + Math.sin(a) * 22
+    };
+
+    ctx.save();
+
+    ctx.strokeStyle = "#f5c49b";
+    ctx.lineWidth = 9;
+    ctx.lineCap = "round";
+
+    ctx.beginPath();
+    ctx.moveTo(shoulder.x, shoulder.y);
+    ctx.lineTo(hand.x, hand.y);
+    ctx.stroke();
+
+    ctx.strokeStyle = "#26382f";
+    ctx.lineWidth = 7;
+
+    ctx.beginPath();
+    ctx.moveTo(hand.x, hand.y);
+    ctx.lineTo(gunTip.x, gunTip.y);
+    ctx.stroke();
+
+    ctx.fillStyle = "#d9f99d";
+    ctx.strokeStyle = "#26382f";
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+    ctx.arc(gunTip.x, gunTip.y, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+function drawZombie(z) {
+    ctx.save();
+    ctx.translate(z.x, z.y);
+
+    const facing = z.facing || 1;
+    const squash = Math.sin(z.squish) * 0.07;
+
+    ctx.scale(facing * (1 + squash), 1 - squash);
+
+    ctx.fillStyle = "rgba(0,0,0,0.27)";
+    ctx.beginPath();
+    ctx.ellipse(0, 42, 27, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    const limp = Math.sin(z.limp);
+
+    ctx.strokeStyle = "#1f3d2b";
+    ctx.lineWidth = 5;
+    ctx.lineCap = "round";
+
+    ctx.beginPath();
+    ctx.moveTo(-10, 24);
+    ctx.lineTo(-17 + limp * 5, 45);
+    ctx.moveTo(8, 24);
+    ctx.lineTo(18 - limp * 5, 45);
+    ctx.stroke();
+
+    ctx.fillStyle = z.pants;
+    ctx.strokeStyle = "#171717";
+    ctx.lineWidth = 4;
+
+    roundedRect(-18, 14, 15, 27, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    roundedRect(3, 14, 15, 27, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = z.shirt;
+    roundedRect(-22, -6, 44, 34, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#8bd346";
+    ctx.strokeStyle = "#1f3d2b";
+    ctx.lineWidth = 5;
+
+    ctx.beginPath();
+    ctx.moveTo(-20, 3);
+    ctx.lineTo(-37, 18 + limp * 5);
+    ctx.moveTo(20, 3);
+    ctx.lineTo(37, 16 - limp * 5);
+    ctx.stroke();
+
+    ctx.fillStyle = z.color;
+    ctx.beginPath();
+    ctx.arc(0, -24, z.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#6abf3a";
+
+    if (z.variant === 0) {
+        ctx.beginPath();
+        ctx.arc(-11, -34, 9, 0, Math.PI * 2);
+        ctx.arc(11, -33, 7, 0, Math.PI * 2);
+        ctx.fill();
+    } else if (z.variant === 1) {
+        ctx.beginPath();
+        ctx.arc(-13, -25, 8, 0, Math.PI * 2);
+        ctx.arc(14, -31, 8, 0, Math.PI * 2);
+        ctx.fill();
+    } else {
+        ctx.beginPath();
+        ctx.ellipse(0, -39, 18, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    ctx.fillStyle = z.hair;
+    ctx.beginPath();
+    ctx.moveTo(-15, -43);
+    ctx.lineTo(-5, -56);
+    ctx.lineTo(0, -42);
+    ctx.lineTo(8, -55);
+    ctx.lineTo(16, -41);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#fff";
+    ctx.strokeStyle = "#1f3d2b";
+    ctx.lineWidth = 2.5;
+
+    ctx.beginPath();
+    ctx.arc(-8, -26, 6, 0, Math.PI * 2);
+    ctx.arc(8, -27, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#101820";
+    ctx.beginPath();
+    ctx.arc(-6, -25, 2, 0, Math.PI * 2);
+    ctx.arc(10, -26, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#2d1b1b";
+    ctx.beginPath();
+    ctx.arc(1, -13, 8, 0.1, Math.PI - 0.1);
+    ctx.fill();
+
+    ctx.fillStyle = "#f8f8f8";
+    ctx.fillRect(-3, -12, 3, 6);
+    ctx.fillRect(3, -12, 3, 5);
+
+    if (z.scared > 0) {
+        ctx.fillStyle = "#fff";
+        ctx.strokeStyle = "#101820";
+        ctx.lineWidth = 3;
+        ctx.font = "900 24px Trebuchet MS";
+        ctx.textAlign = "center";
+        ctx.strokeText("!", 0, -z.r - 44);
+        ctx.fillText("!", 0, -z.r - 44);
+    }
+
+    ctx.restore();
+}
+
+function drawNet(n) {
+    ctx.save();
+    ctx.translate(n.x, n.y);
+    ctx.rotate(n.spin);
+
+    ctx.strokeStyle = "#eaf4f4";
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+    ctx.arc(0, 0, n.r, 0, Math.PI * 2);
+    ctx.stroke();
+
+    for (let i = 0; i < 4; i++) {
+        ctx.rotate(Math.PI / 4);
+
+        ctx.beginPath();
+        ctx.moveTo(-n.r, 0);
+        ctx.lineTo(n.r, 0);
+        ctx.stroke();
+    }
+
+    ctx.restore();
+}
+
+function drawCar(c) {
+    ctx.save();
+
+    const bounce = Math.sin(c.bounce) * 2;
+
+    ctx.translate(c.x, c.y + bounce);
+
+    ctx.fillStyle = "rgba(0,0,0,0.28)";
+    ctx.beginPath();
+    ctx.ellipse(0, 30, c.w * 0.48, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (c.model === "compact") {
+        drawCompactCar(c);
+    } else if (c.model === "sedan") {
+        drawSedanCar(c);
+    } else if (c.model === "van") {
+        drawVanCar(c);
+    } else if (c.model === "pickup") {
+        drawPickupCar(c);
+    } else if (c.model === "sports") {
+        drawSportsCar(c);
+    } else if (c.model === "taxi") {
+        drawTaxiCar(c);
+    }
+
+    drawCarSpeech(c);
+
+    ctx.restore();
+}
+
+function drawCarBodyBase(c, bodyY = 0) {
+    ctx.fillStyle = c.color;
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 5;
+
+    roundedRect(-c.w / 2, -c.h / 2 + bodyY, c.w, c.h, 16);
+    ctx.fill();
+    ctx.stroke();
+}
+
+function drawWheels(c) {
+    ctx.fillStyle = "#101820";
+
+    ctx.beginPath();
+    ctx.arc(-c.w / 3, c.h / 2, 10, 0, Math.PI * 2);
+    ctx.arc(c.w / 3, c.h / 2, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#eaf4f4";
+
+    ctx.beginPath();
+    ctx.arc(-c.w / 3, c.h / 2, 4, 0, Math.PI * 2);
+    ctx.arc(c.w / 3, c.h / 2, 4, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function drawCompactCar(c) {
+    drawCarBodyBase(c);
+
+    ctx.fillStyle = shadeColor(c.color, 25);
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 5;
+
+    ctx.beginPath();
+    ctx.moveTo(-c.w / 4, -c.h / 2);
+    ctx.lineTo(-c.w / 8, -c.h / 2 - 25);
+    ctx.lineTo(c.w / 5, -c.h / 2 - 25);
+    ctx.lineTo(c.w / 3, -c.h / 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#bde0fe";
+    roundedRect(-8, -c.h / 2 - 20, 22, 15, 5);
+    ctx.fill();
+
+    drawWheels(c);
+}
+
+function drawSedanCar(c) {
+    drawCarBodyBase(c);
+
+    ctx.fillStyle = shadeColor(c.color, 25);
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 5;
+
+    roundedRect(-c.w / 5, -c.h / 2 - 20, c.w * 0.5, 30, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#bde0fe";
+    roundedRect(-c.w / 10, -c.h / 2 - 14, c.w * 0.18, 18, 5);
+    ctx.fill();
+
+    roundedRect(c.w / 10, -c.h / 2 - 14, c.w * 0.18, 18, 5);
+    ctx.fill();
+
+    drawWheels(c);
+}
+
+function drawVanCar(c) {
+    drawCarBodyBase(c, -5);
+
+    ctx.fillStyle = shadeColor(c.color, 20);
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 5;
+
+    roundedRect(-c.w / 2 + 16, -c.h / 2 - 32, c.w - 34, 42, 14);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#bde0fe";
+
+    for (let i = 0; i < 3; i++) {
+        roundedRect(-c.w / 2 + 28 + i * 34, -c.h / 2 - 23, 23, 20, 5);
+        ctx.fill();
+    }
+
+    drawWheels(c);
+}
+
+function drawPickupCar(c) {
+    drawCarBodyBase(c);
+
+    ctx.fillStyle = shadeColor(c.color, 25);
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 5;
+
+    roundedRect(-c.w / 2 + 16, -c.h / 2 - 25, c.w * 0.42, 35, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#2e383b";
+    roundedRect(10, -c.h / 2 - 4, c.w / 2 - 20, 28, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#bde0fe";
+    roundedRect(-c.w / 2 + 30, -c.h / 2 - 18, 24, 18, 5);
+    ctx.fill();
+
+    drawWheels(c);
+}
+
+function drawSportsCar(c) {
+    ctx.fillStyle = c.color;
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 5;
+
+    ctx.beginPath();
+    ctx.moveTo(-c.w / 2, 5);
+    ctx.lineTo(-c.w / 3, -c.h / 2);
+    ctx.lineTo(c.w / 8, -c.h / 2 - 16);
+    ctx.lineTo(c.w / 2, 0);
+    ctx.lineTo(c.w / 2 - 10, c.h / 2);
+    ctx.lineTo(-c.w / 2 + 10, c.h / 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#bde0fe";
+    roundedRect(-5, -c.h / 2 - 8, 36, 15, 5);
+    ctx.fill();
+
+    drawWheels(c);
+}
+
+function drawTaxiCar(c) {
+    drawSedanCar(c);
+
+    ctx.fillStyle = "#101820";
+    ctx.font = "900 15px Trebuchet MS";
+    ctx.textAlign = "center";
+    ctx.fillText("TAXI", 0, 4);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 3;
+
+    roundedRect(-18, -c.h / 2 - 34, 36, 15, 5);
+    ctx.fill();
+    ctx.stroke();
+}
+
+function drawCarSpeech(c) {
+    if (c.state !== "waiting") return;
+
+    ctx.fillStyle = "#fff";
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+    ctx.roundRect(-35, -82, 70, 38, 10);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#26382f";
+    ctx.font = "900 15px Trebuchet MS";
+    ctx.textAlign = "center";
+    ctx.fillText(c.bought ? "YUM!" : "JUICE?", 0, -58);
+}
+
+function drawParticles() {
+    for (const p of particles) {
+        const alpha = p.life / p.maxLife;
+
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * alpha, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = 1;
+    }
+}
+
+function drawCarryZombies() {
+    for (const z of player.carry) {
+        drawZombie(z);
+    }
+}
+
+function drawAimLine() {
+    if (game.screen !== "forest") return;
+
+    ctx.save();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.35)";
     ctx.lineWidth = 4;
     ctx.setLineDash([10, 10]);
 
@@ -1144,7 +1894,42 @@ function drawAimLine() {
     ctx.restore();
 }
 
+function drawFade() {
+    if (game.fade <= 0) return;
+
+    ctx.save();
+    ctx.globalAlpha = game.fade;
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+}
+
+function drawUI() {
+    const speedCost = 35 + world.upgrades.speed * world.upgrades.speed * 40;
+    const netCost = 35 + world.upgrades.net * world.upgrades.net * 40;
+    const tankCost = 35 + world.upgrades.tank * world.upgrades.tank * 40;
+    const factoryCost = 35 + world.upgrades.factory * world.upgrades.factory * 40;
+
+    const area = game.screen === "base" ? "Juice Base" : "Zombie Forest";
+
+    ui.innerHTML = `
+        📍 Area: ${area}<br>
+        💵 Money: $${world.money}<br>
+        🧃 Juice: ${world.juice}<br>
+        🧟 Zombies in Factory: ${world.caught}<br>
+        🎒 Carrying: ${player.carry.length}/${player.maxCarry}<br>
+        🚗 Sold: ${world.totalSold}<br>
+        <br>
+        Speed Lv.${world.upgrades.speed} - $${speedCost}<br>
+        Net Lv.${world.upgrades.net} - $${netCost}<br>
+        Tank Lv.${world.upgrades.tank} - $${tankCost}<br>
+        Factory Lv.${world.upgrades.factory} - $${factoryCost}
+    `;
+}
+
 function update() {
+    updateTransition();
     updatePlayer();
     updateZombies();
     updateNets();
@@ -1152,26 +1937,31 @@ function update() {
     updateCars();
     updateParticles();
     updateSpawning();
+    updateFireflies();
 }
 
 function draw() {
     drawWorld();
+
     drawFactoryZone();
     drawFactory();
     drawDriveThruWindow();
 
-    for (const c of cars) drawCar(c);
+    if (game.screen === "base") {
+        for (const c of cars) drawCar(c);
+    }
 
-    for (const z of zombies) drawZombie(z);
+    if (game.screen === "forest") {
+        for (const z of zombies) drawZombie(z);
+        for (const n of nets) drawNet(n);
+    }
 
     drawCarryZombies();
-
-    for (const n of nets) drawNet(n);
-
     drawAimLine();
     drawPlayer();
     drawParticles();
     drawUI();
+    drawFade();
 }
 
 function loop() {
