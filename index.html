@@ -2,19 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <title>Cartoon Tugboat Ocean</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>3D Gladiator Arena - Armory Update</title>
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&display=swap');
-
-    html,
-    body {
+    html, body {
       margin: 0;
+      padding: 0;
       overflow: hidden;
-      background: #120b08;
-      font-family: "Cinzel", Georgia, serif;
-      user-select: none;
+      background: #9fe7ff;
+      font-family: "Trebuchet MS", Arial, sans-serif;
     }
 
     canvas {
@@ -23,2553 +20,926 @@
 
     #ui {
       position: fixed;
-      inset: 0;
-      pointer-events: none;
-      color: #f7e5bd;
-      z-index: 10;
-    }
-
-    #topBar {
-      position: absolute;
       top: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(920px, 92vw);
-      display: flex;
-      gap: 28px;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 18px;
-      border: 3px solid #8a5a24;
-      border-radius: 12px;
-      background:
-        linear-gradient(135deg, rgba(59, 31, 14, 0.92), rgba(16, 10, 7, 0.94)),
-        radial-gradient(circle at top, rgba(255, 209, 137, 0.16), transparent 55%);
-      box-shadow:
-        0 0 0 2px rgba(20, 10, 3, 0.9),
-        0 10px 28px rgba(0,0,0,0.65),
-        inset 0 0 25px rgba(255, 174, 72, 0.08);
+      left: 18px;
+      color: white;
+      text-shadow: 0 3px 0 rgba(0,0,0,0.25);
+      z-index: 10;
+      user-select: none;
     }
 
-    #topBar::before,
-    #topBar::after {
-      content: "⚔";
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 30px;
-      color: #d7a54f;
-      text-shadow: 0 2px 6px #000;
-    }
-
-    #topBar::before {
-      left: -24px;
-    }
-
-    #topBar::after {
-      right: -24px;
-    }
-
-    .healthBox {
-      width: 380px;
-      max-width: 42vw;
-    }
-
-    .label {
-      font-size: 15px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-      color: #ffe7ad;
-      text-shadow: 0 2px 4px #000;
-      font-weight: 900;
-      min-height: 19px;
-    }
-
-    .barOuter {
-      height: 22px;
-      border: 2px solid #b88a44;
-      background: linear-gradient(#160c07, #2a170d);
-      border-radius: 4px;
-      overflow: hidden;
-      box-shadow:
-        0 0 0 2px rgba(28, 15, 7, 0.9),
-        inset 0 2px 8px rgba(0,0,0,0.85),
-        0 2px 12px rgba(0,0,0,0.55);
-      position: relative;
-    }
-
-    .barOuter::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.11) 50%, transparent 100%);
-      pointer-events: none;
-    }
-
-    .barInner {
-      height: 100%;
-      width: 100%;
-      transition: width 0.15s ease;
-    }
-
-    #playerHealth {
-      background: linear-gradient(90deg, #2f8f31, #9ccc42, #f4d35e);
-    }
-
-    #enemyHealth {
-      background: linear-gradient(90deg, #7a0b0b, #c62828, #ff8a2b);
-    }
-
-    #bloodCoinsWrap {
-      position: absolute;
-      top: 108px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 9px 18px;
-      border: 2px solid #b98437;
-      border-radius: 999px;
-      background:
-        radial-gradient(circle at top, rgba(255, 215, 115, 0.2), transparent 65%),
-        linear-gradient(135deg, rgba(58, 29, 12, 0.92), rgba(14, 8, 5, 0.92));
-      box-shadow:
-        0 0 0 2px rgba(30, 13, 4, 0.85),
-        0 8px 22px rgba(0,0,0,0.55),
-        inset 0 0 16px rgba(255, 190, 58, 0.12);
-      font-size: 16px;
-      font-weight: 900;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-      color: #ffd86f;
-      text-shadow: 0 2px 5px #000;
-    }
-
-    #loadoutWrap {
-      position: absolute;
-      top: 108px;
-      right: 22px;
-      max-width: 280px;
-      padding: 10px 14px;
-      border: 2px solid #b98437;
-      border-radius: 10px;
-      background:
-        radial-gradient(circle at top, rgba(255, 215, 115, 0.14), transparent 70%),
-        linear-gradient(135deg, rgba(58, 29, 12, 0.88), rgba(14, 8, 5, 0.9));
-      box-shadow:
-        0 0 0 2px rgba(30, 13, 4, 0.8),
-        0 8px 22px rgba(0,0,0,0.5),
-        inset 0 0 16px rgba(255, 190, 58, 0.1);
-      font-size: 12px;
+    #title {
+      font-size: 34px;
       font-weight: 900;
       letter-spacing: 1px;
-      text-transform: uppercase;
-      color: #ffe1a1;
-      text-shadow: 0 2px 5px #000;
-      text-align: right;
     }
 
-    #loadoutWrap span {
-      display: block;
-      color: #ffd86f;
-      margin-top: 3px;
-    }
-
-    #staminaWrap {
-      position: absolute;
-      left: 50%;
-      bottom: 24px;
-      transform: translateX(-50%);
-      width: 280px;
-      padding: 10px 12px;
-      background: linear-gradient(135deg, rgba(50, 27, 13, 0.88), rgba(14, 9, 6, 0.88));
-      border: 2px solid #8f6029;
-      border-radius: 8px;
-      box-shadow:
-        0 0 0 2px rgba(28, 13, 5, 0.8),
-        0 8px 22px rgba(0,0,0,0.45);
-    }
-
-    #stamina {
-      background: linear-gradient(90deg, #276ca8, #60d3ff, #f8ffff);
-    }
-
-    #blockText {
-      text-align: center;
+    #stats {
       margin-top: 8px;
-      font-size: 12px;
-      opacity: 0.95;
-      letter-spacing: 1.5px;
-      text-shadow: 0 2px 4px black;
-      color: #f7e5bd;
-      text-transform: uppercase;
-      font-weight: 700;
+      font-size: 20px;
+      font-weight: 800;
     }
 
-    #messagePanel {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%) scale(0.96);
-      width: min(760px, 92vw);
-      max-height: 88vh;
-      overflow-y: auto;
-      padding: 26px 28px 24px;
-      text-align: center;
-      opacity: 0;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      background:
-        radial-gradient(circle at top, rgba(255, 214, 132, 0.18), transparent 55%),
-        linear-gradient(135deg, rgba(65, 34, 14, 0.96), rgba(19, 11, 6, 0.98));
-      border: 4px ridge #b98437;
-      border-radius: 16px;
-      box-shadow:
-        0 0 0 3px rgba(34, 16, 5, 0.95),
-        0 18px 50px rgba(0,0,0,0.75),
-        inset 0 0 26px rgba(255, 177, 63, 0.12);
-      pointer-events: none;
-    }
-
-    #messagePanel.show {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-      pointer-events: auto;
-    }
-
-    #message {
-      font-size: clamp(40px, 7vw, 82px);
-      font-weight: 900;
-      letter-spacing: 5px;
-      text-transform: uppercase;
-      color: #ffe1a1;
-      text-shadow:
-        0 4px 0 #4a1b0a,
-        0 8px 18px #000;
-      margin-bottom: 8px;
-    }
-
-    #subMessage {
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      color: #f7d894;
-      text-shadow: 0 2px 5px #000;
-      margin-bottom: 18px;
-      text-transform: uppercase;
-    }
-
-    #restartBtn,
-    .shopButton {
-      pointer-events: auto;
-      cursor: pointer;
-      border: 3px solid #d6a14a;
-      border-radius: 8px;
-      background: linear-gradient(#8d5520, #4d260d);
-      color: #ffe7ad;
-      font-family: "Cinzel", Georgia, serif;
-      font-size: 15px;
-      font-weight: 900;
-      letter-spacing: 1.4px;
-      text-transform: uppercase;
-      padding: 11px 16px;
-      box-shadow:
-        0 5px 0 #251006,
-        0 10px 18px rgba(0,0,0,0.5),
-        inset 0 2px 0 rgba(255,255,255,0.16);
-    }
-
-    #restartBtn:hover,
-    .shopButton:hover:not(:disabled) {
-      filter: brightness(1.18);
-      transform: translateY(-1px);
-    }
-
-    #restartBtn:active,
-    .shopButton:active:not(:disabled) {
-      transform: translateY(3px);
-      box-shadow:
-        0 2px 0 #251006,
-        0 5px 12px rgba(0,0,0,0.5),
-        inset 0 2px 0 rgba(255,255,255,0.16);
-    }
-
-    .shopButton {
-      width: 100%;
-      margin-top: 8px;
-      font-size: 12px;
-      padding: 8px 10px;
-      border-width: 2px;
-    }
-
-    .shopButton:disabled {
-      cursor: default;
-      opacity: 0.55;
-      filter: grayscale(0.25);
-    }
-
-    #shopPanel {
-      margin-top: 18px;
-      border-top: 2px solid rgba(214, 161, 74, 0.5);
-      padding-top: 16px;
-    }
-
-    #shopTitle {
-      color: #ffd86f;
-      font-size: 22px;
-      font-weight: 900;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      text-shadow: 0 3px 8px #000;
-      margin-bottom: 10px;
-    }
-
-    #shopCoinsLine {
-      margin-bottom: 14px;
-      font-size: 14px;
-      color: #ffe7ad;
-      text-transform: uppercase;
-      font-weight: 900;
-      letter-spacing: 1px;
-    }
-
-    .shopGrid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(220px, 1fr));
-      gap: 12px;
-      max-width: 680px;
-      margin: 0 auto 16px;
-    }
-
-    .shopColumn {
-      border: 2px solid rgba(184, 138, 68, 0.72);
-      border-radius: 10px;
-      background: linear-gradient(135deg, rgba(32, 16, 7, 0.86), rgba(78, 41, 17, 0.74));
-      padding: 12px;
-      box-shadow: inset 0 0 18px rgba(255, 190, 58, 0.07);
-    }
-
-    .shopColumn h3 {
-      margin: 0 0 9px;
-      font-size: 15px;
-      color: #ffe1a1;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      text-shadow: 0 2px 5px #000;
-    }
-
-    .shopCard {
-      border: 2px solid rgba(93, 47, 17, 0.95);
-      border-radius: 8px;
-      background: linear-gradient(#7a4318, #34180a);
-      padding: 10px;
-      margin-bottom: 9px;
-      text-align: left;
-      box-shadow:
-        0 4px 0 rgba(20, 8, 3, 0.88),
-        inset 0 1px 0 rgba(255,255,255,0.12);
-    }
-
-    .shopCard.equipped {
-      border-color: #ffd86f;
-      box-shadow:
-        0 0 16px rgba(255, 216, 111, 0.25),
-        0 4px 0 rgba(20, 8, 3, 0.88),
-        inset 0 1px 0 rgba(255,255,255,0.16);
-    }
-
-    .shopCardName {
-      font-size: 14px;
-      font-weight: 900;
-      letter-spacing: 1px;
-      color: #ffd86f;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-      text-shadow: 0 2px 4px #000;
-    }
-
-    .shopCardStats {
-      font-size: 11px;
-      line-height: 1.45;
-      color: #f7d894;
-      min-height: 32px;
-      text-shadow: 0 1px 3px #000;
-    }
-
-    #shopHint {
-      font-size: 11px;
-      line-height: 1.45;
-      color: #d9bb7e;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      max-width: 620px;
-      margin: 0 auto 16px;
-    }
-
-    #damageFlash {
+    #help {
       position: fixed;
-      inset: 0;
-      background: radial-gradient(circle, rgba(255,0,0,0.18), rgba(120,0,0,0.4));
-      opacity: 0;
-      transition: opacity 0.12s ease;
-      pointer-events: none;
-      z-index: 9;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.8);
+      border: 4px solid rgba(0,0,0,0.18);
+      border-radius: 20px;
+      padding: 12px 20px;
+      color: #16627a;
+      font-size: 17px;
+      font-weight: 900;
+      box-shadow: 0 8px 0 rgba(0,0,0,0.12);
+      z-index: 10;
+      user-select: none;
     }
 
-    @media (max-width: 740px) {
-      .shopGrid {
-        grid-template-columns: 1fr;
-      }
-
-      #loadoutWrap {
-        top: 150px;
-        right: 50%;
-        transform: translateX(50%);
-        text-align: center;
-      }
+    #crosshair {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,0.8);
+      box-shadow: 0 0 0 4px rgba(0,0,0,0.15);
+      pointer-events: none;
+      z-index: 10;
     }
   </style>
 </head>
-
 <body>
-  <div id="damageFlash"></div>
-
   <div id="ui">
-    <div id="topBar">
-      <div class="healthBox">
-        <div class="label">Gladiator</div>
-        <div class="barOuter">
-          <div id="playerHealth" class="barInner"></div>
-        </div>
-      </div>
-
-      <div class="healthBox">
-        <div id="enemyNameLabel" class="label" style="text-align:right;">Opponent</div>
-        <div class="barOuter">
-          <div id="enemyHealth" class="barInner"></div>
-        </div>
-      </div>
-    </div>
-
-    <div id="bloodCoinsWrap">BloodCoins: <span id="bloodCoinsCount">0</span></div>
-
-    <div id="loadoutWrap">
-      Weapon <span id="weaponLoadout">Bronze Gladius</span>
-      Shield <span id="shieldLoadout">Wooden Round Shield</span>
-    </div>
-
-    <div id="staminaWrap">
-      <div class="barOuter">
-        <div id="stamina" class="barInner"></div>
-      </div>
-      <div id="blockText">Shield stamina</div>
-    </div>
-
-    <div id="messagePanel">
-      <div id="message"></div>
-      <div id="subMessage"></div>
-
-      <div id="shopPanel">
-        <div id="shopTitle">Arena Armory</div>
-        <div id="shopCoinsLine">BloodCoins: <span id="shopCoins">0</span></div>
-
-        <div class="shopGrid">
-          <div class="shopColumn">
-            <h3>Weapons</h3>
-            <div id="weaponShop"></div>
-          </div>
-
-          <div class="shopColumn">
-            <h3>Shields</h3>
-            <div id="shieldShop"></div>
-          </div>
-        </div>
-
-        <div id="shopHint">
-          Buy gear with BloodCoins. Purchased gear stays unlocked after refresh.
-          Weapons change damage, reach, swing speed, and appearance.
-          Shields change block power, stamina drain, and appearance.
-        </div>
-      </div>
-
-      <button id="restartBtn">Fight Again</button>
-    </div>
+    <div id="title">TUGBOAT TIDES</div>
+    <div id="stats">Coins: <span id="coins">0</span></div>
   </div>
+
+  <div id="help">
+    WASD / Arrow Keys to sail • Shift to boost • Collect coins
+  </div>
+
+  <div id="crosshair"></div>
 
   <script type="module">
     import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
 
-    let scene;
-    let camera;
-    let renderer;
-    let clock;
+    let scene, camera, renderer;
+    let boat, boatBody;
+    let water;
+    let clock = new THREE.Clock();
 
-    let player;
-    let enemy;
+    const keys = {};
+    let coins = 0;
 
-    let keys = {};
-    let mouseLocked = false;
-
-    let yaw = 0;
-    let pitch = 0;
-    let cameraRoll = 0;
-
-    let playerHP = 100;
-    let enemyHP = 100;
-    let stamina = 100;
-    let bloodCoins = 0;
-
-    let playerAttackTimer = 0;
-    let playerAttackCooldown = 0;
-    let enemyAttackTimer = 0;
-    let enemyAttackCooldown = 1.2;
-    let enemyHitDone = false;
-    let playerHitDone = false;
-
-    let isBlocking = false;
-    let gameOver = false;
-    let currentEnemyName = "";
-
-    let enemyDeathTimer = 0;
-    const enemyDeathDuration = 1.55;
-    let pendingVictoryText = "";
-    let pendingVictoryDetail = "";
-
-    const ARENA_RADIUS = 28;
-    const PLAYER_SPEED = 7.2;
-    const ENEMY_SPEED = 3.36;
-    const ENEMY_ATTACK_DURATION = 1.25;
-    const PLAYER_ATTACK_DURATION = 0.624;
-
-    const particles = [];
-    const floatingTexts = [];
-    const bloodDecals = [];
-
-    const opponentNames = [
-      "Marcus Bloodfang",
-      "Titus Ironjaw",
-      "Cassius the Cruel",
-      "Brutus Stormblade",
-      "Lucius Skullsplitter",
-      "Gaius Redmane",
-      "Drusus the Unbroken",
-      "Flavius Nightwolf",
-      "Octavius Bonebreaker",
-      "Aurelius Ashborn",
-      "Valerius Doomhand",
-      "Severus the Savage",
-      "Maximus Blackshield",
-      "Nero Flameheart",
-      "Magnus the Merciless",
-      "Rufus Steelborn",
-      "Corvus Sandstrider",
-      "Decimus the Viper",
-      "Atticus Grimblade",
-      "Varrus Thunderfist"
-    ];
-
-    const weapons = [
-      {
-        id: "bronze_gladius",
-        name: "Bronze Gladius",
-        cost: 0,
-        damage: 1,
-        reach: 1,
-        cooldown: 1,
-        bladeColor: 0xdedede,
-        guardColor: 0xd7d7d7,
-        length: 1.55,
-        width: 0.13,
-        stats: "Balanced starter blade."
-      },
-      {
-        id: "iron_longsword",
-        name: "Iron Longsword",
-        cost: 75,
-        damage: 1.25,
-        reach: 1.22,
-        cooldown: 1.08,
-        bladeColor: 0xcfd6df,
-        guardColor: 0x9c9c9c,
-        length: 1.95,
-        width: 0.14,
-        stats: "+25% damage, +22% reach, slightly slower."
-      },
-      {
-        id: "crimson_sabre",
-        name: "Crimson Sabre",
-        cost: 140,
-        damage: 1.12,
-        reach: 1.1,
-        cooldown: 0.72,
-        bladeColor: 0xffd3c0,
-        guardColor: 0xb32222,
-        length: 1.72,
-        width: 0.12,
-        stats: "Fast attacks, good reach, lower damage."
-      },
-      {
-        id: "golden_executioner",
-        name: "Golden Executioner",
-        cost: 260,
-        damage: 1.75,
-        reach: 1.36,
-        cooldown: 1.28,
-        bladeColor: 0xffdf76,
-        guardColor: 0xc98a1c,
-        length: 2.15,
-        width: 0.18,
-        stats: "Huge damage and reach, very heavy."
-      }
-    ];
-
-    const shields = [
-      {
-        id: "wood_round",
-        name: "Wooden Round Shield",
-        cost: 0,
-        blockDamage: 0.25,
-        staminaDrain: 1,
-        staminaBlockCost: 1,
-        radius: 0.696,
-        color: 0x5b2619,
-        rimColor: 0xd7d7d7,
-        stats: "Balanced starter shield."
-      },
-      {
-        id: "iron_tower",
-        name: "Iron Tower Shield",
-        cost: 90,
-        blockDamage: 0.15,
-        staminaDrain: 1.28,
-        staminaBlockCost: 1.25,
-        radius: 0.86,
-        color: 0x3f4650,
-        rimColor: 0xc8c8c8,
-        stats: "Blocks more damage, drains more stamina."
-      },
-      {
-        id: "spiked_round",
-        name: "Spiked Round Shield",
-        cost: 150,
-        blockDamage: 0.22,
-        staminaDrain: 0.88,
-        staminaBlockCost: 0.85,
-        radius: 0.74,
-        color: 0x7d1818,
-        rimColor: 0xffd86f,
-        stats: "Efficient blocking and lower stamina cost."
-      },
-      {
-        id: "aegis_of_mars",
-        name: "Aegis of Mars",
-        cost: 300,
-        blockDamage: 0.08,
-        staminaDrain: 0.78,
-        staminaBlockCost: 0.7,
-        radius: 0.92,
-        color: 0x271509,
-        rimColor: 0xffb638,
-        stats: "Massive block power and stamina efficiency."
-      }
-    ];
-
-    const defaultSave = {
-      coins: 0,
-      ownedWeapons: ["bronze_gladius"],
-      ownedShields: ["wood_round"],
-      equippedWeapon: "bronze_gladius",
-      equippedShield: "wood_round"
+    const boatState = {
+      position: new THREE.Vector3(0, 0, 0),
+      velocity: new THREE.Vector3(0, 0, 0),
+      angle: 0,
+      angularVelocity: 0,
+      speed: 0
     };
 
-    let saveData = loadSave();
+    const waterSize = 260;
+    const waveGrid = 150;
+    const waterVertices = [];
 
-    const uiPlayerHealth = document.getElementById("playerHealth");
-    const uiEnemyHealth = document.getElementById("enemyHealth");
-    const uiStamina = document.getElementById("stamina");
-    const uiBloodCoins = document.getElementById("bloodCoinsCount");
-    const enemyNameLabel = document.getElementById("enemyNameLabel");
-    const msg = document.getElementById("message");
-    const subMessage = document.getElementById("subMessage");
-    const messagePanel = document.getElementById("messagePanel");
-    const restartBtn = document.getElementById("restartBtn");
-    const damageFlash = document.getElementById("damageFlash");
-    const weaponShop = document.getElementById("weaponShop");
-    const shieldShop = document.getElementById("shieldShop");
-    const uiShopCoins = document.getElementById("shopCoins");
-    const weaponLoadout = document.getElementById("weaponLoadout");
-    const shieldLoadout = document.getElementById("shieldLoadout");
+    const wakeParticles = [];
+    const splashParticles = [];
+    const coinObjects = [];
+    const floatingProps = [];
+
+    const statsCoins = document.getElementById("coins");
 
     init();
     animate();
 
-    function loadSave() {
-      try {
-        const raw = localStorage.getItem("gladiatorArmorySave");
-        if (!raw) return structuredClone(defaultSave);
-
-        const parsed = JSON.parse(raw);
-        return {
-          ...structuredClone(defaultSave),
-          ...parsed,
-          ownedWeapons: parsed.ownedWeapons || ["bronze_gladius"],
-          ownedShields: parsed.ownedShields || ["wood_round"]
-        };
-      } catch {
-        return structuredClone(defaultSave);
-      }
-    }
-
-    function saveGame() {
-      saveData.coins = bloodCoins;
-      localStorage.setItem("gladiatorArmorySave", JSON.stringify(saveData));
-    }
-
-    function getEquippedWeapon() {
-      return weapons.find(w => w.id === saveData.equippedWeapon) || weapons[0];
-    }
-
-    function getEquippedShield() {
-      return shields.find(s => s.id === saveData.equippedShield) || shields[0];
-    }
-
-    function ownsWeapon(id) {
-      return saveData.ownedWeapons.includes(id);
-    }
-
-    function ownsShield(id) {
-      return saveData.ownedShields.includes(id);
-    }
-
-    function buyOrEquipWeapon(id) {
-      const item = weapons.find(w => w.id === id);
-      if (!item) return;
-
-      if (ownsWeapon(id)) {
-        saveData.equippedWeapon = id;
-      } else if (bloodCoins >= item.cost) {
-        bloodCoins -= item.cost;
-        saveData.ownedWeapons.push(id);
-        saveData.equippedWeapon = id;
-        createFloatingText("-" + item.cost + " BloodCoins", player.group.position.clone().add(new THREE.Vector3(0, 3.2, 0)), 0xffd86f);
-      }
-
-      saveGame();
-      applyWeaponVisuals(player, getEquippedWeapon());
-      renderShop();
-      updateUI();
-    }
-
-    function buyOrEquipShield(id) {
-      const item = shields.find(s => s.id === id);
-      if (!item) return;
-
-      if (ownsShield(id)) {
-        saveData.equippedShield = id;
-      } else if (bloodCoins >= item.cost) {
-        bloodCoins -= item.cost;
-        saveData.ownedShields.push(id);
-        saveData.equippedShield = id;
-        createFloatingText("-" + item.cost + " BloodCoins", player.group.position.clone().add(new THREE.Vector3(0, 3.2, 0)), 0xffd86f);
-      }
-
-      saveGame();
-      applyShieldVisuals(player, getEquippedShield());
-      renderShop();
-      updateUI();
-    }
-
-    function renderShop() {
-      weaponShop.innerHTML = "";
-      shieldShop.innerHTML = "";
-      uiShopCoins.textContent = bloodCoins;
-
-      for (const item of weapons) {
-        const owned = ownsWeapon(item.id);
-        const equipped = saveData.equippedWeapon === item.id;
-
-        const card = document.createElement("div");
-        card.className = "shopCard" + (equipped ? " equipped" : "");
-
-        const buttonText = equipped
-          ? "Equipped"
-          : owned
-            ? "Equip"
-            : "Buy - " + item.cost + " BC";
-
-        card.innerHTML = `
-          <div class="shopCardName">${item.name}</div>
-          <div class="shopCardStats">${item.stats}</div>
-          <button class="shopButton" ${equipped || (!owned && bloodCoins < item.cost) ? "disabled" : ""}>
-            ${buttonText}
-          </button>
-        `;
-
-        const button = card.querySelector("button");
-        button.addEventListener("click", () => buyOrEquipWeapon(item.id));
-
-        weaponShop.appendChild(card);
-      }
-
-      for (const item of shields) {
-        const owned = ownsShield(item.id);
-        const equipped = saveData.equippedShield === item.id;
-
-        const card = document.createElement("div");
-        card.className = "shopCard" + (equipped ? " equipped" : "");
-
-        const buttonText = equipped
-          ? "Equipped"
-          : owned
-            ? "Equip"
-            : "Buy - " + item.cost + " BC";
-
-        card.innerHTML = `
-          <div class="shopCardName">${item.name}</div>
-          <div class="shopCardStats">${item.stats}</div>
-          <button class="shopButton" ${equipped || (!owned && bloodCoins < item.cost) ? "disabled" : ""}>
-            ${buttonText}
-          </button>
-        `;
-
-        const button = card.querySelector("button");
-        button.addEventListener("click", () => buyOrEquipShield(item.id));
-
-        shieldShop.appendChild(card);
-      }
-    }
-
-    function randomOpponentName() {
-      return opponentNames[Math.floor(Math.random() * opponentNames.length)];
-    }
-
-    function setNewOpponentName() {
-      currentEnemyName = randomOpponentName();
-      enemyNameLabel.textContent = currentEnemyName;
-    }
-
-    function createToonGradient() {
-      const canvas = document.createElement("canvas");
-      canvas.width = 4;
-      canvas.height = 1;
-
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#222";
-      ctx.fillRect(0, 0, 1, 1);
-      ctx.fillStyle = "#777";
-      ctx.fillRect(1, 0, 1, 1);
-      ctx.fillStyle = "#bbb";
-      ctx.fillRect(2, 0, 1, 1);
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(3, 0, 1, 1);
-
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.minFilter = THREE.NearestFilter;
-      texture.magFilter = THREE.NearestFilter;
-      return texture;
-    }
-
-    function toonMaterial(color, extra = {}) {
-      return new THREE.MeshToonMaterial({
-        color,
-        gradientMap: createToonGradient(),
-        ...extra
-      });
-    }
-
-    function addOutline(mesh, scale = 1.045) {
-      if (!mesh.geometry) return;
-
-      const outline = new THREE.Mesh(
-        mesh.geometry,
-        new THREE.MeshBasicMaterial({
-          color: 0x160a05,
-          side: THREE.BackSide
-        })
-      );
-
-      outline.scale.copy(mesh.scale).multiplyScalar(scale);
-      mesh.add(outline);
-    }
-
-    function createSandyTexture() {
-      const canvas = document.createElement("canvas");
-      canvas.width = 512;
-      canvas.height = 512;
-
-      const ctx = canvas.getContext("2d");
-      const baseGradient = ctx.createRadialGradient(256, 256, 20, 256, 256, 390);
-      baseGradient.addColorStop(0, "#b98248");
-      baseGradient.addColorStop(0.45, "#9d6838");
-      baseGradient.addColorStop(1, "#6f4428");
-
-      ctx.fillStyle = baseGradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      for (let i = 0; i < 9000; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const r = Math.random() * 1.55 + 0.25;
-        const shade = Math.floor(105 + Math.random() * 95);
-        const alpha = 0.08 + Math.random() * 0.18;
-
-        ctx.fillStyle = `rgba(${shade + 22}, ${shade + 2}, ${Math.max(25, shade - 36)}, ${alpha})`;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      for (let i = 0; i < 180; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const length = 18 + Math.random() * 55;
-        const angle = Math.random() * Math.PI * 2;
-
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(angle);
-        ctx.strokeStyle = Math.random() > 0.5
-          ? "rgba(62, 36, 21, 0.18)"
-          : "rgba(225, 170, 100, 0.14)";
-        ctx.lineWidth = 1 + Math.random() * 2.5;
-        ctx.beginPath();
-        ctx.moveTo(-length * 0.5, 0);
-        ctx.quadraticCurveTo(0, Math.random() * 12 - 6, length * 0.5, 0);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.wrapS = THREE.RepeatWrapping;
-      texture.wrapT = THREE.RepeatWrapping;
-      texture.repeat.set(8, 8);
-      texture.magFilter = THREE.NearestFilter;
-      texture.minFilter = THREE.NearestMipmapNearestFilter;
-      texture.colorSpace = THREE.SRGBColorSpace;
-
-      return texture;
-    }
-
-    function createStoneTexture() {
-      const canvas = document.createElement("canvas");
-      canvas.width = 512;
-      canvas.height = 512;
-
-      const ctx = canvas.getContext("2d");
-      const gradient = ctx.createLinearGradient(0, 0, 512, 512);
-      gradient.addColorStop(0, "#8f806d");
-      gradient.addColorStop(0.45, "#625846");
-      gradient.addColorStop(1, "#3d3329");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, 512, 512);
-
-      for (let i = 0; i < 6500; i++) {
-        const x = Math.random() * 512;
-        const y = Math.random() * 512;
-        const shade = Math.floor(70 + Math.random() * 95);
-        const alpha = 0.06 + Math.random() * 0.22;
-
-        ctx.fillStyle = `rgba(${shade}, ${shade - 4}, ${Math.max(35, shade - 12)}, ${alpha})`;
-        ctx.fillRect(x, y, 1 + Math.random() * 3, 1 + Math.random() * 3);
-      }
-
-      for (let i = 0; i < 90; i++) {
-        const x = Math.random() * 512;
-        const y = Math.random() * 512;
-        const length = 35 + Math.random() * 140;
-        const angle = Math.random() * Math.PI * 2;
-
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(angle);
-        ctx.strokeStyle = Math.random() > 0.5
-          ? "rgba(20, 17, 14, 0.22)"
-          : "rgba(210, 198, 176, 0.13)";
-        ctx.lineWidth = 1 + Math.random() * 3;
-        ctx.beginPath();
-        ctx.moveTo(-length / 2, 0);
-        ctx.quadraticCurveTo(0, Math.random() * 18 - 9, length / 2, Math.random() * 12 - 6);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.wrapS = THREE.RepeatWrapping;
-      texture.wrapT = THREE.RepeatWrapping;
-      texture.repeat.set(1.4, 1.9);
-      texture.magFilter = THREE.NearestFilter;
-      texture.minFilter = THREE.NearestMipmapNearestFilter;
-      texture.colorSpace = THREE.SRGBColorSpace;
-
-      return texture;
-    }
-
     function init() {
-      bloodCoins = saveData.coins || 0;
-
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x120b08);
-      scene.fog = new THREE.Fog(0x120b08, 26, 70);
-
-      clock = new THREE.Clock();
+      scene.background = new THREE.Color(0x9fe7ff);
+      scene.fog = new THREE.Fog(0x9fe7ff, 70, 210);
 
       camera = new THREE.PerspectiveCamera(
-        70,
+        60,
         window.innerWidth / window.innerHeight,
         0.1,
         1000
       );
 
-      renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer = new THREE.WebGLRenderer({
+        antialias: true
+      });
+
       renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       document.body.appendChild(renderer.domElement);
 
-      setNewOpponentName();
-      addLights();
-      createArena();
+      setupLights();
+      createWater();
+      createBoat();
+      createSkyDecorations();
+      createCoins();
+      createFloatingProps();
+
+      window.addEventListener("resize", onResize);
 
-      player = createGladiator({
-        bodyColor: 0xb87848,
-        armorColor: 0xd7d7d7,
-        clothColor: 0x9e1b1b,
-        skinColor: 0xd49a6a,
-        x: 0,
-        z: 8
-      });
-
-      enemy = createGladiator({
-        bodyColor: 0x6b3421,
-        armorColor: 0x8e8e8e,
-        clothColor: 0x273f8f,
-        skinColor: 0xb9784a,
-        x: 0,
-        z: -8
-      });
-
-      scene.add(player.group);
-      scene.add(enemy.group);
-
-      applyWeaponVisuals(player, getEquippedWeapon());
-      applyShieldVisuals(player, getEquippedShield());
-
-      setupEvents();
-      updateCamera(0);
-      renderShop();
-      updateUI();
-    }
-
-    function addLights() {
-      const hemi = new THREE.HemisphereLight(0xffddbb, 0x21110b, 2.1);
-      scene.add(hemi);
-
-      const sun = new THREE.DirectionalLight(0xffd19a, 3.4);
-      sun.position.set(10, 22, 13);
-      sun.castShadow = true;
-      sun.shadow.mapSize.width = 2048;
-      sun.shadow.mapSize.height = 2048;
-      sun.shadow.camera.near = 0.5;
-      sun.shadow.camera.far = 80;
-      sun.shadow.camera.left = -38;
-      sun.shadow.camera.right = 38;
-      sun.shadow.camera.top = 38;
-      sun.shadow.camera.bottom = -38;
-      scene.add(sun);
-
-      const fireLight1 = new THREE.PointLight(0xff4c1a, 3.5, 18);
-      fireLight1.position.set(-18, 5, -16);
-      scene.add(fireLight1);
-
-      const fireLight2 = new THREE.PointLight(0xff4c1a, 3.5, 18);
-      fireLight2.position.set(18, 5, 16);
-      scene.add(fireLight2);
-    }
-
-    function createArena() {
-      const sandyTexture = createSandyTexture();
-      const stoneTextureA = createStoneTexture();
-      const stoneTextureB = createStoneTexture();
-
-      const ground = new THREE.Mesh(
-        new THREE.CircleGeometry(ARENA_RADIUS, 128),
-        toonMaterial(0xc58a4c, { map: sandyTexture })
-      );
-      ground.rotation.x = -Math.PI / 2;
-      ground.receiveShadow = true;
-      scene.add(ground);
-
-      const wall = new THREE.Mesh(
-        new THREE.TorusGeometry(ARENA_RADIUS, 0.55, 12, 128),
-        toonMaterial(0x3b2115)
-      );
-      wall.rotation.x = Math.PI / 2;
-      wall.position.y = 0.25;
-      wall.castShadow = true;
-      wall.receiveShadow = true;
-      scene.add(wall);
-      addOutline(wall, 1.035);
-
-      const pillarMatA = toonMaterial(0x847661, { map: stoneTextureA });
-      const pillarMatB = toonMaterial(0x6f6454, { map: stoneTextureB });
-
-      for (let i = 0; i < 48; i++) {
-        const angle = (i / 48) * Math.PI * 2;
-        const x = Math.cos(angle) * ARENA_RADIUS;
-        const z = Math.sin(angle) * ARENA_RADIUS;
-        const h = 2.7 + Math.random() * 1.4;
-
-        const block = new THREE.Mesh(
-          new THREE.BoxGeometry(1.5, h, 1.2),
-          i % 2 ? pillarMatA : pillarMatB
-        );
-
-        block.position.set(x, h / 2 - 0.15, z);
-        block.rotation.y = -angle;
-        block.castShadow = true;
-        block.receiveShadow = true;
-        scene.add(block);
-        addOutline(block, 1.035);
-
-        const cap = new THREE.Mesh(
-          new THREE.BoxGeometry(1.78, 0.22, 1.45),
-          i % 2 ? pillarMatB : pillarMatA
-        );
-
-        cap.position.set(x, h - 0.02, z);
-        cap.rotation.y = -angle;
-        cap.castShadow = true;
-        cap.receiveShadow = true;
-        scene.add(cap);
-        addOutline(cap, 1.035);
-      }
-
-      for (let i = 0; i < 150; i++) {
-        const a = Math.random() * Math.PI * 2;
-        const r = Math.random() * ARENA_RADIUS * 0.92;
-
-        const stone = new THREE.Mesh(
-          new THREE.DodecahedronGeometry(0.055 + Math.random() * 0.16),
-          toonMaterial(Math.random() > 0.5 ? 0x6b4328 : 0x8b6038)
-        );
-
-        stone.position.set(Math.cos(a) * r, 0.06, Math.sin(a) * r);
-        stone.rotation.set(Math.random(), Math.random(), Math.random());
-        stone.receiveShadow = true;
-        stone.castShadow = true;
-        scene.add(stone);
-        addOutline(stone, 1.08);
-      }
-
-      createTorches();
-    }
-
-    function createTorches() {
-      const positions = [
-        [-20, -20],
-        [20, -20],
-        [-20, 20],
-        [20, 20]
-      ];
-
-      for (const [x, z] of positions) {
-        const pole = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.18, 0.25, 4.5, 12),
-          toonMaterial(0x2b160d)
-        );
-        pole.position.set(x, 2.25, z);
-        pole.castShadow = true;
-        scene.add(pole);
-        addOutline(pole, 1.04);
-
-        const bowl = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.62, 0.4, 0.35, 12),
-          toonMaterial(0x1d0d07)
-        );
-        bowl.position.set(x, 4.48, z);
-        bowl.castShadow = true;
-        scene.add(bowl);
-        addOutline(bowl, 1.04);
-
-        const flame = new THREE.Group();
-        flame.position.set(x, 4.75, z);
-        scene.add(flame);
-
-        const outerFlame = new THREE.Mesh(
-          new THREE.ConeGeometry(0.55, 1.35, 8),
-          new THREE.MeshBasicMaterial({ color: 0xff5a14 })
-        );
-        outerFlame.position.y = 0.25;
-        flame.add(outerFlame);
-
-        const innerFlame = new THREE.Mesh(
-          new THREE.ConeGeometry(0.32, 0.95, 8),
-          new THREE.MeshBasicMaterial({ color: 0xffe16b })
-        );
-        innerFlame.position.y = 0.22;
-        flame.add(innerFlame);
-
-        flame.userData.baseY = flame.position.y;
-        flame.userData.flicker = Math.random() * 10;
-        flame.userData.outer = outerFlame;
-        flame.userData.inner = innerFlame;
-
-        particles.push({
-          mesh: flame,
-          velocity: new THREE.Vector3(),
-          life: Infinity,
-          maxLife: Infinity,
-          type: "flame"
-        });
-      }
-    }
-
-    function createGladiator(opts) {
-      const group = new THREE.Group();
-      group.position.set(opts.x, 0, opts.z);
-
-      const skin = toonMaterial(opts.skinColor);
-      const armor = toonMaterial(opts.armorColor);
-      const cloth = toonMaterial(opts.clothColor);
-      const leather = toonMaterial(opts.bodyColor);
-
-      const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.7, 1.15, 8, 16), skin);
-      body.position.y = 1.75;
-      body.castShadow = true;
-      group.add(body);
-      addOutline(body, 1.045);
-
-      const chest = new THREE.Mesh(
-        new THREE.BoxGeometry(1.25, 1.1, 0.5),
-        new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, visible: false })
-      );
-      chest.position.y = 2.08;
-      chest.visible = false;
-      group.add(chest);
-
-      const belt = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.78, 0.82, 0.22, 18),
-        armor
-      );
-      belt.position.y = 1.43;
-      belt.castShadow = true;
-      group.add(belt);
-      addOutline(belt, 1.035);
-
-      const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 1.02, 0.65, 12), cloth);
-      skirt.position.y = 1.18;
-      skirt.castShadow = true;
-      group.add(skirt);
-      addOutline(skirt, 1.04);
-
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 24), skin);
-      head.position.y = 3.05;
-      head.castShadow = true;
-      group.add(head);
-      addOutline(head, 1.045);
-
-      const helmet = new THREE.Mesh(
-        new THREE.SphereGeometry(0.45, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
-        armor
-      );
-      helmet.position.y = 3.13;
-      helmet.castShadow = true;
-      group.add(helmet);
-      addOutline(helmet, 1.035);
-
-      const crestBase = new THREE.Mesh(
-        new THREE.BoxGeometry(0.13, 0.16, 0.82),
-        armor
-      );
-      crestBase.position.y = 3.49;
-      crestBase.castShadow = true;
-      group.add(crestBase);
-      addOutline(crestBase, 1.04);
-
-      for (let i = 0; i < 7; i++) {
-        const plume = new THREE.Mesh(
-          new THREE.BoxGeometry(0.08, 0.5 + i * 0.012, 0.08),
-          cloth
-        );
-
-        plume.position.set(0, 3.72, -0.36 + i * 0.12);
-        plume.rotation.x = -0.32 + i * 0.085;
-        plume.castShadow = true;
-        group.add(plume);
-        addOutline(plume, 1.08);
-      }
-
-      const eyeGroup = new THREE.Group();
-      eyeGroup.position.set(0, 3.08, 0.37);
-      group.add(eyeGroup);
-
-      const leftEye = createCartoonEye();
-      const rightEye = createCartoonEye();
-      leftEye.position.set(-0.17, 0.02, 0);
-      rightEye.position.set(0.17, 0.02, 0);
-      eyeGroup.add(leftEye);
-      eyeGroup.add(rightEye);
-
-      const leftArmPivot = new THREE.Group();
-      const rightArmPivot = new THREE.Group();
-      leftArmPivot.position.set(-0.84, 2.48, 0);
-      rightArmPivot.position.set(0.84, 2.48, 0);
-      group.add(leftArmPivot, rightArmPivot);
-
-      const armGeo = new THREE.CapsuleGeometry(0.17, 0.82, 6, 12);
-
-      const leftArm = new THREE.Mesh(armGeo, skin);
-      leftArm.position.y = -0.48;
-      leftArm.castShadow = true;
-      leftArmPivot.add(leftArm);
-      addOutline(leftArm, 1.05);
-
-      const rightArm = new THREE.Mesh(armGeo, skin);
-      rightArm.position.y = -0.48;
-      rightArm.castShadow = true;
-      rightArmPivot.add(rightArm);
-      addOutline(rightArm, 1.05);
-
-      const shieldPivot = new THREE.Group();
-      shieldPivot.position.set(0, -0.84, 0.12);
-      leftArmPivot.add(shieldPivot);
-
-      const shield = createShieldMesh(0.696, 0x5b2619, 0xd7d7d7);
-      shieldPivot.add(shield.group);
-
-      const swordPivot = new THREE.Group();
-      swordPivot.position.set(0.04, -0.78, 0.02);
-      rightArmPivot.add(swordPivot);
-
-      const sword = createSwordMesh({
-        length: 1.55,
-        width: 0.13,
-        bladeColor: 0xdedede,
-        guardColor: 0xd7d7d7
-      });
-      swordPivot.add(sword.group);
-
-      const leftLegPivot = new THREE.Group();
-      const rightLegPivot = new THREE.Group();
-      leftLegPivot.position.set(-0.34, 0.98, 0);
-      rightLegPivot.position.set(0.34, 0.98, 0);
-      group.add(leftLegPivot, rightLegPivot);
-
-      const legGeo = new THREE.CapsuleGeometry(0.18, 0.95, 6, 12);
-
-      const leftLeg = new THREE.Mesh(legGeo, skin);
-      leftLeg.position.y = -0.6;
-      leftLeg.castShadow = true;
-      leftLegPivot.add(leftLeg);
-      addOutline(leftLeg, 1.05);
-
-      const rightLeg = new THREE.Mesh(legGeo, skin);
-      rightLeg.position.y = -0.6;
-      rightLeg.castShadow = true;
-      rightLegPivot.add(rightLeg);
-      addOutline(rightLeg, 1.05);
-
-      const sandalGeo = new THREE.BoxGeometry(0.38, 0.12, 0.65);
-
-      const leftSandal = new THREE.Mesh(sandalGeo, leather);
-      leftSandal.position.set(0, -1.15, 0.08);
-      leftSandal.castShadow = true;
-      leftLegPivot.add(leftSandal);
-      addOutline(leftSandal, 1.05);
-
-      const rightSandal = new THREE.Mesh(sandalGeo, leather);
-      rightSandal.position.set(0, -1.15, 0.08);
-      rightSandal.castShadow = true;
-      rightLegPivot.add(rightSandal);
-      addOutline(rightSandal, 1.05);
-
-      return {
-        group,
-        body,
-        chest,
-        head,
-        eyeGroup,
-        leftEye,
-        rightEye,
-        leftArmPivot,
-        rightArmPivot,
-        leftLegPivot,
-        rightLegPivot,
-        swordPivot,
-        shieldPivot,
-        swordGroup: sword.group,
-        swordBlade: sword.blade,
-        shieldGroup: shield.group,
-        shieldFace: shield.face,
-        shieldRim: shield.rim,
-        velocity: new THREE.Vector3(),
-        walkTime: 0,
-        idleTime: Math.random() * 100,
-        dustTimer: 0,
-        hurtTimer: 0,
-        blinkTimer: Math.random() * 2,
-        blinkDuration: 0,
-        moveLocalX: 0,
-        moveLocalZ: 0,
-        targetSway: 0,
-        currentSway: 0
-      };
-    }
-
-    function createSwordMesh(config) {
-      const group = new THREE.Group();
-
-      const blade = new THREE.Mesh(
-        new THREE.BoxGeometry(config.width, config.length, 0.07),
-        toonMaterial(config.bladeColor)
-      );
-      blade.position.y = -0.18 - config.length * 0.52;
-      blade.castShadow = true;
-      group.add(blade);
-      addOutline(blade, 1.08);
-
-      const tip = new THREE.Mesh(
-        new THREE.ConeGeometry(config.width * 0.7, 0.24, 4),
-        blade.material
-      );
-      tip.position.y = blade.position.y - config.length * 0.5 - 0.12;
-      tip.rotation.y = Math.PI / 4;
-      tip.castShadow = true;
-      group.add(tip);
-      addOutline(tip, 1.08);
-
-      const guard = new THREE.Mesh(
-        new THREE.BoxGeometry(0.52, 0.09, 0.12),
-        toonMaterial(config.guardColor)
-      );
-      guard.position.y = -0.18;
-      guard.castShadow = true;
-      group.add(guard);
-      addOutline(guard, 1.05);
-
-      const handle = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.07, 0.07, 0.45, 12),
-        toonMaterial(0x7b4320)
-      );
-      handle.position.y = 0.05;
-      handle.castShadow = true;
-      group.add(handle);
-      addOutline(handle, 1.06);
-
-      return { group, blade };
-    }
-
-    function createShieldMesh(radius, color, rimColor) {
-      const group = new THREE.Group();
-
-      const face = new THREE.Mesh(
-        new THREE.CylinderGeometry(radius, radius, 0.16, 36),
-        toonMaterial(color)
-      );
-      face.rotation.x = Math.PI / 2;
-      face.castShadow = true;
-      group.add(face);
-      addOutline(face, 1.04);
-
-      const rim = new THREE.Mesh(
-        new THREE.TorusGeometry(radius, 0.05, 10, 56),
-        toonMaterial(rimColor)
-      );
-      rim.position.z = 0.095;
-      rim.castShadow = true;
-      group.add(rim);
-      addOutline(rim, 1.035);
-
-      const innerShieldRing = new THREE.Mesh(
-        new THREE.TorusGeometry(radius * 0.53, 0.03, 8, 44),
-        toonMaterial(rimColor)
-      );
-      innerShieldRing.position.z = 0.105;
-      innerShieldRing.castShadow = true;
-      group.add(innerShieldRing);
-      addOutline(innerShieldRing, 1.035);
-
-      const boss = new THREE.Mesh(
-        new THREE.SphereGeometry(radius * 0.31, 16, 16),
-        toonMaterial(rimColor)
-      );
-      boss.position.z = 0.145;
-      boss.scale.z = 0.55;
-      boss.castShadow = true;
-      group.add(boss);
-      addOutline(boss, 1.04);
-
-      return { group, face, rim };
-    }
-
-    function applyWeaponVisuals(g, weapon) {
-      if (!g || !g.swordPivot) return;
-
-      while (g.swordPivot.children.length) {
-        const child = g.swordPivot.children.pop();
-        child.traverse(obj => {
-          if (obj.geometry) obj.geometry.dispose();
-          if (obj.material) obj.material.dispose?.();
-        });
-      }
-
-      const sword = createSwordMesh(weapon);
-      g.swordPivot.add(sword.group);
-      g.swordGroup = sword.group;
-      g.swordBlade = sword.blade;
-    }
-
-    function applyShieldVisuals(g, shieldItem) {
-      if (!g || !g.shieldPivot) return;
-
-      while (g.shieldPivot.children.length) {
-        const child = g.shieldPivot.children.pop();
-        child.traverse(obj => {
-          if (obj.geometry) obj.geometry.dispose();
-          if (obj.material) obj.material.dispose?.();
-        });
-      }
-
-      const shield = createShieldMesh(shieldItem.radius, shieldItem.color, shieldItem.rimColor);
-      g.shieldPivot.add(shield.group);
-      g.shieldGroup = shield.group;
-      g.shieldFace = shield.face;
-      g.shieldRim = shield.rim;
-    }
-
-    function createCartoonEye() {
-      const eye = new THREE.Group();
-
-      const whitePart = new THREE.Mesh(
-        new THREE.SphereGeometry(0.115, 20, 20),
-        toonMaterial(0xffffff)
-      );
-      whitePart.scale.set(1.1, 1.35, 0.35);
-      eye.add(whitePart);
-
-      const pupil = new THREE.Mesh(
-        new THREE.SphereGeometry(0.042, 12, 12),
-        new THREE.MeshBasicMaterial({ color: 0x050505 })
-      );
-      pupil.position.set(0, -0.005, 0.085);
-      pupil.scale.set(1, 1.2, 0.35);
-      eye.add(pupil);
-
-      const shine = new THREE.Mesh(
-        new THREE.SphereGeometry(0.014, 8, 8),
-        new THREE.MeshBasicMaterial({ color: 0xffffff })
-      );
-      shine.position.set(-0.018, 0.03, 0.112);
-      eye.add(shine);
-
-      const outline = new THREE.Mesh(
-        new THREE.SphereGeometry(0.12, 20, 20),
-        new THREE.MeshBasicMaterial({
-          color: 0x120704,
-          side: THREE.BackSide
-        })
-      );
-      outline.scale.set(1.18, 1.43, 0.39);
-      eye.add(outline);
-
-      eye.userData.white = whitePart;
-      eye.userData.pupil = pupil;
-      eye.userData.shine = shine;
-
-      return eye;
-    }
-
-    function setupEvents() {
       document.addEventListener("keydown", e => {
-        keys[e.code] = true;
-
-        if (e.code === "KeyR") {
-          restartGame();
-        }
+        keys[e.key.toLowerCase()] = true;
       });
 
       document.addEventListener("keyup", e => {
-        keys[e.code] = false;
-      });
-
-      document.body.addEventListener("click", e => {
-        if (
-          e.target === restartBtn ||
-          e.target.classList.contains("shopButton")
-        ) {
-          return;
-        }
-
-        if (!mouseLocked && !gameOver) {
-          renderer.domElement.requestPointerLock();
-        }
-      });
-
-      restartBtn.addEventListener("click", e => {
-        e.stopPropagation();
-        restartGame();
-      });
-
-      document.addEventListener("pointerlockchange", () => {
-        mouseLocked = document.pointerLockElement === renderer.domElement;
-      });
-
-      document.addEventListener("mousemove", e => {
-        if (!mouseLocked || gameOver) return;
-
-        yaw -= e.movementX * 0.0022;
-        pitch -= e.movementY * 0.0022;
-        pitch = THREE.MathUtils.clamp(pitch, -0.7, 0.45);
-      });
-
-      document.addEventListener("mousedown", e => {
-        if (gameOver) return;
-
-        if (e.button === 0) {
-          playerAttack();
-        }
-
-        if (e.button === 2) {
-          isBlocking = true;
-        }
-      });
-
-      document.addEventListener("mouseup", e => {
-        if (e.button === 2) {
-          isBlocking = false;
-        }
-      });
-
-      document.addEventListener("contextmenu", e => e.preventDefault());
-
-      window.addEventListener("resize", () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        keys[e.key.toLowerCase()] = false;
       });
     }
 
-    function playerAttack() {
-      const weapon = getEquippedWeapon();
-      const cooldownFactor = weapon.cooldown;
+    function setupLights() {
+      const hemi = new THREE.HemisphereLight(0xffffff, 0x4bb7ff, 1.6);
+      scene.add(hemi);
 
-      if (playerAttackCooldown > 0 || stamina < 15 || isBlocking) return;
+      const sun = new THREE.DirectionalLight(0xffffff, 3);
+      sun.position.set(40, 80, 30);
+      sun.castShadow = true;
+      sun.shadow.mapSize.width = 2048;
+      sun.shadow.mapSize.height = 2048;
+      sun.shadow.camera.left = -80;
+      sun.shadow.camera.right = 80;
+      sun.shadow.camera.top = 80;
+      sun.shadow.camera.bottom = -80;
+      scene.add(sun);
 
-      playerAttackTimer = PLAYER_ATTACK_DURATION * cooldownFactor;
-      playerAttackCooldown = 0.82 * cooldownFactor;
-      playerHitDone = false;
-      stamina -= 15;
+      const rim = new THREE.DirectionalLight(0x7be7ff, 1.4);
+      rim.position.set(-40, 30, -60);
+      scene.add(rim);
     }
 
-    function animate() {
-      requestAnimationFrame(animate);
-
-      const dt = Math.min(clock.getDelta(), 0.033);
-
-      updatePlayer(dt);
-      updateEnemy(dt);
-      updateAnimations(dt);
-      updateEnemyDeath(dt);
-      checkEnemySwordDamage();
-      updateParticles(dt);
-      updateFloatingTexts(dt);
-      updateBloodDecals(dt);
-      updateCamera(dt);
-      updateUI();
-
-      renderer.render(scene, camera);
+    function toonMaterial(color, emissive = 0x000000) {
+      return new THREE.MeshToonMaterial({
+        color,
+        emissive,
+        emissiveIntensity: 0.06
+      });
     }
 
-    function updatePlayer(dt) {
-      if (gameOver) return;
+    function outlineObject(mesh, scale = 1.04) {
+      const outlineMat = new THREE.MeshBasicMaterial({
+        color: 0x1d3140,
+        side: THREE.BackSide
+      });
 
-      const weapon = getEquippedWeapon();
-      const shieldItem = getEquippedShield();
+      const outline = new THREE.Mesh(mesh.geometry.clone(), outlineMat);
+      outline.scale.copy(mesh.scale).multiplyScalar(scale);
+      outline.position.copy(mesh.position);
+      outline.rotation.copy(mesh.rotation);
+      outline.castShadow = false;
+      outline.receiveShadow = false;
 
-      playerAttackCooldown = Math.max(0, playerAttackCooldown - dt);
-      playerAttackTimer = Math.max(0, playerAttackTimer - dt);
-
-      const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
-      const right = new THREE.Vector3(-Math.cos(yaw), 0, Math.sin(yaw));
-      const move = new THREE.Vector3();
-
-      if (keys.KeyW) move.add(forward);
-      if (keys.KeyS) move.sub(forward);
-      if (keys.KeyD) move.add(right);
-      if (keys.KeyA) move.sub(right);
-
-      if (move.lengthSq() > 0) {
-        move.normalize();
-
-        player.moveLocalX = THREE.MathUtils.lerp(player.moveLocalX, move.dot(right), dt * 12);
-        player.moveLocalZ = THREE.MathUtils.lerp(player.moveLocalZ, move.dot(forward), dt * 12);
-
-        const speed = isBlocking ? PLAYER_SPEED * 0.45 : PLAYER_SPEED;
-        player.group.position.addScaledVector(move, speed * dt);
-
-        player.walkTime += dt * 10.5;
-        player.dustTimer -= dt;
-
-        if (player.dustTimer <= 0) {
-          createDustPuff(player.group.position.clone(), move.clone().multiplyScalar(-1));
-          player.dustTimer = 0.09;
-        }
-      } else {
-        player.idleTime += dt;
-        player.dustTimer = 0;
-        player.moveLocalX = THREE.MathUtils.lerp(player.moveLocalX, 0, dt * 8);
-        player.moveLocalZ = THREE.MathUtils.lerp(player.moveLocalZ, 0, dt * 8);
-      }
-
-      keepInsideArena(player.group.position);
-      player.group.rotation.y = yaw;
-
-      if (isBlocking && stamina > 0) {
-        stamina -= 18 * shieldItem.staminaDrain * dt;
-      } else {
-        stamina += 28 * dt;
-      }
-
-      stamina = THREE.MathUtils.clamp(stamina, 0, 100);
-
-      if (stamina <= 1) {
-        isBlocking = false;
-      }
-
-      if (playerAttackTimer > 0 && !playerHitDone) {
-        const attackDuration = PLAYER_ATTACK_DURATION * weapon.cooldown;
-        const dist = player.group.position.distanceTo(enemy.group.position);
-        const hitRange = 3.15 * weapon.reach;
-
-        if (dist < hitRange && playerAttackTimer < attackDuration * 0.65) {
-          const toEnemy = enemy.group.position.clone().sub(player.group.position).normalize();
-          const facing = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
-          const dot = facing.dot(toEnemy);
-
-          if (dot > 0.35) {
-            damageEnemy((18 + Math.random() * 10) * weapon.damage);
-            playerHitDone = true;
-          }
-        }
-      }
+      mesh.parent.add(outline);
+      outline.renderOrder = -1;
+      return outline;
     }
 
-    function updateEnemy(dt) {
-      if (gameOver) return;
-
-      enemyAttackCooldown -= dt;
-      enemyAttackTimer = Math.max(0, enemyAttackTimer - dt);
-
-      const toPlayer = player.group.position.clone().sub(enemy.group.position);
-      const dist = toPlayer.length();
-
-      if (dist > 0.001) {
-        toPlayer.normalize();
-      }
-
-      const targetYaw = Math.atan2(toPlayer.x, toPlayer.z);
-      enemy.group.rotation.y = lerpAngle(enemy.group.rotation.y, targetYaw, dt * 8);
-
-      const enemyStopDistance = 1.55;
-      const enemyAttackStartDistance = 2.25;
-
-      if (dist > enemyStopDistance && enemyAttackTimer <= 0) {
-        enemy.group.position.addScaledVector(toPlayer, ENEMY_SPEED * dt);
-        enemy.walkTime += dt * 9.2;
-
-        const enemyForward = new THREE.Vector3(Math.sin(enemy.group.rotation.y), 0, Math.cos(enemy.group.rotation.y));
-        const enemyRight = new THREE.Vector3(-Math.cos(enemy.group.rotation.y), 0, Math.sin(enemy.group.rotation.y));
-
-        enemy.moveLocalX = THREE.MathUtils.lerp(enemy.moveLocalX, toPlayer.dot(enemyRight), dt * 8);
-        enemy.moveLocalZ = THREE.MathUtils.lerp(enemy.moveLocalZ, toPlayer.dot(enemyForward), dt * 8);
-
-        enemy.dustTimer -= dt;
-
-        if (enemy.dustTimer <= 0) {
-          createDustPuff(enemy.group.position.clone(), toPlayer.clone().multiplyScalar(-1));
-          enemy.dustTimer = 0.12;
-        }
-      } else {
-        enemy.idleTime += dt;
-        enemy.walkTime += dt * 1.2;
-        enemy.dustTimer = 0;
-
-        enemy.moveLocalX = THREE.MathUtils.lerp(enemy.moveLocalX, 0, dt * 8);
-        enemy.moveLocalZ = THREE.MathUtils.lerp(enemy.moveLocalZ, 0, dt * 8);
-
-        if (enemyAttackCooldown <= 0 && enemyAttackTimer <= 0 && dist < enemyAttackStartDistance) {
-          enemyAttackTimer = ENEMY_ATTACK_DURATION;
-          enemyAttackCooldown = 1.25 + Math.random() * 0.75;
-          enemyHitDone = false;
-        }
-      }
-
-      keepInsideArena(enemy.group.position);
-    }
-
-    function updateEnemyDeath(dt) {
-      if (enemyDeathTimer <= 0) return;
-
-      enemyDeathTimer = Math.max(0, enemyDeathTimer - dt);
-      const t = 1 - enemyDeathTimer / enemyDeathDuration;
-      const p = easeInOut(t);
-
-      enemy.group.position.y = Math.sin(Math.min(1, t) * Math.PI) * 0.08;
-      enemy.group.rotation.x = -p * 1.38;
-      enemy.group.rotation.z = Math.sin(p * Math.PI) * 0.18;
-      enemy.rightArmPivot.rotation.x = -0.4 + p * 1.35;
-      enemy.rightArmPivot.rotation.z = 0.2 - p * 0.65;
-      enemy.leftArmPivot.rotation.x = -0.2 + p * 0.85;
-      enemy.leftArmPivot.rotation.z = 0.25 + p * 0.45;
-      enemy.swordPivot.rotation.z = 0.35 - p * 1.2;
-      enemy.shieldPivot.rotation.z = p * 0.75;
-
-      if (enemyDeathTimer <= 0) {
-        enemy.group.position.y = 0;
-        enemy.group.rotation.x = -1.38;
-        endGame(pendingVictoryText, pendingVictoryDetail);
-      }
-    }
-
-    function checkEnemySwordDamage() {
-      if (gameOver || enemyHitDone || enemyAttackTimer <= 0) return;
-
-      const progress = 1 - enemyAttackTimer / ENEMY_ATTACK_DURATION;
-
-      if (progress < 0.4 || progress > 0.88) return;
-
-      const toPlayer = player.group.position.clone().sub(enemy.group.position).normalize();
-      const enemyFacing = new THREE.Vector3(
-        Math.sin(enemy.group.rotation.y),
-        0,
-        Math.cos(enemy.group.rotation.y)
+    function createWater() {
+      const geometry = new THREE.PlaneGeometry(
+        waterSize,
+        waterSize,
+        waveGrid,
+        waveGrid
       );
 
-      if (enemyFacing.dot(toPlayer) < 0.2) return;
+      geometry.rotateX(-Math.PI / 2);
 
-      if (enemySwordTouchesPlayer()) {
-        damagePlayer(16 + Math.random() * 8);
-        enemyHitDone = true;
-      }
-    }
+      const positions = geometry.attributes.position;
 
-    function enemySwordTouchesPlayer() {
-      scene.updateMatrixWorld(true);
+      for (let i = 0; i < positions.count; i++) {
+        const x = positions.getX(i);
+        const z = positions.getZ(i);
 
-      const swordSamples = [
-        new THREE.Vector3(0, -0.55, 0),
-        new THREE.Vector3(0, -0.85, 0),
-        new THREE.Vector3(0, -1.15, 0),
-        new THREE.Vector3(0, -1.45, 0),
-        new THREE.Vector3(0, -1.75, 0),
-        new THREE.Vector3(0, -2.05, 0),
-        new THREE.Vector3(0, -2.28, 0)
-      ];
-
-      const playerBase = player.group.position.clone();
-
-      for (const sample of swordSamples) {
-        const p = sample.clone().applyMatrix4(enemy.swordPivot.matrixWorld);
-        const closestY = THREE.MathUtils.clamp(p.y, playerBase.y + 0.65, playerBase.y + 2.95);
-        const closest = new THREE.Vector3(playerBase.x, closestY, playerBase.z);
-        const dist = p.distanceTo(closest);
-
-        if (dist < 1.22) {
-          return true;
-        }
+        waterVertices.push({
+          x,
+          z,
+          baseY: positions.getY(i),
+          offset: Math.random() * Math.PI * 2,
+          speed: 0.6 + Math.random() * 1.3
+        });
       }
 
-      return false;
-    }
+      const material = new THREE.MeshToonMaterial({
+        color: 0x26c9e8,
+        transparent: true,
+        opacity: 0.94
+      });
 
-    function updateAnimations(dt) {
-      animateGladiator(player, dt, true);
-      animateGladiator(enemy, dt, false);
-      updateBlinking(player, dt);
-      updateBlinking(enemy, dt);
-      updateEyeFocus(player, enemy.group.position);
-      updateEyeFocus(enemy, player.group.position);
+      water = new THREE.Mesh(geometry, material);
+      water.receiveShadow = true;
+      scene.add(water);
 
-      if (player.hurtTimer > 0) player.hurtTimer -= dt;
-      if (enemy.hurtTimer > 0) enemy.hurtTimer -= dt;
+      const lineMaterial = new THREE.LineBasicMaterial({
+        color: 0x78efff,
+        transparent: true,
+        opacity: 0.35
+      });
 
-      if (player.body.material.emissive) {
-        player.body.material.emissive.set(player.hurtTimer > 0 ? 0x550000 : 0x000000);
-      }
+      for (let i = 0; i < 45; i++) {
+        const curve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(-8, 0.08, 0),
+          new THREE.Vector3(-4, 0.14, Math.sin(i) * 1.2),
+          new THREE.Vector3(0, 0.08, 0),
+          new THREE.Vector3(4, 0.14, Math.cos(i) * 1.2),
+          new THREE.Vector3(8, 0.08, 0)
+        ]);
 
-      if (enemy.body.material.emissive) {
-        enemy.body.material.emissive.set(enemy.hurtTimer > 0 ? 0x550000 : 0x000000);
-      }
-    }
+        const points = curve.getPoints(20);
+        const geo = new THREE.BufferGeometry().setFromPoints(points);
+        const line = new THREE.Line(geo, lineMaterial);
 
-    function updateBlinking(g, dt) {
-      g.blinkTimer -= dt;
-
-      if (g.blinkTimer <= 0 && g.blinkDuration <= 0) {
-        g.blinkDuration = 0.15;
-        g.blinkTimer = 1.6 + Math.random() * 2.8;
-      }
-
-      let eyeScaleY = 1;
-
-      if (g.blinkDuration > 0) {
-        g.blinkDuration -= dt;
-        const t = 1 - Math.max(0, g.blinkDuration) / 0.15;
-        eyeScaleY = 1 - Math.sin(t * Math.PI) * 0.9;
-      }
-
-      g.leftEye.scale.y = eyeScaleY;
-      g.rightEye.scale.y = eyeScaleY;
-    }
-
-    function updateEyeFocus(g, targetPosition) {
-      const localTarget = g.group.worldToLocal(targetPosition.clone());
-      const xLook = THREE.MathUtils.clamp(localTarget.x * 0.035, -0.025, 0.025);
-      const yLook = THREE.MathUtils.clamp((localTarget.y - 2.4) * 0.02, -0.015, 0.025);
-
-      for (const eye of [g.leftEye, g.rightEye]) {
-        eye.userData.pupil.position.x = xLook;
-        eye.userData.pupil.position.y = yLook - 0.005;
-        eye.userData.shine.position.x = xLook - 0.018;
-        eye.userData.shine.position.y = yLook + 0.03;
-      }
-    }
-
-    function animateGladiator(g, dt, isPlayer) {
-      const moving = isPlayer
-        ? keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD
-        : enemy.group.position.distanceTo(player.group.position) > 1.65 && enemyAttackTimer <= 0;
-
-      const walkSwing = moving ? Math.sin(g.walkTime) * 0.48 : 0;
-      const stepBob = moving ? Math.abs(Math.sin(g.walkTime * 1.05)) * 0.075 : 0;
-      const forwardLean = moving ? -g.moveLocalZ * 0.04 : 0;
-
-      g.targetSway = g.moveLocalX * 0.11;
-      g.currentSway = THREE.MathUtils.lerp(g.currentSway, g.targetSway, dt * 9);
-
-      const shoulderSway = g.currentSway * 0.6;
-
-      g.group.position.y = stepBob;
-
-      if (enemyDeathTimer <= 0 || isPlayer) {
-        g.body.rotation.z = g.currentSway;
-        g.body.rotation.x = forwardLean;
-        g.head.rotation.z = g.currentSway * -0.35;
-        g.head.rotation.x = moving ? Math.sin(g.walkTime) * 0.035 + forwardLean * 0.4 : 0;
-      }
-
-      g.leftLegPivot.rotation.x = walkSwing;
-      g.rightLegPivot.rotation.x = -walkSwing;
-
-      g.leftArmPivot.rotation.x = -walkSwing * 0.28 - 0.08;
-      g.rightArmPivot.rotation.x = walkSwing * 0.24 - 0.1;
-
-      g.leftArmPivot.rotation.y = shoulderSway * 0.35;
-      g.rightArmPivot.rotation.y = -shoulderSway * 0.35;
-
-      if (isPlayer) {
-        if (isBlocking) {
-          g.leftArmPivot.rotation.x = -0.88;
-          g.leftArmPivot.rotation.z = -0.38 + g.currentSway * 0.18;
-          g.leftArmPivot.rotation.y = 0.18;
-          g.shieldPivot.rotation.x = -0.05;
-          g.shieldPivot.rotation.y = 0.18;
-          g.shieldPivot.rotation.z = Math.sin(clock.elapsedTime * 5) * 0.025;
-          g.shieldPivot.position.z = 0.5;
-        } else {
-          g.leftArmPivot.rotation.z = -0.18 + g.currentSway * 0.18;
-          g.shieldPivot.position.z = 0.12;
-          g.shieldPivot.rotation.set(-0.06, 0.06, g.currentSway * 0.06);
-        }
-
-        if (playerAttackTimer > 0) {
-          const attackDuration = PLAYER_ATTACK_DURATION * getEquippedWeapon().cooldown;
-          const t = 1 - playerAttackTimer / attackDuration;
-
-          if (t < 0.28) {
-            const p = easeOut(t / 0.28);
-            g.rightArmPivot.rotation.x = -0.45 - p * 1.15;
-            g.rightArmPivot.rotation.z = -0.2 - p * 0.95;
-            g.rightArmPivot.rotation.y = -0.15 - p * 0.25;
-            g.swordPivot.rotation.x = -0.45 - p * 0.65;
-            g.swordPivot.rotation.y = -0.1;
-            g.swordPivot.rotation.z = -0.35 - p * 1.45;
-          } else if (t < 0.68) {
-            const p = easeInOut((t - 0.28) / 0.4);
-            g.rightArmPivot.rotation.x = -1.6 + p * 2.15;
-            g.rightArmPivot.rotation.z = -1.15 + p * 1.95;
-            g.rightArmPivot.rotation.y = -0.35 + p * 0.45;
-            g.swordPivot.rotation.x = -1.1 + p * 1.25;
-            g.swordPivot.rotation.y = -0.1 + p * 0.18;
-            g.swordPivot.rotation.z = -1.8 + p * 3.05;
-          } else {
-            const p = easeOut((t - 0.68) / 0.32);
-            g.rightArmPivot.rotation.x = 0.55 - p * 0.78;
-            g.rightArmPivot.rotation.z = 0.8 - p * 1.0;
-            g.rightArmPivot.rotation.y = 0.1 - p * 0.1;
-            g.swordPivot.rotation.x = 0.15 - p * 0.8;
-            g.swordPivot.rotation.y = 0.08 - p * 0.18;
-            g.swordPivot.rotation.z = 1.25 - p * 1.6;
-          }
-        } else {
-          g.rightArmPivot.rotation.x += -0.18;
-          g.rightArmPivot.rotation.z = 0.14 + g.currentSway * 0.08;
-          g.swordPivot.rotation.set(-0.62, -0.1, -0.38 + g.currentSway * 0.06);
-        }
-      } else {
-        if (enemyDeathTimer > 0) return;
-
-        if (enemyAttackTimer > 0) {
-          const t = 1 - enemyAttackTimer / ENEMY_ATTACK_DURATION;
-
-          if (t < 0.38) {
-            const p = easeOut(t / 0.38);
-            g.rightArmPivot.rotation.x = -0.3 - p * 1.25;
-            g.rightArmPivot.rotation.z = 0.18 + p * 1.18;
-            g.rightArmPivot.rotation.y = 0.08 + p * 0.22;
-            g.swordPivot.rotation.x = -0.48 - p * 0.72;
-            g.swordPivot.rotation.y = 0.08;
-            g.swordPivot.rotation.z = 0.35 + p * 1.55;
-          } else if (t < 0.78) {
-            const p = easeInOut((t - 0.38) / 0.4);
-            g.rightArmPivot.rotation.x = -1.55 + p * 2.25;
-            g.rightArmPivot.rotation.z = 1.36 - p * 2.2;
-            g.rightArmPivot.rotation.y = 0.3 - p * 0.48;
-            g.swordPivot.rotation.x = -1.2 + p * 1.35;
-            g.swordPivot.rotation.y = 0.08 - p * 0.2;
-            g.swordPivot.rotation.z = 1.9 - p * 3.25;
-          } else {
-            const p = easeOut((t - 0.78) / 0.22);
-            g.rightArmPivot.rotation.x = 0.7 - p * 0.9;
-            g.rightArmPivot.rotation.z = -0.84 + p * 1.08;
-            g.rightArmPivot.rotation.y = -0.18 + p * 0.18;
-            g.swordPivot.rotation.x = 0.15 - p * 0.77;
-            g.swordPivot.rotation.y = -0.12 + p * 0.22;
-            g.swordPivot.rotation.z = -1.35 + p * 1.73;
-          }
-        } else {
-          g.swordPivot.rotation.set(-0.62, 0.1, 0.38 - g.currentSway * 0.06);
-          g.leftArmPivot.rotation.x = -0.28;
-          g.leftArmPivot.rotation.z = 0.32 + g.currentSway * 0.1;
-          g.shieldPivot.rotation.set(-0.04, -0.08, g.currentSway * 0.06);
-        }
-      }
-    }
-
-    function easeOut(t) {
-      t = THREE.MathUtils.clamp(t, 0, 1);
-      return 1 - Math.pow(1 - t, 3);
-    }
-
-    function easeInOut(t) {
-      t = THREE.MathUtils.clamp(t, 0, 1);
-      return t < 0.5
-        ? 4 * t * t * t
-        : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    }
-
-    function updateCamera(dt) {
-      const target = player.group.position.clone();
-      target.y += 1.8;
-
-      const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
-      const right = new THREE.Vector3(-Math.cos(yaw), 0, Math.sin(yaw));
-
-      const shoulderSide = right.clone().multiplyScalar(1.85);
-      const backOffset = forward.clone().multiplyScalar(-5.8);
-      const heightOffset = new THREE.Vector3(0, 2.45 + Math.sin(pitch) * 1.3, 0);
-
-      const desiredPosition = target
-        .clone()
-        .add(shoulderSide)
-        .add(backOffset)
-        .add(heightOffset);
-
-      const aimTarget = target
-        .clone()
-        .add(forward.clone().multiplyScalar(8))
-        .add(new THREE.Vector3(0, pitch * 4.2 + 0.35, 0));
-
-      camera.position.copy(desiredPosition);
-      camera.lookAt(aimTarget);
-
-      const targetRoll = -player.moveLocalX * 0.055;
-      cameraRoll = THREE.MathUtils.lerp(cameraRoll, targetRoll, dt * 8);
-      camera.rotateZ(cameraRoll);
-    }
-
-    function damageEnemy(amount) {
-      if (gameOver || enemyDeathTimer > 0) return;
-
-      enemyHP = Math.max(0, enemyHP - amount);
-      enemy.hurtTimer = 0.18;
-
-      const hitPos = enemy.group.position.clone().add(new THREE.Vector3(0, 2.1, 0));
-      createBloodBurst(hitPos, player.group.position);
-      createFloatingText("-" + Math.round(amount), hitPos, 0xff3b30);
-      shakeCamera(0.16);
-
-      enemy.group.position.add(
-        enemy.group.position.clone()
-          .sub(player.group.position)
-          .normalize()
-          .multiplyScalar(0.45)
-      );
-
-      if (enemyHP <= 0) {
-        const earned = 25;
-        bloodCoins += earned;
-        saveGame();
-        updateUI();
-
-        gameOver = true;
-        isBlocking = false;
-        enemyAttackTimer = 0;
-        enemyDeathTimer = enemyDeathDuration;
-
-        pendingVictoryText = "Victory";
-        pendingVictoryDetail = currentEnemyName + " has fallen. +" + earned + " BloodCoins.";
-
-        createFloatingText(
-          "+" + earned + " BloodCoins",
-          enemy.group.position.clone().add(new THREE.Vector3(0, 3.1, 0)),
-          0xffd86f
+        line.position.set(
+          randomRange(-waterSize / 2, waterSize / 2),
+          0.35,
+          randomRange(-waterSize / 2, waterSize / 2)
         );
 
-        if (document.pointerLockElement) {
-          document.exitPointerLock();
+        line.rotation.y = Math.random() * Math.PI;
+        line.userData.floatOffset = Math.random() * 100;
+        scene.add(line);
+        floatingProps.push(line);
+      }
+    }
+
+    function createBoat() {
+      boat = new THREE.Group();
+      scene.add(boat);
+
+      boatBody = new THREE.Group();
+      boat.add(boatBody);
+
+      const hullMat = toonMaterial(0xe94b5b);
+      const darkHullMat = toonMaterial(0x9e2434);
+      const deckMat = toonMaterial(0xffd36e);
+      const cabinMat = toonMaterial(0xffffff);
+      const roofMat = toonMaterial(0x1f7bbb);
+      const windowMat = toonMaterial(0x2bdfff, 0x0abfff);
+      const blackMat = toonMaterial(0x233142);
+      const ropeMat = toonMaterial(0xd49d56);
+
+      const hull = new THREE.Mesh(
+        new THREE.BoxGeometry(3.8, 1.1, 7),
+        hullMat
+      );
+      hull.position.y = 0.55;
+      hull.scale.x = 1.05;
+      hull.castShadow = true;
+      hull.receiveShadow = true;
+      boatBody.add(hull);
+      outlineObject(hull);
+
+      const hullFront = new THREE.Mesh(
+        new THREE.ConeGeometry(1.95, 2.6, 4),
+        hullMat
+      );
+      hullFront.rotation.y = Math.PI / 4;
+      hullFront.rotation.x = Math.PI / 2;
+      hullFront.position.set(0, 0.55, -4.45);
+      hullFront.scale.set(1.05, 1.25, 0.85);
+      hullFront.castShadow = true;
+      boatBody.add(hullFront);
+      outlineObject(hullFront);
+
+      const lowerHull = new THREE.Mesh(
+        new THREE.BoxGeometry(3.4, 0.7, 6.6),
+        darkHullMat
+      );
+      lowerHull.position.y = 0.05;
+      lowerHull.castShadow = true;
+      boatBody.add(lowerHull);
+      outlineObject(lowerHull, 1.035);
+
+      const deck = new THREE.Mesh(
+        new THREE.BoxGeometry(3.4, 0.28, 5.7),
+        deckMat
+      );
+      deck.position.y = 1.23;
+      deck.castShadow = true;
+      boatBody.add(deck);
+      outlineObject(deck, 1.035);
+
+      const cabin = new THREE.Mesh(
+        new THREE.BoxGeometry(2.35, 1.7, 2.25),
+        cabinMat
+      );
+      cabin.position.set(0, 2.25, 0.65);
+      cabin.castShadow = true;
+      boatBody.add(cabin);
+      outlineObject(cabin);
+
+      const roof = new THREE.Mesh(
+        new THREE.BoxGeometry(2.75, 0.35, 2.65),
+        roofMat
+      );
+      roof.position.set(0, 3.28, 0.65);
+      roof.castShadow = true;
+      boatBody.add(roof);
+      outlineObject(roof);
+
+      const chimney = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.28, 0.36, 1.1, 12),
+        blackMat
+      );
+      chimney.position.set(0.65, 3.95, 0.75);
+      chimney.castShadow = true;
+      boatBody.add(chimney);
+      outlineObject(chimney);
+
+      const chimneyTop = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.45, 0.45, 0.22, 12),
+        darkHullMat
+      );
+      chimneyTop.position.set(0.65, 4.58, 0.75);
+      chimneyTop.castShadow = true;
+      boatBody.add(chimneyTop);
+      outlineObject(chimneyTop);
+
+      createWindow(0, 2.45, -0.5, 1.35, 0.55, 0.08);
+      createWindow(-1.2, 2.45, 0.8, 0.08, 0.5, 0.8);
+      createWindow(1.2, 2.45, 0.8, 0.08, 0.5, 0.8);
+
+      const tirePositions = [
+        [-2.05, 0.9, -2.3],
+        [-2.05, 0.9, 0.1],
+        [-2.05, 0.9, 2.4],
+        [2.05, 0.9, -2.3],
+        [2.05, 0.9, 0.1],
+        [2.05, 0.9, 2.4]
+      ];
+
+      tirePositions.forEach(p => {
+        const tire = new THREE.Mesh(
+          new THREE.TorusGeometry(0.42, 0.13, 8, 18),
+          blackMat
+        );
+
+        tire.position.set(p[0], p[1], p[2]);
+        tire.rotation.y = Math.PI / 2;
+        tire.castShadow = true;
+        boatBody.add(tire);
+      });
+
+      const railMat = toonMaterial(0xffffff);
+
+      for (let side of [-1, 1]) {
+        for (let i = -2; i <= 2; i++) {
+          const post = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.05, 0.05, 0.65, 8),
+            railMat
+          );
+          post.position.set(side * 1.75, 1.75, i * 1.1);
+          boatBody.add(post);
+        }
+
+        const rail = new THREE.Mesh(
+          new THREE.BoxGeometry(0.12, 0.12, 5.1),
+          railMat
+        );
+        rail.position.set(side * 1.75, 2.08, 0);
+        boatBody.add(rail);
+      }
+
+      const frontBumper = new THREE.Mesh(
+        new THREE.TorusGeometry(0.75, 0.1, 8, 20),
+        ropeMat
+      );
+      frontBumper.position.set(0, 1.28, -4.1);
+      frontBumper.rotation.x = Math.PI / 2;
+      frontBumper.castShadow = true;
+      boatBody.add(frontBumper);
+
+      function createWindow(x, y, z, sx, sy, sz) {
+        const win = new THREE.Mesh(
+          new THREE.BoxGeometry(sx, sy, sz),
+          windowMat
+        );
+        win.position.set(x, y, z);
+        win.castShadow = true;
+        boatBody.add(win);
+        outlineObject(win, 1.08);
+      }
+    }
+
+    function createCoins() {
+      for (let i = 0; i < 35; i++) {
+        const coin = new THREE.Group();
+
+        const coinMat = new THREE.MeshToonMaterial({
+          color: 0xffd83d,
+          emissive: 0xffb000,
+          emissiveIntensity: 0.15
+        });
+
+        const coinMesh = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.45, 0.45, 0.16, 20),
+          coinMat
+        );
+
+        coinMesh.rotation.x = Math.PI / 2;
+        coinMesh.castShadow = true;
+        coin.add(coinMesh);
+
+        const ring = new THREE.Mesh(
+          new THREE.TorusGeometry(0.47, 0.045, 8, 20),
+          new THREE.MeshBasicMaterial({ color: 0x8d5d00 })
+        );
+
+        ring.rotation.x = Math.PI / 2;
+        coin.add(ring);
+
+        coin.position.set(
+          randomRange(-90, 90),
+          2.4,
+          randomRange(-90, 90)
+        );
+
+        coin.userData.baseY = coin.position.y;
+        coin.userData.spin = Math.random() * 10;
+        scene.add(coin);
+        coinObjects.push(coin);
+      }
+    }
+
+    function createFloatingProps() {
+      for (let i = 0; i < 22; i++) {
+        const buoy = new THREE.Group();
+
+        const base = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.35, 0.5, 1.2, 12),
+          toonMaterial(i % 2 === 0 ? 0xff6b6b : 0xffffff)
+        );
+        base.castShadow = true;
+        buoy.add(base);
+
+        const top = new THREE.Mesh(
+          new THREE.SphereGeometry(0.35, 12, 12),
+          toonMaterial(0xffffff)
+        );
+        top.position.y = 0.75;
+        top.castShadow = true;
+        buoy.add(top);
+
+        buoy.position.set(
+          randomRange(-105, 105),
+          0.55,
+          randomRange(-105, 105)
+        );
+
+        buoy.userData.offset = Math.random() * 100;
+        scene.add(buoy);
+        floatingProps.push(buoy);
+      }
+    }
+
+    function createSkyDecorations() {
+      const sun = new THREE.Mesh(
+        new THREE.SphereGeometry(7, 24, 24),
+        new THREE.MeshBasicMaterial({ color: 0xffee7a })
+      );
+      sun.position.set(-60, 65, -90);
+      scene.add(sun);
+
+      for (let i = 0; i < 12; i++) {
+        const cloud = new THREE.Group();
+
+        const mat = new THREE.MeshToonMaterial({
+          color: 0xffffff
+        });
+
+        for (let j = 0; j < 5; j++) {
+          const puff = new THREE.Mesh(
+            new THREE.SphereGeometry(randomRange(1.8, 3.5), 12, 12),
+            mat
+          );
+          puff.position.set(
+            j * 2.4 + randomRange(-0.8, 0.8),
+            randomRange(-0.3, 0.8),
+            randomRange(-0.6, 0.6)
+          );
+          cloud.add(puff);
+        }
+
+        cloud.position.set(
+          randomRange(-120, 120),
+          randomRange(34, 55),
+          randomRange(-120, 20)
+        );
+
+        cloud.scale.setScalar(randomRange(0.8, 1.6));
+        scene.add(cloud);
+      }
+
+      for (let i = 0; i < 18; i++) {
+        const island = new THREE.Group();
+
+        const sand = new THREE.Mesh(
+          new THREE.CylinderGeometry(
+            randomRange(2, 4),
+            randomRange(3, 5),
+            0.5,
+            16
+          ),
+          toonMaterial(0xffd785)
+        );
+
+        sand.scale.z = randomRange(0.5, 1.4);
+        sand.castShadow = true;
+        sand.receiveShadow = true;
+        island.add(sand);
+
+        const palmTrunk = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.18, 0.28, 3, 8),
+          toonMaterial(0xb8753a)
+        );
+        palmTrunk.position.y = 1.7;
+        palmTrunk.rotation.z = randomRange(-0.25, 0.25);
+        palmTrunk.castShadow = true;
+        island.add(palmTrunk);
+
+        for (let j = 0; j < 5; j++) {
+          const leaf = new THREE.Mesh(
+            new THREE.ConeGeometry(0.45, 2.2, 8),
+            toonMaterial(0x38c76f)
+          );
+          leaf.position.y = 3.25;
+          leaf.rotation.z = Math.PI / 2;
+          leaf.rotation.y = j * Math.PI * 0.4;
+          leaf.castShadow = true;
+          island.add(leaf);
+        }
+
+        let x = randomRange(-125, 125);
+        let z = randomRange(-125, 125);
+
+        if (Math.abs(x) < 35 && Math.abs(z) < 35) {
+          x += Math.sign(x || 1) * 50;
+          z += Math.sign(z || 1) * 50;
+        }
+
+        island.position.set(x, 0.15, z);
+        island.rotation.y = Math.random() * Math.PI;
+        scene.add(island);
+      }
+    }
+
+    function updateBoat(delta, time) {
+      const forwardInput =
+        (keys["w"] || keys["arrowup"] ? 1 : 0) -
+        (keys["s"] || keys["arrowdown"] ? 1 : 0);
+
+      const turnInput =
+        (keys["a"] || keys["arrowleft"] ? 1 : 0) -
+        (keys["d"] || keys["arrowright"] ? 1 : 0);
+
+      const boost = keys["shift"] ? 1.55 : 1;
+
+      const forward = new THREE.Vector3(
+        Math.sin(boatState.angle),
+        0,
+        Math.cos(boatState.angle)
+      );
+
+      const acceleration = 13 * boost;
+      const turnPower = 2.2;
+
+      boatState.velocity.addScaledVector(forward, forwardInput * acceleration * delta);
+
+      const speedFactor = Math.min(boatState.velocity.length() / 12, 1);
+      boatState.angularVelocity += turnInput * turnPower * delta * (0.25 + speedFactor);
+
+      boatState.velocity.multiplyScalar(Math.pow(0.965, delta * 60));
+      boatState.angularVelocity *= Math.pow(0.9, delta * 60);
+
+      const maxSpeed = keys["shift"] ? 21 : 14;
+      if (boatState.velocity.length() > maxSpeed) {
+        boatState.velocity.setLength(maxSpeed);
+      }
+
+      boatState.angle += boatState.angularVelocity * delta;
+      boatState.position.addScaledVector(boatState.velocity, delta);
+
+      const boundary = waterSize / 2 - 10;
+      boatState.position.x = THREE.MathUtils.clamp(boatState.position.x, -boundary, boundary);
+      boatState.position.z = THREE.MathUtils.clamp(boatState.position.z, -boundary, boundary);
+
+      const waveY = getWaveHeight(boatState.position.x, boatState.position.z, time);
+      const waveAhead = getWaveHeight(
+        boatState.position.x + forward.x * 2,
+        boatState.position.z + forward.z * 2,
+        time
+      );
+
+      const side = new THREE.Vector3(forward.z, 0, -forward.x);
+      const waveSide = getWaveHeight(
+        boatState.position.x + side.x * 2,
+        boatState.position.z + side.z * 2,
+        time
+      );
+
+      boat.position.copy(boatState.position);
+      boat.position.y = waveY + 0.75;
+
+      boat.rotation.y = boatState.angle;
+
+      const pitch = THREE.MathUtils.clamp((waveAhead - waveY) * 0.28, -0.25, 0.25);
+      const roll = THREE.MathUtils.clamp((waveSide - waveY) * 0.35, -0.3, 0.3);
+
+      boatBody.rotation.x = pitch + Math.sin(time * 3.2) * 0.025;
+      boatBody.rotation.z = roll - boatState.angularVelocity * 0.18;
+
+      boatState.speed = boatState.velocity.length();
+
+      if (boatState.speed > 2.5) {
+        spawnWake(time);
+      }
+
+      if (boatState.speed > 9 && Math.random() < 0.18) {
+        spawnSplash();
+      }
+    }
+
+    function updateWater(time) {
+      const positions = water.geometry.attributes.position;
+
+      for (let i = 0; i < positions.count; i++) {
+        const v = waterVertices[i];
+
+        const y =
+          Math.sin(v.x * 0.16 + time * 1.4 + v.offset) * 0.35 +
+          Math.sin(v.z * 0.19 + time * 1.15 + v.offset) * 0.28 +
+          Math.sin((v.x + v.z) * 0.07 + time * 1.8) * 0.18;
+
+        positions.setY(i, y);
+      }
+
+      positions.needsUpdate = true;
+      water.geometry.computeVertexNormals();
+    }
+
+    function getWaveHeight(x, z, time) {
+      return (
+        Math.sin(x * 0.16 + time * 1.4) * 0.35 +
+        Math.sin(z * 0.19 + time * 1.15) * 0.28 +
+        Math.sin((x + z) * 0.07 + time * 1.8) * 0.18
+      );
+    }
+
+    function spawnWake(time) {
+      const back = new THREE.Vector3(
+        -Math.sin(boatState.angle),
+        0,
+        -Math.cos(boatState.angle)
+      );
+
+      const side = new THREE.Vector3(
+        Math.cos(boatState.angle),
+        0,
+        -Math.sin(boatState.angle)
+      );
+
+      for (let i = 0; i < 2; i++) {
+        const particle = new THREE.Mesh(
+          new THREE.SphereGeometry(randomRange(0.12, 0.32), 8, 8),
+          new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.85
+          })
+        );
+
+        const spread = side.clone().multiplyScalar(randomRange(-1.1, 1.1));
+        const behind = back.clone().multiplyScalar(randomRange(3.3, 4.3));
+
+        particle.position.copy(boat.position)
+          .add(behind)
+          .add(spread);
+
+        particle.position.y = getWaveHeight(
+          particle.position.x,
+          particle.position.z,
+          time
+        ) + 0.22;
+
+        particle.userData.life = 1;
+        particle.userData.maxLife = randomRange(0.7, 1.25);
+        particle.userData.velocity = back.clone()
+          .multiplyScalar(randomRange(1, 3))
+          .add(side.clone().multiplyScalar(randomRange(-1, 1)));
+
+        particle.userData.grow = randomRange(1.2, 2.4);
+
+        scene.add(particle);
+        wakeParticles.push(particle);
+      }
+    }
+
+    function spawnSplash() {
+      const back = new THREE.Vector3(
+        -Math.sin(boatState.angle),
+        0,
+        -Math.cos(boatState.angle)
+      );
+
+      const side = new THREE.Vector3(
+        Math.cos(boatState.angle),
+        0,
+        -Math.sin(boatState.angle)
+      );
+
+      const particle = new THREE.Mesh(
+        new THREE.SphereGeometry(randomRange(0.08, 0.18), 8, 8),
+        new THREE.MeshBasicMaterial({
+          color: 0xcfffff,
+          transparent: true,
+          opacity: 0.9
+        })
+      );
+
+      particle.position.copy(boat.position)
+        .add(back.clone().multiplyScalar(randomRange(1.2, 2.8)))
+        .add(side.clone().multiplyScalar(randomRange(-1.7, 1.7)));
+
+      particle.position.y += randomRange(0.1, 0.5);
+
+      particle.userData.life = 1;
+      particle.userData.maxLife = randomRange(0.4, 0.7);
+      particle.userData.velocity = new THREE.Vector3(
+        randomRange(-1.5, 1.5),
+        randomRange(1.2, 2.4),
+        randomRange(-1.5, 1.5)
+      );
+
+      scene.add(particle);
+      splashParticles.push(particle);
+    }
+
+    function updateParticles(delta) {
+      for (let i = wakeParticles.length - 1; i >= 0; i--) {
+        const p = wakeParticles[i];
+
+        p.userData.life -= delta / p.userData.maxLife;
+        p.position.addScaledVector(p.userData.velocity, delta);
+
+        p.scale.multiplyScalar(1 + delta * p.userData.grow);
+        p.material.opacity = Math.max(0, p.userData.life * 0.8);
+
+        if (p.userData.life <= 0) {
+          scene.remove(p);
+          p.geometry.dispose();
+          p.material.dispose();
+          wakeParticles.splice(i, 1);
+        }
+      }
+
+      for (let i = splashParticles.length - 1; i >= 0; i--) {
+        const p = splashParticles[i];
+
+        p.userData.life -= delta / p.userData.maxLife;
+        p.userData.velocity.y -= 4.8 * delta;
+        p.position.addScaledVector(p.userData.velocity, delta);
+        p.material.opacity = Math.max(0, p.userData.life);
+
+        if (p.userData.life <= 0 || p.position.y < 0) {
+          scene.remove(p);
+          p.geometry.dispose();
+          p.material.dispose();
+          splashParticles.splice(i, 1);
         }
       }
     }
 
-    function damagePlayer(amount) {
-      if (gameOver) return;
+    function updateCoins(delta, time) {
+      for (let i = coinObjects.length - 1; i >= 0; i--) {
+        const coin = coinObjects[i];
 
-      const shieldItem = getEquippedShield();
-      let finalDamage = amount;
+        coin.rotation.y += delta * 2.8;
+        coin.position.y =
+          coin.userData.baseY +
+          Math.sin(time * 2.5 + coin.userData.spin) * 0.28;
 
-      if (isBlocking && stamina > 5) {
-        finalDamage *= shieldItem.blockDamage;
-        stamina = Math.max(0, stamina - 22 * shieldItem.staminaBlockCost);
-        createShieldBlockEffect(player.group.position.clone().add(new THREE.Vector3(0, 2.0, 0)));
-        createFloatingText("BLOCK", player.group.position.clone().add(new THREE.Vector3(0, 2.8, 0)), 0x9de7ff);
-      } else {
-        createBloodBurst(player.group.position.clone().add(new THREE.Vector3(0, 2.1, 0)), enemy.group.position);
-        flashDamage();
-      }
+        const dist = coin.position.distanceTo(boat.position);
 
-      playerHP = Math.max(0, playerHP - finalDamage);
-      player.hurtTimer = 0.18;
-
-      player.group.position.add(
-        player.group.position.clone()
-          .sub(enemy.group.position)
-          .normalize()
-          .multiplyScalar(0.35)
-      );
-
-      shakeCamera(0.12);
-      createFloatingText("-" + Math.round(finalDamage), player.group.position.clone().add(new THREE.Vector3(0, 2.4, 0)), 0xff3b30);
-
-      if (playerHP <= 0) {
-        endGame("Defeat", currentEnemyName + " claims victory.");
+        if (dist < 3.1) {
+          collectCoin(coin, i);
+        }
       }
     }
 
-    function createBloodBurst(position, attackerPosition) {
-      const dir = position.clone().sub(attackerPosition).normalize();
+    function collectCoin(coin, index) {
+      coins++;
+      statsCoins.textContent = coins;
 
-      for (let i = 0; i < 58; i++) {
-        const dropletSize = 0.075 + Math.random() * 0.12;
-
-        const mesh = new THREE.Mesh(
-          new THREE.SphereGeometry(dropletSize, 10, 10),
+      for (let i = 0; i < 14; i++) {
+        const sparkle = new THREE.Mesh(
+          new THREE.SphereGeometry(randomRange(0.06, 0.14), 8, 8),
           new THREE.MeshBasicMaterial({
-            color: Math.random() > 0.28 ? 0xb30000 : 0xff1717,
+            color: 0xfff2a0,
             transparent: true,
             opacity: 1
           })
         );
 
-        mesh.scale.set(
-          1 + Math.random() * 0.9,
-          0.65 + Math.random() * 0.7,
-          1 + Math.random() * 0.9
+        sparkle.position.copy(coin.position);
+
+        sparkle.userData.life = 1;
+        sparkle.userData.maxLife = randomRange(0.35, 0.65);
+        sparkle.userData.velocity = new THREE.Vector3(
+          randomRange(-3, 3),
+          randomRange(1.5, 4),
+          randomRange(-3, 3)
         );
 
-        mesh.position.copy(position);
-        scene.add(mesh);
-
-        const spread = new THREE.Vector3(
-          (Math.random() - 0.5) * 2.15,
-          Math.random() * 1.85,
-          (Math.random() - 0.5) * 2.15
-        );
-
-        const velocity = dir.clone()
-          .multiplyScalar(4.8 + Math.random() * 7.5)
-          .add(spread);
-
-        particles.push({
-          mesh,
-          velocity,
-          life: 0.9 + Math.random() * 0.5,
-          maxLife: 1.4,
-          gravity: 9.5,
-          type: "blood",
-          startScale: mesh.scale.clone()
-        });
+        scene.add(sparkle);
+        splashParticles.push(sparkle);
       }
 
-      createBloodDecal(position);
-    }
+      scene.remove(coin);
+      coinObjects.splice(index, 1);
 
-    function createBloodDecal(position) {
-      const splat = new THREE.Mesh(
-        new THREE.CircleGeometry(0.25 + Math.random() * 0.45, 18),
-        new THREE.MeshBasicMaterial({
-          color: 0x5d0000,
-          transparent: true,
-          opacity: 0.75,
-          depthWrite: false
-        })
-      );
-
-      splat.rotation.x = -Math.PI / 2;
-      splat.rotation.z = Math.random() * Math.PI * 2;
-      splat.position.set(
-        position.x + (Math.random() - 0.5) * 1.2,
-        0.012,
-        position.z + (Math.random() - 0.5) * 1.2
-      );
-      splat.scale.set(1, 0.55 + Math.random() * 0.8, 1);
-      scene.add(splat);
-
-      bloodDecals.push({
-        mesh: splat,
-        life: 8,
-        maxLife: 8
-      });
-    }
-
-    function createDustPuff(position, direction) {
-      for (let i = 0; i < 7; i++) {
-        const mesh = new THREE.Mesh(
-          new THREE.SphereGeometry(0.055 + Math.random() * 0.085, 8, 8),
-          new THREE.MeshBasicMaterial({
-            color: Math.random() > 0.5 ? 0xc5965a : 0x9f7143,
-            transparent: true,
-            opacity: 0.45,
-            depthWrite: false
-          })
-        );
-
-        mesh.position.set(
-          position.x + (Math.random() - 0.5) * 0.55,
-          0.09 + Math.random() * 0.08,
-          position.z + (Math.random() - 0.5) * 0.55
-        );
-
-        scene.add(mesh);
-
-        const side = new THREE.Vector3(-direction.z, 0, direction.x).multiplyScalar((Math.random() - 0.5) * 1.2);
-        const velocity = direction.clone()
-          .multiplyScalar(0.6 + Math.random() * 1.0)
-          .add(side);
-
-        velocity.y = 0.18 + Math.random() * 0.35;
-
-        particles.push({
-          mesh,
-          velocity,
-          life: 0.42 + Math.random() * 0.25,
-          maxLife: 0.67,
-          gravity: 0.55,
-          type: "dust",
-          startScale: mesh.scale.clone()
-        });
-      }
-    }
-
-    function createShieldBlockEffect(position) {
-      for (let i = 0; i < 22; i++) {
-        const mesh = new THREE.Mesh(
-          new THREE.SphereGeometry(0.045, 8, 8),
-          new THREE.MeshBasicMaterial({ color: 0x9de7ff })
-        );
-
-        mesh.position.copy(position);
-        scene.add(mesh);
-
-        const angle = Math.random() * Math.PI * 2;
-
-        particles.push({
-          mesh,
-          velocity: new THREE.Vector3(
-            Math.cos(angle) * (2 + Math.random() * 3),
-            (Math.random() - 0.2) * 2.5,
-            Math.sin(angle) * (2 + Math.random() * 3)
-          ),
-          life: 0.45,
-          maxLife: 0.45,
-          gravity: 1,
-          type: "shield"
-        });
-      }
-    }
-
-    function updateParticles(dt) {
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-
-        if (p.type === "flame") {
-          p.mesh.userData.flicker += dt * 12;
-
-          const s = 1 + Math.sin(p.mesh.userData.flicker) * 0.18 + Math.random() * 0.08;
-          p.mesh.scale.set(0.85 * s, 1.05 * s, 0.85 * s);
-          p.mesh.position.y = p.mesh.userData.baseY + Math.sin(p.mesh.userData.flicker * 1.7) * 0.08;
-          p.mesh.rotation.y += dt * 1.4;
-
-          p.mesh.userData.outer.rotation.z = Math.sin(p.mesh.userData.flicker * 0.7) * 0.12;
-          p.mesh.userData.inner.rotation.z = -Math.sin(p.mesh.userData.flicker * 0.9) * 0.16;
-          continue;
-        }
-
-        p.life -= dt;
-        p.velocity.y -= (p.gravity || 0) * dt;
-        p.mesh.position.addScaledVector(p.velocity, dt);
-
-        p.mesh.rotation.x += dt * 8;
-        p.mesh.rotation.y += dt * 7;
-
-        const alpha = Math.max(0, p.life / p.maxLife);
-
-        if ((p.type === "blood" || p.type === "dust") && p.startScale) {
-          p.mesh.scale.copy(p.startScale).multiplyScalar(Math.max(0.18, alpha));
-        } else {
-          p.mesh.scale.setScalar(Math.max(0.05, alpha));
-        }
-
-        if (p.mesh.material.transparent !== undefined) {
-          p.mesh.material.transparent = true;
-          p.mesh.material.opacity = p.type === "dust" ? alpha * 0.45 : alpha;
-        }
-
-        if (p.mesh.position.y < 0.05 && p.type === "blood") {
-          createBloodDecal(p.mesh.position);
-          scene.remove(p.mesh);
-          particles.splice(i, 1);
-          continue;
-        }
-
-        if (p.life <= 0) {
-          scene.remove(p.mesh);
-          particles.splice(i, 1);
-        }
-      }
-    }
-
-    function createFloatingText(text, position, color) {
-      const canvas = document.createElement("canvas");
-      canvas.width = 512;
-      canvas.height = 160;
-
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = "bold 54px Georgia";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.lineWidth = 8;
-      ctx.strokeStyle = "rgba(0,0,0,0.85)";
-      ctx.strokeText(text, 256, 80);
-      ctx.fillStyle = "#" + color.toString(16).padStart(6, "0");
-      ctx.fillText(text, 256, 80);
-
-      const texture = new THREE.CanvasTexture(canvas);
-
-      const sprite = new THREE.Sprite(
-        new THREE.SpriteMaterial({
-          map: texture,
-          transparent: true,
-          depthWrite: false
-        })
-      );
-
-      sprite.position.copy(position);
-      sprite.scale.set(3.2, 1.0, 1);
-      scene.add(sprite);
-
-      floatingTexts.push({
-        sprite,
-        life: 0.9,
-        maxLife: 0.9
-      });
-    }
-
-    function updateFloatingTexts(dt) {
-      for (let i = floatingTexts.length - 1; i >= 0; i--) {
-        const t = floatingTexts[i];
-        t.life -= dt;
-        t.sprite.position.y += dt * 1.2;
-        t.sprite.material.opacity = Math.max(0, t.life / t.maxLife);
-
-        if (t.life <= 0) {
-          scene.remove(t.sprite);
-          floatingTexts.splice(i, 1);
-        }
-      }
-    }
-
-    function updateBloodDecals(dt) {
-      for (let i = bloodDecals.length - 1; i >= 0; i--) {
-        const d = bloodDecals[i];
-        d.life -= dt;
-        d.mesh.material.opacity = 0.75 * Math.max(0, d.life / d.maxLife);
-
-        if (d.life <= 0) {
-          scene.remove(d.mesh);
-          bloodDecals.splice(i, 1);
-        }
-      }
-    }
-
-    function updateUI() {
-      uiPlayerHealth.style.width = playerHP + "%";
-      uiEnemyHealth.style.width = enemyHP + "%";
-      uiStamina.style.width = stamina + "%";
-
-      uiBloodCoins.textContent = bloodCoins;
-      uiShopCoins.textContent = bloodCoins;
-
-      weaponLoadout.textContent = getEquippedWeapon().name;
-      shieldLoadout.textContent = getEquippedShield().name;
-
-      if (stamina < 20) {
-        uiStamina.style.filter = "brightness(0.75)";
-      } else {
-        uiStamina.style.filter = "brightness(1)";
-      }
-    }
-
-    function flashDamage() {
-      damageFlash.style.opacity = "1";
       setTimeout(() => {
-        damageFlash.style.opacity = "0";
-      }, 90);
+        const newCoin = coin.clone();
+        newCoin.position.set(
+          randomRange(-95, 95),
+          2.4,
+          randomRange(-95, 95)
+        );
+        newCoin.userData.baseY = newCoin.position.y;
+        newCoin.userData.spin = Math.random() * 20;
+        scene.add(newCoin);
+        coinObjects.push(newCoin);
+      }, 1800);
     }
 
-    function shakeCamera(amount) {
-      camera.position.x += (Math.random() - 0.5) * amount;
-      camera.position.y += (Math.random() - 0.5) * amount;
-      camera.position.z += (Math.random() - 0.5) * amount;
+    function updateFloatingProps(time) {
+      floatingProps.forEach(obj => {
+        if (obj.type === "Line") {
+          obj.position.y =
+            getWaveHeight(obj.position.x, obj.position.z, time) + 0.5;
+          obj.rotation.z = Math.sin(time + obj.userData.floatOffset) * 0.05;
+          return;
+        }
+
+        obj.position.y =
+          getWaveHeight(obj.position.x, obj.position.z, time) + 0.7;
+
+        obj.rotation.x = Math.sin(time * 1.7 + obj.userData.offset) * 0.12;
+        obj.rotation.z = Math.cos(time * 1.4 + obj.userData.offset) * 0.12;
+      });
     }
 
-    function endGame(text, detail) {
-      gameOver = true;
-      isBlocking = false;
-      msg.textContent = text;
-      subMessage.textContent = detail || "";
-      renderShop();
-      messagePanel.classList.add("show");
+    function updateCamera(delta) {
+      const forward = new THREE.Vector3(
+        Math.sin(boatState.angle),
+        0,
+        Math.cos(boatState.angle)
+      );
 
-      if (document.pointerLockElement) {
-        document.exitPointerLock();
-      }
+      const desiredPosition = boat.position.clone()
+        .add(forward.clone().multiplyScalar(-15))
+        .add(new THREE.Vector3(0, 9, 0));
+
+      camera.position.lerp(desiredPosition, 1 - Math.pow(0.02, delta));
+
+      const lookTarget = boat.position.clone()
+        .add(forward.clone().multiplyScalar(8))
+        .add(new THREE.Vector3(0, 2.5, 0));
+
+      camera.lookAt(lookTarget);
     }
 
-    function restartGame() {
-      playerHP = 100;
-      enemyHP = 100;
-      stamina = 100;
-      gameOver = false;
-      isBlocking = false;
+    function animate() {
+      requestAnimationFrame(animate);
 
-      setNewOpponentName();
+      const delta = Math.min(clock.getDelta(), 0.033);
+      const time = clock.elapsedTime;
 
-      player.group.position.set(0, 0, 8);
-      enemy.group.position.set(0, 0, -8);
-      enemy.group.rotation.set(0, 0, 0);
+      updateWater(time);
+      updateBoat(delta, time);
+      updateParticles(delta);
+      updateCoins(delta, time);
+      updateFloatingProps(time);
+      updateCamera(delta);
 
-      playerAttackTimer = 0;
-      playerAttackCooldown = 0;
-      enemyAttackTimer = 0;
-      enemyAttackCooldown = 1.2;
-      playerHitDone = false;
-      enemyHitDone = false;
-
-      enemyDeathTimer = 0;
-      pendingVictoryText = "";
-      pendingVictoryDetail = "";
-
-      player.blinkTimer = Math.random() * 2;
-      enemy.blinkTimer = Math.random() * 2;
-      player.blinkDuration = 0;
-      enemy.blinkDuration = 0;
-
-      player.moveLocalX = 0;
-      player.moveLocalZ = 0;
-      player.currentSway = 0;
-      player.targetSway = 0;
-
-      enemy.moveLocalX = 0;
-      enemy.moveLocalZ = 0;
-      enemy.currentSway = 0;
-      enemy.targetSway = 0;
-
-      cameraRoll = 0;
-
-      player.body.rotation.set(0, 0, 0);
-      enemy.body.rotation.set(0, 0, 0);
-      player.head.rotation.set(0, 0, 0);
-      enemy.head.rotation.set(0, 0, 0);
-      player.rightArmPivot.rotation.set(0, 0, 0);
-      enemy.rightArmPivot.rotation.set(0, 0, 0);
-      player.leftArmPivot.rotation.set(0, 0, 0);
-      enemy.leftArmPivot.rotation.set(0, 0, 0);
-      player.swordPivot.rotation.set(0, 0, 0);
-      enemy.swordPivot.rotation.set(0, 0, 0);
-      player.shieldPivot.rotation.set(0, 0, 0);
-      enemy.shieldPivot.rotation.set(0, 0, 0);
-
-      applyWeaponVisuals(player, getEquippedWeapon());
-      applyShieldVisuals(player, getEquippedShield());
-
-      messagePanel.classList.remove("show");
-
-      for (const p of particles) {
-        if (p.mesh && p.type !== "flame") scene.remove(p.mesh);
-      }
-
-      for (const t of floatingTexts) {
-        scene.remove(t.sprite);
-      }
-
-      for (const d of bloodDecals) {
-        scene.remove(d.mesh);
-      }
-
-      const flameParticles = particles.filter(p => p.type === "flame");
-      particles.length = 0;
-      particles.push(...flameParticles);
-      floatingTexts.length = 0;
-      bloodDecals.length = 0;
-
-      updateUI();
-      renderShop();
+      renderer.render(scene, camera);
     }
 
-    function keepInsideArena(pos) {
-      const r = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
-      const max = ARENA_RADIUS - 2;
-
-      if (r > max) {
-        pos.x = (pos.x / r) * max;
-        pos.z = (pos.z / r) * max;
-      }
+    function onResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    function lerpAngle(a, b, t) {
-      const diff = Math.atan2(Math.sin(b - a), Math.cos(b - a));
-      return a + diff * THREE.MathUtils.clamp(t, 0, 1);
+    function randomRange(min, max) {
+      return min + Math.random() * (max - min);
     }
   </script>
 </body>
