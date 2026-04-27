@@ -102,13 +102,7 @@
       content: "";
       position: absolute;
       inset: 0;
-      background:
-        linear-gradient(
-          90deg,
-          transparent 0%,
-          rgba(255,255,255,0.11) 50%,
-          transparent 100%
-        );
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.11) 50%, transparent 100%);
       pointer-events: none;
     }
 
@@ -238,8 +232,7 @@
       transform: translateX(-50%);
       width: 280px;
       padding: 10px 12px;
-      background:
-        linear-gradient(135deg, rgba(50, 27, 13, 0.88), rgba(14, 9, 6, 0.88));
+      background: linear-gradient(135deg, rgba(50, 27, 13, 0.88), rgba(14, 9, 6, 0.88));
       border: 2px solid #8f6029;
       border-radius: 8px;
       box-shadow:
@@ -367,8 +360,11 @@
     const bloodDecals = [];
 
     const ARENA_RADIUS = 28;
-    const PLAYER_SPEED = 9;
-    const ENEMY_SPEED = 4.2;
+
+    /* 20% slower than the previous version */
+    const PLAYER_SPEED = 7.2;
+    const ENEMY_SPEED = 3.36;
+
     const ENEMY_ATTACK_DURATION = 1.25;
 
     const uiPlayerHealth = document.getElementById("playerHealth");
@@ -502,6 +498,78 @@
       return texture;
     }
 
+    function createStoneTexture() {
+      const canvas = document.createElement("canvas");
+      canvas.width = 512;
+      canvas.height = 512;
+
+      const ctx = canvas.getContext("2d");
+
+      const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+      gradient.addColorStop(0, "#8f806d");
+      gradient.addColorStop(0.45, "#625846");
+      gradient.addColorStop(1, "#3d3329");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 512, 512);
+
+      for (let i = 0; i < 6500; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const shade = Math.floor(70 + Math.random() * 95);
+        const alpha = 0.06 + Math.random() * 0.22;
+
+        ctx.fillStyle = `rgba(${shade}, ${shade - 4}, ${Math.max(35, shade - 12)}, ${alpha})`;
+        ctx.fillRect(x, y, 1 + Math.random() * 3, 1 + Math.random() * 3);
+      }
+
+      for (let i = 0; i < 90; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const length = 35 + Math.random() * 140;
+        const angle = Math.random() * Math.PI * 2;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        ctx.strokeStyle = Math.random() > 0.5
+          ? "rgba(20, 17, 14, 0.22)"
+          : "rgba(210, 198, 176, 0.13)";
+        ctx.lineWidth = 1 + Math.random() * 3;
+        ctx.beginPath();
+        ctx.moveTo(-length / 2, 0);
+        ctx.quadraticCurveTo(0, Math.random() * 18 - 9, length / 2, Math.random() * 12 - 6);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      for (let i = 0; i < 26; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const radius = 18 + Math.random() * 55;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(Math.random() * Math.PI);
+        ctx.fillStyle = Math.random() > 0.5
+          ? "rgba(24, 21, 18, 0.14)"
+          : "rgba(205, 196, 178, 0.09)";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, radius, radius * (0.25 + Math.random() * 0.45), 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(1.4, 1.9);
+      texture.magFilter = THREE.NearestFilter;
+      texture.minFilter = THREE.NearestMipmapNearestFilter;
+      texture.colorSpace = THREE.SRGBColorSpace;
+
+      return texture;
+    }
+
     function addOutline(mesh, scale = 1.045) {
       if (!mesh.geometry) return;
 
@@ -609,6 +677,8 @@
 
     function createArena() {
       const sandyTexture = createSandyTexture();
+      const stoneTextureA = createStoneTexture();
+      const stoneTextureB = createStoneTexture();
 
       const groundMat = toonMaterial(0xc58a4c, {
         map: sandyTexture
@@ -635,22 +705,37 @@
       scene.add(wall);
       addOutline(wall, 1.035);
 
+      const pillarMatA = toonMaterial(0x847661, { map: stoneTextureA });
+      const pillarMatB = toonMaterial(0x6f6454, { map: stoneTextureB });
+
       for (let i = 0; i < 48; i++) {
         const angle = (i / 48) * Math.PI * 2;
         const x = Math.cos(angle) * ARENA_RADIUS;
         const z = Math.sin(angle) * ARENA_RADIUS;
+        const h = 2.7 + Math.random() * 1.4;
 
         const block = new THREE.Mesh(
-          new THREE.BoxGeometry(1.5, 2.7 + Math.random() * 1.4, 1.2),
-          toonMaterial(i % 2 ? 0x8b765d : 0x6c5842)
+          new THREE.BoxGeometry(1.5, h, 1.2),
+          i % 2 ? pillarMatA : pillarMatB
         );
 
-        block.position.set(x, block.geometry.parameters.height / 2 - 0.15, z);
+        block.position.set(x, h / 2 - 0.15, z);
         block.rotation.y = -angle;
         block.castShadow = true;
         block.receiveShadow = true;
         scene.add(block);
         addOutline(block, 1.035);
+
+        const cap = new THREE.Mesh(
+          new THREE.BoxGeometry(1.78, 0.22, 1.45),
+          i % 2 ? pillarMatB : pillarMatA
+        );
+        cap.position.set(x, h - 0.02, z);
+        cap.rotation.y = -angle;
+        cap.castShadow = true;
+        cap.receiveShadow = true;
+        scene.add(cap);
+        addOutline(cap, 1.035);
       }
 
       for (let i = 0; i < 150; i++) {
@@ -971,6 +1056,7 @@
         velocity: new THREE.Vector3(),
         walkTime: 0,
         idleTime: Math.random() * 100,
+        dustTimer: 0,
         hurtTimer: 0,
         blinkTimer: Math.random() * 2,
         blinkDuration: 0
@@ -1103,6 +1189,13 @@
       updatePlayer(dt);
       updateEnemy(dt);
       updateAnimations(dt);
+
+      /*
+        Enemy damage is checked AFTER animation updates now,
+        so the sword's world position matches the visual swing.
+      */
+      checkEnemySwordDamage();
+
       updateParticles(dt);
       updateFloatingTexts(dt);
       updateBloodDecals(dt);
@@ -1135,8 +1228,15 @@
         player.group.position.addScaledVector(move, speed * dt);
 
         player.walkTime += dt * 10.5;
+        player.dustTimer -= dt;
+
+        if (player.dustTimer <= 0) {
+          createDustPuff(player.group.position.clone(), move.clone().multiplyScalar(-1));
+          player.dustTimer = 0.09;
+        }
       } else {
         player.idleTime += dt;
+        player.dustTimer = 0;
       }
 
       keepInsideArena(player.group.position);
@@ -1187,14 +1287,21 @@
       const targetYaw = Math.atan2(toPlayer.x, toPlayer.z);
       enemy.group.rotation.y = lerpAngle(enemy.group.rotation.y, targetYaw, dt * 8);
 
-      if (dist > 2.25) {
+      if (dist > 2.25 && enemyAttackTimer <= 0) {
         enemy.group.position.addScaledVector(toPlayer, ENEMY_SPEED * dt);
         enemy.walkTime += dt * 9.2;
+        enemy.dustTimer -= dt;
+
+        if (enemy.dustTimer <= 0) {
+          createDustPuff(enemy.group.position.clone(), toPlayer.clone().multiplyScalar(-1));
+          enemy.dustTimer = 0.12;
+        }
       } else {
         enemy.idleTime += dt;
         enemy.walkTime += dt * 1.2;
+        enemy.dustTimer = 0;
 
-        if (enemyAttackCooldown <= 0 && enemyAttackTimer <= 0) {
+        if (enemyAttackCooldown <= 0 && enemyAttackTimer <= 0 && dist < 2.75) {
           enemyAttackTimer = ENEMY_ATTACK_DURATION;
           enemyAttackCooldown = 1.25 + Math.random() * 0.75;
           enemyHitDone = false;
@@ -1202,33 +1309,59 @@
       }
 
       keepInsideArena(enemy.group.position);
+    }
 
-      if (enemyAttackTimer > 0 && !enemyHitDone) {
-        const progress = 1 - enemyAttackTimer / ENEMY_ATTACK_DURATION;
+    function checkEnemySwordDamage() {
+      if (gameOver || enemyHitDone || enemyAttackTimer <= 0) return;
 
-        if (progress > 0.42 && progress < 0.78) {
-          const swordTip = getSwordTipWorld(enemy);
-          const playerTouchPoint = getClosestPointOnPlayerBody(swordTip);
-          const touchDistance = swordTip.distanceTo(playerTouchPoint);
+      const progress = 1 - enemyAttackTimer / ENEMY_ATTACK_DURATION;
 
-          if (touchDistance < 0.72) {
-            damagePlayer(16 + Math.random() * 8);
-            enemyHitDone = true;
-          }
-        }
+      if (progress < 0.43 || progress > 0.84) return;
+
+      const toPlayer = player.group.position.clone().sub(enemy.group.position).normalize();
+      const enemyFacing = new THREE.Vector3(
+        Math.sin(enemy.group.rotation.y),
+        0,
+        Math.cos(enemy.group.rotation.y)
+      );
+
+      if (enemyFacing.dot(toPlayer) < 0.28) return;
+
+      if (enemySwordTouchesPlayer()) {
+        damagePlayer(16 + Math.random() * 8);
+        enemyHitDone = true;
       }
     }
 
-    function getSwordTipWorld(g) {
-      const localTip = new THREE.Vector3(0, -1.95, 0);
-      return localTip.applyMatrix4(g.swordPivot.matrixWorld);
-    }
+    function enemySwordTouchesPlayer() {
+      scene.updateMatrixWorld(true);
 
-    function getClosestPointOnPlayerBody(point) {
-      const base = player.group.position.clone();
-      const y = THREE.MathUtils.clamp(point.y, base.y + 0.9, base.y + 2.75);
+      const swordSamples = [
+        new THREE.Vector3(0, -1.95, 0),
+        new THREE.Vector3(0, -1.55, 0),
+        new THREE.Vector3(0, -1.15, 0),
+        new THREE.Vector3(0, -0.75, 0)
+      ];
 
-      return new THREE.Vector3(base.x, y, base.z);
+      const playerBase = player.group.position.clone();
+
+      for (const sample of swordSamples) {
+        const p = sample.clone().applyMatrix4(enemy.swordPivot.matrixWorld);
+
+        const closestY = THREE.MathUtils.clamp(p.y, playerBase.y + 0.75, playerBase.y + 2.85);
+        const closest = new THREE.Vector3(playerBase.x, closestY, playerBase.z);
+        const dist = p.distanceTo(closest);
+
+        /*
+          Slightly forgiving contact radius so it matches the visual sword width
+          and does not miss due to stylized model scale.
+        */
+        if (dist < 1.02) {
+          return true;
+        }
+      }
+
+      return false;
     }
 
     function updateAnimations(dt) {
@@ -1287,7 +1420,7 @@
     function animateGladiator(g, dt, isPlayer) {
       const moving = isPlayer
         ? keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD
-        : enemy.group.position.distanceTo(player.group.position) > 2.4;
+        : enemy.group.position.distanceTo(player.group.position) > 2.4 && enemyAttackTimer <= 0;
 
       const walkSwing = moving ? Math.sin(g.walkTime) * 0.48 : 0;
       const stepBob = moving ? Math.abs(Math.sin(g.walkTime * 1.05)) * 0.075 : Math.sin(clock.elapsedTime * 2.1 + g.idleTime) * 0.018;
@@ -1579,6 +1712,45 @@
       });
     }
 
+    function createDustPuff(position, direction) {
+      for (let i = 0; i < 7; i++) {
+        const mesh = new THREE.Mesh(
+          new THREE.SphereGeometry(0.055 + Math.random() * 0.085, 8, 8),
+          new THREE.MeshBasicMaterial({
+            color: Math.random() > 0.5 ? 0xc5965a : 0x9f7143,
+            transparent: true,
+            opacity: 0.45,
+            depthWrite: false
+          })
+        );
+
+        mesh.position.set(
+          position.x + (Math.random() - 0.5) * 0.55,
+          0.09 + Math.random() * 0.08,
+          position.z + (Math.random() - 0.5) * 0.55
+        );
+
+        scene.add(mesh);
+
+        const side = new THREE.Vector3(-direction.z, 0, direction.x).multiplyScalar((Math.random() - 0.5) * 1.2);
+        const velocity = direction.clone()
+          .multiplyScalar(0.6 + Math.random() * 1.0)
+          .add(side);
+
+        velocity.y = 0.18 + Math.random() * 0.35;
+
+        particles.push({
+          mesh,
+          velocity,
+          life: 0.42 + Math.random() * 0.25,
+          maxLife: 0.67,
+          gravity: 0.55,
+          type: "dust",
+          startScale: mesh.scale.clone()
+        });
+      }
+    }
+
     function createShieldBlockEffect(position) {
       for (let i = 0; i < 22; i++) {
         const mesh = new THREE.Mesh(
@@ -1633,7 +1805,7 @@
 
         const alpha = Math.max(0, p.life / p.maxLife);
 
-        if (p.type === "blood" && p.startScale) {
+        if ((p.type === "blood" || p.type === "dust") && p.startScale) {
           p.mesh.scale.copy(p.startScale).multiplyScalar(Math.max(0.18, alpha));
         } else {
           p.mesh.scale.setScalar(Math.max(0.05, alpha));
@@ -1641,7 +1813,7 @@
 
         if (p.mesh.material.transparent !== undefined) {
           p.mesh.material.transparent = true;
-          p.mesh.material.opacity = alpha;
+          p.mesh.material.opacity = p.type === "dust" ? alpha * 0.45 : alpha;
         }
 
         if (p.mesh.position.y < 0.05 && p.type === "blood") {
