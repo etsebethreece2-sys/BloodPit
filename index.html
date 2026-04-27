@@ -333,6 +333,11 @@
     let gameOver = false;
     let currentEnemyName = "";
 
+    let enemyDeathTimer = 0;
+    let enemyDeathDuration = 1.55;
+    let pendingVictoryText = "";
+    let pendingVictoryDetail = "";
+
     const opponentNames = [
       "Marcus Bloodfang",
       "Titus Ironjaw",
@@ -364,8 +369,6 @@
     const PLAYER_SPEED = 7.2;
     const ENEMY_SPEED = 3.36;
     const ENEMY_ATTACK_DURATION = 1.25;
-
-    /* Player attack is now 30% slower than 0.48s. */
     const PLAYER_ATTACK_DURATION = 0.624;
 
     const uiPlayerHealth = document.getElementById("playerHealth");
@@ -861,10 +864,6 @@
       group.add(head);
       addOutline(head, 1.045);
 
-      /*
-        Helmet restored to original simple style.
-        Only the colored crest/plume hair has been kept.
-      */
       const helmet = new THREE.Mesh(
         new THREE.SphereGeometry(0.45, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
         armor
@@ -1209,6 +1208,7 @@
       updatePlayer(dt);
       updateEnemy(dt);
       updateAnimations(dt);
+      updateEnemyDeath(dt);
 
       checkEnemySwordDamage();
 
@@ -1344,6 +1344,30 @@
       keepInsideArena(enemy.group.position);
     }
 
+    function updateEnemyDeath(dt) {
+      if (enemyDeathTimer <= 0) return;
+
+      enemyDeathTimer = Math.max(0, enemyDeathTimer - dt);
+      const t = 1 - enemyDeathTimer / enemyDeathDuration;
+      const p = easeInOut(t);
+
+      enemy.group.position.y = Math.sin(Math.min(1, t) * Math.PI) * 0.08;
+      enemy.group.rotation.x = -p * 1.38;
+      enemy.group.rotation.z = Math.sin(p * Math.PI) * 0.18;
+      enemy.rightArmPivot.rotation.x = -0.4 + p * 1.35;
+      enemy.rightArmPivot.rotation.z = 0.2 - p * 0.65;
+      enemy.leftArmPivot.rotation.x = -0.2 + p * 0.85;
+      enemy.leftArmPivot.rotation.z = 0.25 + p * 0.45;
+      enemy.swordPivot.rotation.z = 0.35 - p * 1.2;
+      enemy.shieldPivot.rotation.z = p * 0.75;
+
+      if (enemyDeathTimer <= 0) {
+        enemy.group.position.y = 0;
+        enemy.group.rotation.x = -1.38;
+        endGame(pendingVictoryText, pendingVictoryDetail);
+      }
+    }
+
     function checkEnemySwordDamage() {
       if (gameOver || enemyHitDone || enemyAttackTimer <= 0) return;
 
@@ -1456,25 +1480,25 @@
 
       const walkSwing = moving ? Math.sin(g.walkTime) * 0.48 : 0;
       const stepBob = moving ? Math.abs(Math.sin(g.walkTime * 1.05)) * 0.075 : 0;
-      const forwardLean = moving ? -g.moveLocalZ * 0.045 : 0;
+      const forwardLean = moving ? -g.moveLocalZ * 0.04 : 0;
 
       /*
-        Sway is movement-reactive now:
-        - Move left = body leans/sways left
-        - Move right = body leans/sways right
-        No more constant side-to-side body rocking while standing.
+        Fixed: sway direction inverted and reduced.
+        It now leans into the movement direction more naturally.
       */
-      g.targetSway = -g.moveLocalX * 0.18;
+      g.targetSway = g.moveLocalX * 0.11;
       g.currentSway = THREE.MathUtils.lerp(g.currentSway, g.targetSway, dt * 9);
 
-      const shoulderSway = g.currentSway * 0.7;
+      const shoulderSway = g.currentSway * 0.6;
 
       g.group.position.y = stepBob;
 
-      g.body.rotation.z = g.currentSway;
-      g.body.rotation.x = forwardLean;
-      g.head.rotation.z = g.currentSway * -0.45;
-      g.head.rotation.x = moving ? Math.sin(g.walkTime) * 0.035 + forwardLean * 0.4 : 0;
+      if (enemyDeathTimer <= 0 || isPlayer) {
+        g.body.rotation.z = g.currentSway;
+        g.body.rotation.x = forwardLean;
+        g.head.rotation.z = g.currentSway * -0.35;
+        g.head.rotation.x = moving ? Math.sin(g.walkTime) * 0.035 + forwardLean * 0.4 : 0;
+      }
 
       g.leftLegPivot.rotation.x = walkSwing;
       g.rightLegPivot.rotation.x = -walkSwing;
@@ -1488,16 +1512,16 @@
       if (isPlayer) {
         if (isBlocking) {
           g.leftArmPivot.rotation.x = -0.88;
-          g.leftArmPivot.rotation.z = -0.38 + g.currentSway * 0.2;
+          g.leftArmPivot.rotation.z = -0.38 + g.currentSway * 0.18;
           g.leftArmPivot.rotation.y = 0.18;
           g.shieldPivot.rotation.x = -0.05;
           g.shieldPivot.rotation.y = 0.18;
           g.shieldPivot.rotation.z = Math.sin(clock.elapsedTime * 5) * 0.025;
           g.shieldPivot.position.z = 0.5;
         } else {
-          g.leftArmPivot.rotation.z = -0.18 + g.currentSway * 0.2;
+          g.leftArmPivot.rotation.z = -0.18 + g.currentSway * 0.18;
           g.shieldPivot.position.z = 0.12;
-          g.shieldPivot.rotation.set(-0.06, 0.06, g.currentSway * 0.08);
+          g.shieldPivot.rotation.set(-0.06, 0.06, g.currentSway * 0.06);
         }
 
         if (playerAttackTimer > 0) {
@@ -1530,10 +1554,12 @@
           }
         } else {
           g.rightArmPivot.rotation.x += -0.18;
-          g.rightArmPivot.rotation.z = 0.14 + g.currentSway * 0.1;
-          g.swordPivot.rotation.set(-0.62, -0.1, -0.38 + g.currentSway * 0.08);
+          g.rightArmPivot.rotation.z = 0.14 + g.currentSway * 0.08;
+          g.swordPivot.rotation.set(-0.62, -0.1, -0.38 + g.currentSway * 0.06);
         }
       } else {
+        if (enemyDeathTimer > 0) return;
+
         if (enemyAttackTimer > 0) {
           const t = 1 - enemyAttackTimer / ENEMY_ATTACK_DURATION;
 
@@ -1563,10 +1589,10 @@
             g.swordPivot.rotation.z = -1.35 + p * 1.73;
           }
         } else {
-          g.swordPivot.rotation.set(-0.62, 0.1, 0.38 - g.currentSway * 0.08);
+          g.swordPivot.rotation.set(-0.62, 0.1, 0.38 - g.currentSway * 0.06);
           g.leftArmPivot.rotation.x = -0.28;
-          g.leftArmPivot.rotation.z = 0.32 + g.currentSway * 0.12;
-          g.shieldPivot.rotation.set(-0.04, -0.08, g.currentSway * 0.08);
+          g.leftArmPivot.rotation.z = 0.32 + g.currentSway * 0.1;
+          g.shieldPivot.rotation.set(-0.04, -0.08, g.currentSway * 0.06);
         }
       }
     }
@@ -1608,17 +1634,13 @@
       camera.position.copy(desiredPosition);
       camera.lookAt(aimTarget);
 
-      /*
-        Subtle camera tilt based on movement direction.
-        Strafing right tilts one way, strafing left tilts the other.
-      */
       const targetRoll = -player.moveLocalX * 0.055;
       cameraRoll = THREE.MathUtils.lerp(cameraRoll, targetRoll, dt * 8);
       camera.rotateZ(cameraRoll);
     }
 
     function damageEnemy(amount) {
-      if (gameOver) return;
+      if (gameOver || enemyDeathTimer > 0) return;
 
       enemyHP = Math.max(0, enemyHP - amount);
       enemy.hurtTimer = 0.18;
@@ -1639,8 +1661,20 @@
         const earned = 25;
         bloodCoins += earned;
         updateUI();
+
+        gameOver = true;
+        isBlocking = false;
+        enemyAttackTimer = 0;
+        enemyDeathTimer = enemyDeathDuration;
+
+        pendingVictoryText = "Victory";
+        pendingVictoryDetail = currentEnemyName + " has fallen. +" + earned + " BloodCoins.";
+
         createFloatingText("+" + earned + " BloodCoins", enemy.group.position.clone().add(new THREE.Vector3(0, 3.1, 0)), 0xffd86f);
-        endGame("Victory", currentEnemyName + " has fallen. +" + earned + " BloodCoins.");
+
+        if (document.pointerLockElement) {
+          document.exitPointerLock();
+        }
       }
     }
 
@@ -1984,6 +2018,7 @@
 
       player.group.position.set(0, 0, 8);
       enemy.group.position.set(0, 0, -8);
+      enemy.group.rotation.set(0, 0, 0);
 
       playerAttackTimer = 0;
       playerAttackCooldown = 0;
@@ -1991,6 +2026,10 @@
       enemyAttackCooldown = 1.2;
       playerHitDone = false;
       enemyHitDone = false;
+
+      enemyDeathTimer = 0;
+      pendingVictoryText = "";
+      pendingVictoryDetail = "";
 
       player.blinkTimer = Math.random() * 2;
       enemy.blinkTimer = Math.random() * 2;
@@ -2013,6 +2052,14 @@
       enemy.body.rotation.set(0, 0, 0);
       player.head.rotation.set(0, 0, 0);
       enemy.head.rotation.set(0, 0, 0);
+      player.rightArmPivot.rotation.set(0, 0, 0);
+      enemy.rightArmPivot.rotation.set(0, 0, 0);
+      player.leftArmPivot.rotation.set(0, 0, 0);
+      enemy.leftArmPivot.rotation.set(0, 0, 0);
+      player.swordPivot.rotation.set(0, 0, 0);
+      enemy.swordPivot.rotation.set(0, 0, 0);
+      player.shieldPivot.rotation.set(0, 0, 0);
+      enemy.shieldPivot.rotation.set(0, 0, 0);
 
       messagePanel.classList.remove("show");
 
