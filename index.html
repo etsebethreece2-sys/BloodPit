@@ -640,11 +640,26 @@
       group.add(body);
       addOutline(body, 1.045);
 
-      const chest = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.1, 0.5), armor);
+      /*
+        The old white/silver chest BoxGeometry was the visible box sticking out of the gladiator.
+        It is kept as an invisible object only in case you want to reuse it later, but it no longer renders.
+      */
+      const chest = new THREE.Mesh(
+        new THREE.BoxGeometry(1.25, 1.1, 0.5),
+        new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, visible: false })
+      );
       chest.position.y = 2.08;
-      chest.castShadow = true;
+      chest.visible = false;
       group.add(chest);
-      addOutline(chest, 1.04);
+
+      const belt = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.78, 0.82, 0.22, 18),
+        armor
+      );
+      belt.position.y = 1.43;
+      belt.castShadow = true;
+      group.add(belt);
+      addOutline(belt, 1.035);
 
       const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 1.02, 0.65, 12), cloth);
       skirt.position.y = 1.18;
@@ -691,26 +706,32 @@
 
       const leftArmPivot = new THREE.Group();
       const rightArmPivot = new THREE.Group();
-      leftArmPivot.position.set(-0.82, 2.25, 0);
-      rightArmPivot.position.set(0.82, 2.25, 0);
+
+      /*
+        Arms raised closer to shoulder height.
+        Old value was around y = 2.25.
+      */
+      leftArmPivot.position.set(-0.84, 2.48, 0);
+      rightArmPivot.position.set(0.84, 2.48, 0);
+
       group.add(leftArmPivot, rightArmPivot);
 
       const armGeo = new THREE.CapsuleGeometry(0.17, 0.82, 6, 12);
 
       const leftArm = new THREE.Mesh(armGeo, skin);
-      leftArm.position.y = -0.52;
+      leftArm.position.y = -0.48;
       leftArm.castShadow = true;
       leftArmPivot.add(leftArm);
       addOutline(leftArm, 1.05);
 
       const rightArm = new THREE.Mesh(armGeo, skin);
-      rightArm.position.y = -0.52;
+      rightArm.position.y = -0.48;
       rightArm.castShadow = true;
       rightArmPivot.add(rightArm);
       addOutline(rightArm, 1.05);
 
       const shieldPivot = new THREE.Group();
-      shieldPivot.position.set(0, -0.88, 0.1);
+      shieldPivot.position.set(0, -0.84, 0.1);
       leftArmPivot.add(shieldPivot);
 
       const shield = new THREE.Mesh(
@@ -722,26 +743,44 @@
       shieldPivot.add(shield);
       addOutline(shield, 1.04);
 
+      /*
+        Fixed shield metal rim:
+        The shield cylinder is rotated so its round face points forward.
+        TorusGeometry already lies flat in the XY plane, so it should NOT be rotated.
+        It is placed slightly in front of the shield face.
+      */
       const shieldRim = new THREE.Mesh(
-        new THREE.TorusGeometry(0.58, 0.045, 8, 32),
+        new THREE.TorusGeometry(0.58, 0.045, 10, 48),
         armor
       );
-      shieldRim.rotation.x = Math.PI / 2;
+      shieldRim.position.z = 0.095;
+      shieldRim.rotation.set(0, 0, 0);
       shieldRim.castShadow = true;
       shieldPivot.add(shieldRim);
-      addOutline(shieldRim, 1.04);
+      addOutline(shieldRim, 1.035);
+
+      const innerShieldRing = new THREE.Mesh(
+        new THREE.TorusGeometry(0.31, 0.025, 8, 40),
+        armor
+      );
+      innerShieldRing.position.z = 0.105;
+      innerShieldRing.rotation.set(0, 0, 0);
+      innerShieldRing.castShadow = true;
+      shieldPivot.add(innerShieldRing);
+      addOutline(innerShieldRing, 1.035);
 
       const shieldBoss = new THREE.Mesh(
         new THREE.SphereGeometry(0.18, 16, 16),
         armor
       );
-      shieldBoss.position.z = 0.08;
+      shieldBoss.position.z = 0.145;
+      shieldBoss.scale.z = 0.55;
       shieldBoss.castShadow = true;
       shieldPivot.add(shieldBoss);
       addOutline(shieldBoss, 1.04);
 
       const swordPivot = new THREE.Group();
-      swordPivot.position.set(0, -0.92, 0);
+      swordPivot.position.set(0, -0.88, 0);
       rightArmPivot.add(swordPivot);
 
       const blade = new THREE.Mesh(
@@ -820,6 +859,7 @@
       return {
         group,
         body,
+        chest,
         head,
         eyeGroup,
         leftEye,
@@ -1135,18 +1175,19 @@
 
       g.leftLegPivot.rotation.x = walkSwing;
       g.rightLegPivot.rotation.x = -walkSwing;
-      g.leftArmPivot.rotation.x = -walkSwing * 0.4;
-      g.rightArmPivot.rotation.x = walkSwing * 0.35;
+
+      g.leftArmPivot.rotation.x = -walkSwing * 0.32;
+      g.rightArmPivot.rotation.x = walkSwing * 0.28;
 
       g.group.position.y = Math.abs(Math.sin(g.walkTime * 0.5)) * (moving ? 0.05 : 0.015);
 
       if (isPlayer) {
         if (isBlocking) {
-          g.leftArmPivot.rotation.x = -1.0;
+          g.leftArmPivot.rotation.x = -0.86;
           g.leftArmPivot.rotation.z = -0.35;
-          g.shieldPivot.rotation.x = -0.1;
+          g.shieldPivot.rotation.x = -0.05;
           g.shieldPivot.rotation.y = 0.15;
-          g.shieldPivot.position.z = 0.45;
+          g.shieldPivot.position.z = 0.48;
         } else {
           g.leftArmPivot.rotation.z = -0.12;
           g.shieldPivot.position.z = 0.1;
@@ -1157,7 +1198,7 @@
           const t = 1 - playerAttackTimer / 0.42;
           const swing = Math.sin(t * Math.PI);
 
-          g.rightArmPivot.rotation.x = -1.35 + swing * 1.75;
+          g.rightArmPivot.rotation.x = -1.18 + swing * 1.75;
           g.rightArmPivot.rotation.z = -0.55 + swing * 1.15;
           g.swordPivot.rotation.z = -1.0 + swing * 2.3;
           g.swordPivot.rotation.x = -0.6 + swing * 1.1;
@@ -1169,13 +1210,13 @@
           const t = 1 - enemyAttackTimer / 0.55;
           const swing = Math.sin(t * Math.PI);
 
-          g.rightArmPivot.rotation.x = -1.2 + swing * 1.9;
+          g.rightArmPivot.rotation.x = -1.06 + swing * 1.9;
           g.rightArmPivot.rotation.z = 0.55 - swing * 1.25;
           g.swordPivot.rotation.z = 0.9 - swing * 2.0;
           g.swordPivot.rotation.x = -0.45 + swing * 1.2;
         } else {
           g.swordPivot.rotation.set(-0.15, 0, 0.25);
-          g.leftArmPivot.rotation.x = -0.35;
+          g.leftArmPivot.rotation.x = -0.25;
           g.leftArmPivot.rotation.z = 0.3;
         }
       }
