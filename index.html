@@ -42,7 +42,8 @@
       velocity: new THREE.Vector3(0, 0, 0),
       angle: 0,
       angularVelocity: 0,
-      speed: 0
+      speed: 0,
+      accelerating: false
     };
 
     const cameraState = {
@@ -80,7 +81,6 @@
       createWater();
       createBoat();
       createSkyDecorations();
-      createFloatingProps();
 
       window.addEventListener("resize", onResize);
 
@@ -256,8 +256,8 @@
       const windowMat = toonMaterial(0x2bdfff, 0x0abfff);
       const blackMat = toonMaterial(0x233142);
       const metalMat = toonMaterial(0x8fa7b3);
+      const darkMetalMat = toonMaterial(0x4a6070);
       const ropeMat = toonMaterial(0xd49d56);
-      const exhaustMat = toonMaterial(0x374957);
 
       const hull = new THREE.Mesh(
         new THREE.BoxGeometry(3.8, 1.1, 7),
@@ -340,100 +340,7 @@
       createWindow(-1.2, 2.45, 0.4, 0.08, 0.5, 0.8);
       createWindow(1.2, 2.45, 0.4, 0.08, 0.5, 0.8);
 
-      const rearEngineBase = new THREE.Mesh(
-        new THREE.BoxGeometry(2.7, 0.95, 1.4),
-        exhaustMat
-      );
-      rearEngineBase.position.set(0, 1.75, 3.05);
-      rearEngineBase.castShadow = true;
-      boatBody.add(rearEngineBase);
-      outlineObject(rearEngineBase);
-
-      const rearEngineTop = new THREE.Mesh(
-        new THREE.BoxGeometry(2.1, 0.55, 1.0),
-        metalMat
-      );
-      rearEngineTop.position.set(0, 2.45, 3.05);
-      rearEngineTop.castShadow = true;
-      boatBody.add(rearEngineTop);
-      outlineObject(rearEngineTop);
-
-      const engineGrille = new THREE.Group();
-      engineGrille.position.set(0, 1.88, 3.82);
-      boatBody.add(engineGrille);
-
-      for (let i = -2; i <= 2; i++) {
-        const grilleBar = new THREE.Mesh(
-          new THREE.BoxGeometry(0.18, 0.55, 0.08),
-          blackMat
-        );
-        grilleBar.position.x = i * 0.38;
-        grilleBar.castShadow = true;
-        engineGrille.add(grilleBar);
-      }
-
-      const exhaustPipeLeft = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.16, 0.18, 1.2, 12),
-        blackMat
-      );
-      exhaustPipeLeft.position.set(-0.85, 2.95, 3.1);
-      exhaustPipeLeft.rotation.x = 0.25;
-      exhaustPipeLeft.castShadow = true;
-      boatBody.add(exhaustPipeLeft);
-      outlineObject(exhaustPipeLeft);
-
-      const exhaustPipeRight = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.16, 0.18, 1.2, 12),
-        blackMat
-      );
-      exhaustPipeRight.position.set(0.85, 2.95, 3.1);
-      exhaustPipeRight.rotation.x = 0.25;
-      exhaustPipeRight.castShadow = true;
-      boatBody.add(exhaustPipeRight);
-      outlineObject(exhaustPipeRight);
-
-      const propellerHub = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.18, 0.18, 0.35, 12),
-        metalMat
-      );
-      propellerHub.position.set(0, 0.25, 4.15);
-      propellerHub.rotation.x = Math.PI / 2;
-      propellerHub.castShadow = true;
-      boatBody.add(propellerHub);
-
-      propeller = new THREE.Group();
-      propeller.position.set(0, 0.25, 4.35);
-      boatBody.add(propeller);
-
-      for (let i = 0; i < 4; i++) {
-        const blade = new THREE.Mesh(
-          new THREE.BoxGeometry(0.22, 0.9, 0.08),
-          metalMat
-        );
-
-        blade.position.y = 0.42;
-        blade.rotation.z = i * Math.PI / 2;
-        blade.castShadow = true;
-        propeller.add(blade);
-      }
-
-      const propGuard = new THREE.Mesh(
-        new THREE.TorusGeometry(0.72, 0.06, 8, 24),
-        blackMat
-      );
-      propGuard.position.set(0, 0.25, 4.34);
-      propGuard.rotation.x = Math.PI / 2;
-      propGuard.castShadow = true;
-      boatBody.add(propGuard);
-
-      const rudder = new THREE.Mesh(
-        new THREE.BoxGeometry(0.18, 0.85, 0.55),
-        darkHullMat
-      );
-      rudder.position.set(0, -0.05, 4.5);
-      rudder.castShadow = true;
-      boatBody.add(rudder);
-      outlineObject(rudder);
+      createRearEngine();
 
       const tirePositions = [
         [-2.05, 0.9, -2.3],
@@ -497,36 +404,122 @@
         boatBody.add(win);
         outlineObject(win, 1.08);
       }
-    }
 
-    function createFloatingProps() {
-      for (let i = 0; i < 22; i++) {
-        const buoy = new THREE.Group();
+      function createRearEngine() {
+        const engineGroup = new THREE.Group();
+        engineGroup.position.set(0, 0, 0);
+        boatBody.add(engineGroup);
 
-        const base = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.35, 0.5, 1.2, 12),
-          toonMaterial(i % 2 === 0 ? 0xff6b6b : 0xffffff)
+        const engineBlock = new THREE.Mesh(
+          new THREE.BoxGeometry(1.65, 0.82, 1.12),
+          darkMetalMat
         );
-        base.castShadow = true;
-        buoy.add(base);
+        engineBlock.position.set(0, 1.68, 3.3);
+        engineBlock.castShadow = true;
+        engineGroup.add(engineBlock);
+        outlineObject(engineBlock, 1.045);
 
-        const top = new THREE.Mesh(
-          new THREE.SphereGeometry(0.35, 12, 12),
-          toonMaterial(0xffffff)
+        const roundedTank = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.42, 0.42, 1.45, 14),
+          metalMat
         );
-        top.position.y = 0.75;
-        top.castShadow = true;
-        buoy.add(top);
+        roundedTank.position.set(0, 2.18, 3.3);
+        roundedTank.rotation.z = Math.PI / 2;
+        roundedTank.castShadow = true;
+        engineGroup.add(roundedTank);
+        outlineObject(roundedTank, 1.045);
 
-        buoy.position.set(
-          randomRange(-105, 105),
-          0.55,
-          randomRange(-105, 105)
+        const engineTopCap = new THREE.Mesh(
+          new THREE.BoxGeometry(1.25, 0.24, 0.75),
+          metalMat
         );
+        engineTopCap.position.set(0, 2.62, 3.3);
+        engineTopCap.castShadow = true;
+        engineGroup.add(engineTopCap);
+        outlineObject(engineTopCap, 1.045);
 
-        buoy.userData.offset = Math.random() * 100;
-        scene.add(buoy);
-        floatingProps.push(buoy);
+        for (let i = -1; i <= 1; i++) {
+          const vent = new THREE.Mesh(
+            new THREE.BoxGeometry(0.18, 0.42, 0.07),
+            blackMat
+          );
+          vent.position.set(i * 0.38, 1.72, 3.9);
+          vent.castShadow = true;
+          engineGroup.add(vent);
+        }
+
+        const exhaustPipe = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.13, 0.15, 1.25, 12),
+          blackMat
+        );
+        exhaustPipe.position.set(0.72, 2.58, 3.25);
+        exhaustPipe.rotation.x = 0.2;
+        exhaustPipe.castShadow = true;
+        engineGroup.add(exhaustPipe);
+        outlineObject(exhaustPipe, 1.045);
+
+        const exhaustLip = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.21, 0.21, 0.16, 12),
+          blackMat
+        );
+        exhaustLip.position.set(0.72, 3.23, 3.39);
+        exhaustLip.rotation.x = 0.2;
+        exhaustLip.castShadow = true;
+        engineGroup.add(exhaustLip);
+        outlineObject(exhaustLip, 1.045);
+
+        const shaft = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.11, 0.11, 0.95, 12),
+          metalMat
+        );
+        shaft.position.set(0, 0.28, 4.0);
+        shaft.rotation.x = Math.PI / 2;
+        shaft.castShadow = true;
+        engineGroup.add(shaft);
+
+        const propellerHub = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.2, 0.2, 0.24, 12),
+          metalMat
+        );
+        propellerHub.position.set(0, 0.28, 4.55);
+        propellerHub.rotation.x = Math.PI / 2;
+        propellerHub.castShadow = true;
+        engineGroup.add(propellerHub);
+
+        propeller = new THREE.Group();
+        propeller.position.set(0, 0.28, 4.68);
+        engineGroup.add(propeller);
+
+        for (let i = 0; i < 4; i++) {
+          const blade = new THREE.Mesh(
+            new THREE.BoxGeometry(0.2, 0.95, 0.08),
+            metalMat
+          );
+
+          blade.position.y = 0.43;
+          blade.rotation.z = i * Math.PI / 2;
+          blade.castShadow = true;
+          propeller.add(blade);
+          outlineObject(blade, 1.035);
+        }
+
+        const propGuard = new THREE.Mesh(
+          new THREE.TorusGeometry(0.78, 0.055, 8, 24),
+          blackMat
+        );
+        propGuard.position.set(0, 0.28, 4.66);
+        propGuard.rotation.x = Math.PI / 2;
+        propGuard.castShadow = true;
+        engineGroup.add(propGuard);
+
+        const rudder = new THREE.Mesh(
+          new THREE.BoxGeometry(0.18, 0.85, 0.55),
+          darkHullMat
+        );
+        rudder.position.set(0, -0.05, 4.55);
+        rudder.castShadow = true;
+        engineGroup.add(rudder);
+        outlineObject(rudder);
       }
     }
 
@@ -540,7 +533,6 @@
 
       for (let i = 0; i < 12; i++) {
         const cloud = new THREE.Group();
-
         const mat = new THREE.MeshToonMaterial({ color: 0xffffff });
 
         for (let j = 0; j < 5; j++) {
@@ -566,57 +558,175 @@
         scene.add(cloud);
       }
 
-      for (let i = 0; i < 18; i++) {
+      createIslands();
+    }
+
+    function createIslands() {
+      for (let i = 0; i < 24; i++) {
         const island = new THREE.Group();
+
+        const islandScale = randomRange(0.55, 2.4);
+        const islandWidth = randomRange(2.2, 5.8) * islandScale;
+        const islandDepth = randomRange(1.4, 4.6) * islandScale;
 
         const sand = new THREE.Mesh(
           new THREE.CylinderGeometry(
-            randomRange(2, 4),
-            randomRange(3, 5),
-            0.5,
-            16
+            islandWidth,
+            islandWidth * randomRange(0.85, 1.25),
+            0.5 * islandScale,
+            18
           ),
           toonMaterial(0xffd785)
         );
 
-        sand.scale.z = randomRange(0.5, 1.4);
+        sand.scale.z = islandDepth / islandWidth;
         sand.castShadow = true;
         sand.receiveShadow = true;
         island.add(sand);
+        outlineObject(sand, 1.025);
 
-        const palmTrunk = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.18, 0.28, 3, 8),
-          toonMaterial(0xb8753a)
+        const grass = new THREE.Mesh(
+          new THREE.CylinderGeometry(
+            islandWidth * 0.72,
+            islandWidth * 0.84,
+            0.28 * islandScale,
+            18
+          ),
+          toonMaterial(0x4bd76d)
         );
-        palmTrunk.position.y = 1.7;
-        palmTrunk.rotation.z = randomRange(-0.25, 0.25);
-        palmTrunk.castShadow = true;
-        island.add(palmTrunk);
 
-        for (let j = 0; j < 5; j++) {
-          const leaf = new THREE.Mesh(
-            new THREE.ConeGeometry(0.45, 2.2, 8),
-            toonMaterial(0x38c76f)
+        grass.position.y = 0.32 * islandScale;
+        grass.scale.z = (islandDepth / islandWidth) * randomRange(0.75, 0.95);
+        grass.castShadow = true;
+        grass.receiveShadow = true;
+        island.add(grass);
+        outlineObject(grass, 1.025);
+
+        const treeCount = Math.floor(randomRange(1, 5 + islandScale * 2));
+
+        for (let t = 0; t < treeCount; t++) {
+          const tree = createPalmTree(randomRange(0.7, 1.4) * islandScale);
+
+          const angle = Math.random() * Math.PI * 2;
+          const radiusX = randomRange(0.1, islandWidth * 0.55);
+          const radiusZ = randomRange(0.1, islandDepth * 0.45);
+
+          tree.position.set(
+            Math.cos(angle) * radiusX,
+            0.35 * islandScale,
+            Math.sin(angle) * radiusZ
           );
-          leaf.position.y = 3.25;
-          leaf.rotation.z = Math.PI / 2;
-          leaf.rotation.y = j * Math.PI * 0.4;
-          leaf.castShadow = true;
-          island.add(leaf);
+
+          tree.rotation.y = Math.random() * Math.PI * 2;
+          island.add(tree);
+        }
+
+        for (let r = 0; r < Math.floor(randomRange(0, 4)); r++) {
+          const rock = new THREE.Mesh(
+            new THREE.DodecahedronGeometry(randomRange(0.25, 0.7) * islandScale, 0),
+            toonMaterial(0x9aa6a8)
+          );
+
+          const angle = Math.random() * Math.PI * 2;
+          rock.position.set(
+            Math.cos(angle) * islandWidth * randomRange(0.25, 0.7),
+            0.55 * islandScale,
+            Math.sin(angle) * islandDepth * randomRange(0.2, 0.65)
+          );
+
+          rock.scale.y = randomRange(0.45, 0.9);
+          rock.castShadow = true;
+          island.add(rock);
+          outlineObject(rock, 1.035);
         }
 
         let x = randomRange(-125, 125);
         let z = randomRange(-125, 125);
 
         if (Math.abs(x) < 35 && Math.abs(z) < 35) {
-          x += Math.sign(x || 1) * 50;
-          z += Math.sign(z || 1) * 50;
+          x += Math.sign(x || 1) * 55;
+          z += Math.sign(z || 1) * 55;
         }
 
-        island.position.set(x, 0.15, z);
+        island.position.set(x, 0.1, z);
         island.rotation.y = Math.random() * Math.PI;
         scene.add(island);
       }
+    }
+
+    function createPalmTree(scale) {
+      const tree = new THREE.Group();
+
+      const trunkMat = toonMaterial(0xb8753a);
+      const leafMats = [
+        toonMaterial(0x31bd64),
+        toonMaterial(0x3edb76),
+        toonMaterial(0x239d55)
+      ];
+
+      const trunkSegments = Math.floor(randomRange(3, 6));
+      const trunkHeight = randomRange(2.3, 4.4) * scale;
+
+      for (let i = 0; i < trunkSegments; i++) {
+        const segment = new THREE.Mesh(
+          new THREE.CylinderGeometry(
+            0.16 * scale,
+            0.24 * scale,
+            trunkHeight / trunkSegments,
+            8
+          ),
+          trunkMat
+        );
+
+        segment.position.y = (i + 0.5) * (trunkHeight / trunkSegments);
+        segment.position.x = Math.sin(i * 0.7) * 0.08 * scale;
+        segment.rotation.z = randomRange(-0.12, 0.12);
+        segment.castShadow = true;
+        tree.add(segment);
+        outlineObject(segment, 1.04);
+      }
+
+      const leafCount = Math.floor(randomRange(5, 8));
+      const leafHeight = trunkHeight + 0.15 * scale;
+
+      for (let j = 0; j < leafCount; j++) {
+        const leaf = new THREE.Mesh(
+          new THREE.ConeGeometry(
+            randomRange(0.35, 0.55) * scale,
+            randomRange(1.8, 2.8) * scale,
+            8
+          ),
+          leafMats[j % leafMats.length]
+        );
+
+        leaf.position.y = leafHeight;
+        leaf.rotation.z = Math.PI / 2 + randomRange(-0.25, 0.25);
+        leaf.rotation.y = j * Math.PI * 2 / leafCount;
+        leaf.castShadow = true;
+        tree.add(leaf);
+        outlineObject(leaf, 1.035);
+      }
+
+      const coconutCount = Math.floor(randomRange(0, 4));
+
+      for (let c = 0; c < coconutCount; c++) {
+        const coconut = new THREE.Mesh(
+          new THREE.SphereGeometry(0.18 * scale, 8, 8),
+          toonMaterial(0x6b421f)
+        );
+
+        coconut.position.set(
+          Math.cos(c * 2.1) * 0.22 * scale,
+          leafHeight - 0.18 * scale,
+          Math.sin(c * 2.1) * 0.22 * scale
+        );
+
+        coconut.castShadow = true;
+        tree.add(coconut);
+        outlineObject(coconut, 1.04);
+      }
+
+      return tree;
     }
 
     function updateBoat(delta, time) {
@@ -627,6 +737,8 @@
       const turnInput =
         (keys["a"] || keys["arrowleft"] ? 1 : 0) -
         (keys["d"] || keys["arrowright"] ? 1 : 0);
+
+      boatState.accelerating = forwardInput !== 0;
 
       const boost = keys["shift"] ? 1.55 : 1;
 
@@ -716,19 +828,20 @@
 
       boatState.speed = boatState.velocity.length();
 
-      if (propeller) {
-        propeller.rotation.z += delta * (8 + boatState.speed * 6);
+      if (propeller && boatState.accelerating) {
+        const propSpeed = forwardInput > 0 ? 1 : -1;
+        propeller.rotation.z += delta * propSpeed * (18 + boatState.speed * 10);
       }
 
       if (boatState.speed > 2.5) {
         spawnWake(time);
       }
 
-      if (boatState.speed > 9 && Math.random() < 0.18) {
+      if (boatState.speed > 9 && Math.random() < 0.13) {
         spawnSplash();
       }
 
-      if (boatState.speed > 3 && Math.random() < 0.12) {
+      if (boatState.accelerating && boatState.speed > 3 && Math.random() < 0.1) {
         spawnEngineSmoke();
       }
     }
@@ -760,6 +873,8 @@
     }
 
     function spawnWake(time) {
+      if (Math.random() > 0.7) return;
+
       const back = new THREE.Vector3(
         -Math.sin(boatState.angle),
         0,
@@ -772,40 +887,38 @@
         -Math.sin(boatState.angle)
       );
 
-      for (let i = 0; i < 2; i++) {
-        const particle = new THREE.Mesh(
-          new THREE.SphereGeometry(randomRange(0.12, 0.32), 8, 8),
-          new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.85
-          })
-        );
+      const particle = new THREE.Mesh(
+        new THREE.SphereGeometry(randomRange(0.12, 0.32), 8, 8),
+        new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0.85
+        })
+      );
 
-        const spread = side.clone().multiplyScalar(randomRange(-1.1, 1.1));
-        const behind = back.clone().multiplyScalar(randomRange(3.3, 4.3));
+      const spread = side.clone().multiplyScalar(randomRange(-1.1, 1.1));
+      const behind = back.clone().multiplyScalar(randomRange(3.3, 4.3));
 
-        particle.position.copy(boat.position)
-          .add(behind)
-          .add(spread);
+      particle.position.copy(boat.position)
+        .add(behind)
+        .add(spread);
 
-        particle.position.y = getWaveHeight(
-          particle.position.x,
-          particle.position.z,
-          time
-        ) + 0.22;
+      particle.position.y = getWaveHeight(
+        particle.position.x,
+        particle.position.z,
+        time
+      ) + 0.22;
 
-        particle.userData.life = 1;
-        particle.userData.maxLife = randomRange(0.7, 1.25);
-        particle.userData.velocity = back.clone()
-          .multiplyScalar(randomRange(1, 3))
-          .add(side.clone().multiplyScalar(randomRange(-1, 1)));
+      particle.userData.life = 1;
+      particle.userData.maxLife = randomRange(0.7, 1.25);
+      particle.userData.velocity = back.clone()
+        .multiplyScalar(randomRange(1, 3))
+        .add(side.clone().multiplyScalar(randomRange(-1, 1)));
 
-        particle.userData.grow = randomRange(1.2, 2.4);
+      particle.userData.grow = randomRange(1.2, 2.4);
 
-        scene.add(particle);
-        wakeParticles.push(particle);
-      }
+      scene.add(particle);
+      wakeParticles.push(particle);
     }
 
     function spawnSplash() {
@@ -872,9 +985,9 @@
 
       smoke.position.copy(boat.position)
         .add(back.clone().multiplyScalar(-2.6))
-        .add(side.clone().multiplyScalar(randomRange(-0.7, 0.7)));
+        .add(side.clone().multiplyScalar(randomRange(-0.45, 0.45)));
 
-      smoke.position.y += 3.2;
+      smoke.position.y += 3.35;
 
       smoke.userData.life = 1;
       smoke.userData.maxLife = randomRange(0.8, 1.3);
@@ -930,14 +1043,7 @@
           obj.position.y =
             getWaveHeight(obj.position.x, obj.position.z, time) + 0.5;
           obj.rotation.z = Math.sin(time + obj.userData.floatOffset) * 0.05;
-          return;
         }
-
-        obj.position.y =
-          getWaveHeight(obj.position.x, obj.position.z, time) + 0.7;
-
-        obj.rotation.x = Math.sin(time * 1.7 + obj.userData.offset) * 0.12;
-        obj.rotation.z = Math.cos(time * 1.4 + obj.userData.offset) * 0.12;
       });
     }
 
