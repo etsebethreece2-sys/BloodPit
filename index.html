@@ -640,10 +640,6 @@
       group.add(body);
       addOutline(body, 1.045);
 
-      /*
-        The old white/silver chest BoxGeometry was the visible box sticking out of the gladiator.
-        It is kept as an invisible object only in case you want to reuse it later, but it no longer renders.
-      */
       const chest = new THREE.Mesh(
         new THREE.BoxGeometry(1.25, 1.1, 0.5),
         new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, visible: false })
@@ -707,10 +703,6 @@
       const leftArmPivot = new THREE.Group();
       const rightArmPivot = new THREE.Group();
 
-      /*
-        Arms raised closer to shoulder height.
-        Old value was around y = 2.25.
-      */
       leftArmPivot.position.set(-0.84, 2.48, 0);
       rightArmPivot.position.set(0.84, 2.48, 0);
 
@@ -743,12 +735,6 @@
       shieldPivot.add(shield);
       addOutline(shield, 1.04);
 
-      /*
-        Fixed shield metal rim:
-        The shield cylinder is rotated so its round face points forward.
-        TorusGeometry already lies flat in the XY plane, so it should NOT be rotated.
-        It is placed slightly in front of the shield face.
-      */
       const shieldRim = new THREE.Mesh(
         new THREE.TorusGeometry(0.58, 0.045, 10, 48),
         armor
@@ -780,7 +766,7 @@
       addOutline(shieldBoss, 1.04);
 
       const swordPivot = new THREE.Group();
-      swordPivot.position.set(0, -0.88, 0);
+      swordPivot.position.set(0.04, -0.78, 0.02);
       rightArmPivot.add(swordPivot);
 
       const blade = new THREE.Mesh(
@@ -874,6 +860,7 @@
         shield,
         velocity: new THREE.Vector3(),
         walkTime: 0,
+        idleTime: Math.random() * 100,
         hurtTimer: 0,
         blinkTimer: Math.random() * 2,
         blinkDuration: 0
@@ -992,12 +979,12 @@
     function playerAttack() {
       if (playerAttackCooldown > 0 || stamina < 15 || isBlocking) return;
 
-      playerAttackTimer = 0.42;
-      playerAttackCooldown = 0.65;
+      playerAttackTimer = 0.48;
+      playerAttackCooldown = 0.62;
       playerHitDone = false;
       stamina -= 15;
 
-      createSlashSpark(player.group.position.clone().add(new THREE.Vector3(0, 2, 0)));
+      createSlashSpark(player.group.position.clone().add(new THREE.Vector3(0, 2.1, 0)));
     }
 
     function animate() {
@@ -1039,7 +1026,9 @@
         const speed = isBlocking ? PLAYER_SPEED * 0.45 : PLAYER_SPEED;
         player.group.position.addScaledVector(move, speed * dt);
 
-        player.walkTime += dt * 9;
+        player.walkTime += dt * 10.5;
+      } else {
+        player.idleTime += dt;
       }
 
       keepInsideArena(player.group.position);
@@ -1061,7 +1050,7 @@
       if (playerAttackTimer > 0 && !playerHitDone) {
         const dist = player.group.position.distanceTo(enemy.group.position);
 
-        if (dist < 3.15 && playerAttackTimer < 0.27) {
+        if (dist < 3.15 && playerAttackTimer < 0.31) {
           const toEnemy = enemy.group.position.clone().sub(player.group.position).normalize();
           const facing = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
           const dot = facing.dot(toEnemy);
@@ -1092,12 +1081,13 @@
 
       if (dist > 2.25) {
         enemy.group.position.addScaledVector(toPlayer, ENEMY_SPEED * dt);
-        enemy.walkTime += dt * 8;
+        enemy.walkTime += dt * 9.2;
       } else {
-        enemy.walkTime += dt * 2;
+        enemy.idleTime += dt;
+        enemy.walkTime += dt * 1.2;
 
         if (enemyAttackCooldown <= 0 && enemyAttackTimer <= 0) {
-          enemyAttackTimer = 0.55;
+          enemyAttackTimer = 0.58;
           enemyAttackCooldown = 1.15 + Math.random() * 0.6;
           enemyHitDone = false;
         }
@@ -1106,7 +1096,7 @@
       keepInsideArena(enemy.group.position);
 
       if (enemyAttackTimer > 0 && !enemyHitDone) {
-        if (enemyAttackTimer < 0.31 && dist < 2.65) {
+        if (enemyAttackTimer < 0.33 && dist < 2.65) {
           damagePlayer(16 + Math.random() * 8);
           enemyHitDone = true;
         }
@@ -1171,55 +1161,129 @@
         ? keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD
         : enemy.group.position.distanceTo(player.group.position) > 2.4;
 
-      const walkSwing = moving ? Math.sin(g.walkTime) * 0.45 : Math.sin(clock.elapsedTime * 2) * 0.05;
+      const walkSwing = moving ? Math.sin(g.walkTime) * 0.48 : 0;
+      const stepBob = moving ? Math.abs(Math.sin(g.walkTime * 1.05)) * 0.075 : Math.sin(clock.elapsedTime * 2.1 + g.idleTime) * 0.018;
+      const bodySway = moving ? Math.sin(g.walkTime * 0.5) * 0.075 : Math.sin(clock.elapsedTime * 1.7 + g.idleTime) * 0.035;
+      const shoulderSway = moving ? Math.sin(g.walkTime * 0.5) * 0.12 : Math.sin(clock.elapsedTime * 1.4 + g.idleTime) * 0.045;
+
+      g.group.position.y = stepBob;
+
+      g.body.rotation.z = bodySway;
+      g.head.rotation.z = bodySway * -0.55;
+      g.head.rotation.x = moving ? Math.sin(g.walkTime) * 0.035 : Math.sin(clock.elapsedTime * 1.5 + g.idleTime) * 0.025;
 
       g.leftLegPivot.rotation.x = walkSwing;
       g.rightLegPivot.rotation.x = -walkSwing;
 
-      g.leftArmPivot.rotation.x = -walkSwing * 0.32;
-      g.rightArmPivot.rotation.x = walkSwing * 0.28;
+      g.leftArmPivot.rotation.x = -walkSwing * 0.28 - 0.08;
+      g.rightArmPivot.rotation.x = walkSwing * 0.24 - 0.1;
 
-      g.group.position.y = Math.abs(Math.sin(g.walkTime * 0.5)) * (moving ? 0.05 : 0.015);
+      g.leftArmPivot.rotation.y = shoulderSway * 0.35;
+      g.rightArmPivot.rotation.y = -shoulderSway * 0.35;
 
       if (isPlayer) {
         if (isBlocking) {
-          g.leftArmPivot.rotation.x = -0.86;
-          g.leftArmPivot.rotation.z = -0.35;
+          g.leftArmPivot.rotation.x = -0.88;
+          g.leftArmPivot.rotation.z = -0.38;
+          g.leftArmPivot.rotation.y = 0.18;
           g.shieldPivot.rotation.x = -0.05;
-          g.shieldPivot.rotation.y = 0.15;
-          g.shieldPivot.position.z = 0.48;
+          g.shieldPivot.rotation.y = 0.18;
+          g.shieldPivot.rotation.z = Math.sin(clock.elapsedTime * 5) * 0.025;
+          g.shieldPivot.position.z = 0.5;
         } else {
-          g.leftArmPivot.rotation.z = -0.12;
-          g.shieldPivot.position.z = 0.1;
-          g.shieldPivot.rotation.set(0, 0, 0);
+          g.leftArmPivot.rotation.z = -0.18 + shoulderSway * 0.15;
+          g.shieldPivot.position.z = 0.12;
+          g.shieldPivot.rotation.set(
+            -0.06 + Math.sin(clock.elapsedTime * 1.6) * 0.025,
+            0.06,
+            Math.sin(clock.elapsedTime * 1.8) * 0.025
+          );
         }
 
         if (playerAttackTimer > 0) {
-          const t = 1 - playerAttackTimer / 0.42;
-          const swing = Math.sin(t * Math.PI);
+          const t = 1 - playerAttackTimer / 0.48;
 
-          g.rightArmPivot.rotation.x = -1.18 + swing * 1.75;
-          g.rightArmPivot.rotation.z = -0.55 + swing * 1.15;
-          g.swordPivot.rotation.z = -1.0 + swing * 2.3;
-          g.swordPivot.rotation.x = -0.6 + swing * 1.1;
+          if (t < 0.28) {
+            const p = easeOut(t / 0.28);
+            g.rightArmPivot.rotation.x = -0.45 - p * 1.15;
+            g.rightArmPivot.rotation.z = -0.2 - p * 0.95;
+            g.rightArmPivot.rotation.y = -0.15 - p * 0.25;
+            g.swordPivot.rotation.x = -0.45 - p * 0.65;
+            g.swordPivot.rotation.y = -0.1;
+            g.swordPivot.rotation.z = -0.35 - p * 1.45;
+          } else if (t < 0.68) {
+            const p = easeInOut((t - 0.28) / 0.4);
+            g.rightArmPivot.rotation.x = -1.6 + p * 2.15;
+            g.rightArmPivot.rotation.z = -1.15 + p * 1.95;
+            g.rightArmPivot.rotation.y = -0.35 + p * 0.45;
+            g.swordPivot.rotation.x = -1.1 + p * 1.25;
+            g.swordPivot.rotation.y = -0.1 + p * 0.18;
+            g.swordPivot.rotation.z = -1.8 + p * 3.05;
+          } else {
+            const p = easeOut((t - 0.68) / 0.32);
+            g.rightArmPivot.rotation.x = 0.55 - p * 0.78;
+            g.rightArmPivot.rotation.z = 0.8 - p * 1.0;
+            g.rightArmPivot.rotation.y = 0.1 - p * 0.1;
+            g.swordPivot.rotation.x = 0.15 - p * 0.8;
+            g.swordPivot.rotation.y = 0.08 - p * 0.18;
+            g.swordPivot.rotation.z = 1.25 - p * 1.6;
+          }
         } else {
-          g.swordPivot.rotation.set(-0.15, 0, -0.25);
+          const idleSword = Math.sin(clock.elapsedTime * 1.8 + g.idleTime) * 0.035;
+          g.rightArmPivot.rotation.x += -0.18;
+          g.rightArmPivot.rotation.z = 0.14 + idleSword;
+          g.swordPivot.rotation.set(-0.62 + idleSword, -0.1, -0.38 + idleSword);
         }
       } else {
         if (enemyAttackTimer > 0) {
-          const t = 1 - enemyAttackTimer / 0.55;
-          const swing = Math.sin(t * Math.PI);
+          const t = 1 - enemyAttackTimer / 0.58;
 
-          g.rightArmPivot.rotation.x = -1.06 + swing * 1.9;
-          g.rightArmPivot.rotation.z = 0.55 - swing * 1.25;
-          g.swordPivot.rotation.z = 0.9 - swing * 2.0;
-          g.swordPivot.rotation.x = -0.45 + swing * 1.2;
+          if (t < 0.3) {
+            const p = easeOut(t / 0.3);
+            g.rightArmPivot.rotation.x = -0.35 - p * 1.05;
+            g.rightArmPivot.rotation.z = 0.25 + p * 1.0;
+            g.rightArmPivot.rotation.y = 0.1 + p * 0.2;
+            g.swordPivot.rotation.x = -0.55 - p * 0.6;
+            g.swordPivot.rotation.z = 0.4 + p * 1.35;
+          } else if (t < 0.72) {
+            const p = easeInOut((t - 0.3) / 0.42);
+            g.rightArmPivot.rotation.x = -1.4 + p * 2.05;
+            g.rightArmPivot.rotation.z = 1.25 - p * 1.95;
+            g.rightArmPivot.rotation.y = 0.3 - p * 0.42;
+            g.swordPivot.rotation.x = -1.15 + p * 1.25;
+            g.swordPivot.rotation.z = 1.75 - p * 3.05;
+          } else {
+            const p = easeOut((t - 0.72) / 0.28);
+            g.rightArmPivot.rotation.x = 0.65 - p * 0.86;
+            g.rightArmPivot.rotation.z = -0.7 + p * 0.95;
+            g.rightArmPivot.rotation.y = -0.12 + p * 0.12;
+            g.swordPivot.rotation.x = 0.1 - p * 0.72;
+            g.swordPivot.rotation.z = -1.3 + p * 1.68;
+          }
         } else {
-          g.swordPivot.rotation.set(-0.15, 0, 0.25);
-          g.leftArmPivot.rotation.x = -0.25;
-          g.leftArmPivot.rotation.z = 0.3;
+          const idleSword = Math.sin(clock.elapsedTime * 1.7 + g.idleTime) * 0.035;
+          g.swordPivot.rotation.set(-0.62 + idleSword, 0.1, 0.38 - idleSword);
+          g.leftArmPivot.rotation.x = -0.28;
+          g.leftArmPivot.rotation.z = 0.32 + shoulderSway * 0.15;
+          g.shieldPivot.rotation.set(
+            -0.04 + Math.sin(clock.elapsedTime * 1.5 + g.idleTime) * 0.025,
+            -0.08,
+            Math.sin(clock.elapsedTime * 1.8 + g.idleTime) * 0.025
+          );
         }
       }
+    }
+
+    function easeOut(t) {
+      t = THREE.MathUtils.clamp(t, 0, 1);
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function easeInOut(t) {
+      t = THREE.MathUtils.clamp(t, 0, 1);
+      return t < 0.5
+        ? 4 * t * t * t
+        : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
 
     function updateCamera(dt) {
@@ -1244,7 +1308,7 @@
         .add(forward.clone().multiplyScalar(8))
         .add(new THREE.Vector3(0, pitch * 4.2 + 0.35, 0));
 
-      camera.position.lerp(desiredPosition, 1 - Math.pow(0.001, dt));
+      camera.position.copy(desiredPosition);
       camera.lookAt(aimTarget);
     }
 
@@ -1307,34 +1371,45 @@
     function createBloodBurst(position, attackerPosition) {
       const dir = position.clone().sub(attackerPosition).normalize();
 
-      for (let i = 0; i < 36; i++) {
+      for (let i = 0; i < 58; i++) {
+        const dropletSize = 0.075 + Math.random() * 0.12;
+
         const mesh = new THREE.Mesh(
-          new THREE.SphereGeometry(0.04 + Math.random() * 0.08, 8, 8),
+          new THREE.SphereGeometry(dropletSize, 10, 10),
           new THREE.MeshBasicMaterial({
-            color: Math.random() > 0.35 ? 0x8f0000 : 0xd11212
+            color: Math.random() > 0.28 ? 0xb30000 : 0xff1717,
+            transparent: true,
+            opacity: 1
           })
+        );
+
+        mesh.scale.set(
+          1 + Math.random() * 0.9,
+          0.65 + Math.random() * 0.7,
+          1 + Math.random() * 0.9
         );
 
         mesh.position.copy(position);
         scene.add(mesh);
 
         const spread = new THREE.Vector3(
-          (Math.random() - 0.5) * 1.2,
-          Math.random() * 1.3,
-          (Math.random() - 0.5) * 1.2
+          (Math.random() - 0.5) * 2.15,
+          Math.random() * 1.85,
+          (Math.random() - 0.5) * 2.15
         );
 
         const velocity = dir.clone()
-          .multiplyScalar(3 + Math.random() * 5)
+          .multiplyScalar(4.8 + Math.random() * 7.5)
           .add(spread);
 
         particles.push({
           mesh,
           velocity,
-          life: 0.75 + Math.random() * 0.45,
-          maxLife: 1.2,
-          gravity: 10,
-          type: "blood"
+          life: 0.9 + Math.random() * 0.5,
+          maxLife: 1.4,
+          gravity: 9.5,
+          type: "blood",
+          startScale: mesh.scale.clone()
         });
       }
 
@@ -1370,9 +1445,9 @@
     }
 
     function createSlashSpark(position) {
-      for (let i = 0; i < 14; i++) {
+      for (let i = 0; i < 18; i++) {
         const mesh = new THREE.Mesh(
-          new THREE.BoxGeometry(0.035, 0.035, 0.35),
+          new THREE.BoxGeometry(0.04, 0.04, 0.45),
           new THREE.MeshBasicMaterial({ color: 0xffdd88 })
         );
 
@@ -1383,12 +1458,12 @@
         particles.push({
           mesh,
           velocity: new THREE.Vector3(
-            (Math.random() - 0.5) * 3,
-            Math.random() * 2,
-            (Math.random() - 0.5) * 3
+            (Math.random() - 0.5) * 3.4,
+            Math.random() * 2.4,
+            (Math.random() - 0.5) * 3.4
           ),
-          life: 0.22 + Math.random() * 0.18,
-          maxLife: 0.4,
+          life: 0.24 + Math.random() * 0.2,
+          maxLife: 0.44,
           gravity: 1.5,
           type: "spark"
         });
@@ -1448,7 +1523,12 @@
         p.mesh.rotation.y += dt * 7;
 
         const alpha = Math.max(0, p.life / p.maxLife);
-        p.mesh.scale.setScalar(Math.max(0.05, alpha));
+
+        if (p.type === "blood" && p.startScale) {
+          p.mesh.scale.copy(p.startScale).multiplyScalar(Math.max(0.18, alpha));
+        } else {
+          p.mesh.scale.setScalar(Math.max(0.05, alpha));
+        }
 
         if (p.mesh.material.transparent !== undefined) {
           p.mesh.material.transparent = true;
@@ -1593,6 +1673,11 @@
       enemy.blinkTimer = Math.random() * 2;
       player.blinkDuration = 0;
       enemy.blinkDuration = 0;
+
+      player.body.rotation.set(0, 0, 0);
+      enemy.body.rotation.set(0, 0, 0);
+      player.head.rotation.set(0, 0, 0);
+      enemy.head.rotation.set(0, 0, 0);
 
       messagePanel.classList.remove("show");
 
