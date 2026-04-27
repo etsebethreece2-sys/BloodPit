@@ -315,6 +315,7 @@
 
     let yaw = 0;
     let pitch = 0;
+    let cameraRoll = 0;
 
     let playerHP = 100;
     let enemyHP = 100;
@@ -363,6 +364,9 @@
     const PLAYER_SPEED = 7.2;
     const ENEMY_SPEED = 3.36;
     const ENEMY_ATTACK_DURATION = 1.25;
+
+    /* Player attack is now 30% slower than 0.48s. */
+    const PLAYER_ATTACK_DURATION = 0.624;
 
     const uiPlayerHealth = document.getElementById("playerHealth");
     const uiEnemyHealth = document.getElementById("enemyHealth");
@@ -617,7 +621,6 @@
         armorColor: 0xd7d7d7,
         clothColor: 0x9e1b1b,
         skinColor: 0xd49a6a,
-        helmetTrimColor: 0xf1c15a,
         x: 0,
         z: 8
       });
@@ -627,7 +630,6 @@
         armorColor: 0x8e8e8e,
         clothColor: 0x273f8f,
         skinColor: 0xb9784a,
-        helmetTrimColor: 0xb8b8b8,
         x: 0,
         z: -8
       });
@@ -821,7 +823,6 @@
 
       const skin = toonMaterial(opts.skinColor);
       const armor = toonMaterial(opts.armorColor);
-      const helmetTrim = toonMaterial(opts.helmetTrimColor || 0xd6a14a);
       const cloth = toonMaterial(opts.clothColor);
       const leather = toonMaterial(opts.bodyColor);
 
@@ -860,7 +861,40 @@
       group.add(head);
       addOutline(head, 1.045);
 
-      createHelmet(group, armor, helmetTrim, cloth);
+      /*
+        Helmet restored to original simple style.
+        Only the colored crest/plume hair has been kept.
+      */
+      const helmet = new THREE.Mesh(
+        new THREE.SphereGeometry(0.45, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+        armor
+      );
+      helmet.position.y = 3.13;
+      helmet.castShadow = true;
+      group.add(helmet);
+      addOutline(helmet, 1.035);
+
+      const crestBase = new THREE.Mesh(
+        new THREE.BoxGeometry(0.13, 0.16, 0.82),
+        armor
+      );
+      crestBase.position.y = 3.49;
+      crestBase.castShadow = true;
+      group.add(crestBase);
+      addOutline(crestBase, 1.04);
+
+      for (let i = 0; i < 7; i++) {
+        const plume = new THREE.Mesh(
+          new THREE.BoxGeometry(0.08, 0.5 + i * 0.012, 0.08),
+          cloth
+        );
+
+        plume.position.set(0, 3.72, -0.36 + i * 0.12);
+        plume.rotation.x = -0.32 + i * 0.085;
+        plume.castShadow = true;
+        group.add(plume);
+        addOutline(plume, 1.08);
+      }
 
       const eyeGroup = new THREE.Group();
       eyeGroup.position.set(0, 3.08, 0.37);
@@ -1041,108 +1075,12 @@
         dustTimer: 0,
         hurtTimer: 0,
         blinkTimer: Math.random() * 2,
-        blinkDuration: 0
+        blinkDuration: 0,
+        moveLocalX: 0,
+        moveLocalZ: 0,
+        targetSway: 0,
+        currentSway: 0
       };
-    }
-
-    function createHelmet(group, armor, helmetTrim, cloth) {
-      const helmetGroup = new THREE.Group();
-      helmetGroup.position.set(0, 3.11, 0);
-      group.add(helmetGroup);
-
-      const dome = new THREE.Mesh(
-        new THREE.SphereGeometry(0.48, 28, 16, 0, Math.PI * 2, 0, Math.PI * 0.62),
-        armor
-      );
-      dome.scale.set(1.02, 0.86, 1.03);
-      dome.castShadow = true;
-      helmetGroup.add(dome);
-      addOutline(dome, 1.035);
-
-      const browBand = new THREE.Mesh(
-        new THREE.TorusGeometry(0.445, 0.045, 10, 40, Math.PI * 1.55),
-        helmetTrim
-      );
-      browBand.position.set(0, -0.02, 0.06);
-      browBand.rotation.x = Math.PI / 2;
-      browBand.rotation.z = -Math.PI * 0.78;
-      browBand.scale.set(1.06, 0.82, 1);
-      browBand.castShadow = true;
-      helmetGroup.add(browBand);
-      addOutline(browBand, 1.03);
-
-      const backNeckGuard = new THREE.Mesh(
-        new THREE.BoxGeometry(0.74, 0.34, 0.12),
-        armor
-      );
-      backNeckGuard.position.set(0, -0.16, -0.34);
-      backNeckGuard.rotation.x = -0.35;
-      backNeckGuard.castShadow = true;
-      helmetGroup.add(backNeckGuard);
-      addOutline(backNeckGuard, 1.045);
-
-      const noseGuard = new THREE.Mesh(
-        new THREE.BoxGeometry(0.075, 0.45, 0.09),
-        helmetTrim
-      );
-      noseGuard.position.set(0, -0.17, 0.43);
-      noseGuard.castShadow = true;
-      helmetGroup.add(noseGuard);
-      addOutline(noseGuard, 1.05);
-
-      const leftCheekGuard = new THREE.Mesh(
-        new THREE.BoxGeometry(0.17, 0.38, 0.11),
-        armor
-      );
-      leftCheekGuard.position.set(-0.34, -0.22, 0.27);
-      leftCheekGuard.rotation.z = -0.18;
-      leftCheekGuard.rotation.y = -0.25;
-      leftCheekGuard.castShadow = true;
-      helmetGroup.add(leftCheekGuard);
-      addOutline(leftCheekGuard, 1.045);
-
-      const rightCheekGuard = new THREE.Mesh(
-        new THREE.BoxGeometry(0.17, 0.38, 0.11),
-        armor
-      );
-      rightCheekGuard.position.set(0.34, -0.22, 0.27);
-      rightCheekGuard.rotation.z = 0.18;
-      rightCheekGuard.rotation.y = 0.25;
-      rightCheekGuard.castShadow = true;
-      helmetGroup.add(rightCheekGuard);
-      addOutline(rightCheekGuard, 1.045);
-
-      const crestBase = new THREE.Mesh(
-        new THREE.BoxGeometry(0.14, 0.13, 0.92),
-        helmetTrim
-      );
-      crestBase.position.set(0, 0.4, -0.02);
-      crestBase.castShadow = true;
-      helmetGroup.add(crestBase);
-      addOutline(crestBase, 1.04);
-
-      for (let i = 0; i < 7; i++) {
-        const plume = new THREE.Mesh(
-          new THREE.BoxGeometry(0.075, 0.48 + i * 0.015, 0.08),
-          cloth
-        );
-
-        plume.position.set(0, 0.68, -0.36 + i * 0.12);
-        plume.rotation.x = -0.35 + i * 0.09;
-        plume.castShadow = true;
-        helmetGroup.add(plume);
-        addOutline(plume, 1.08);
-      }
-
-      const frontGem = new THREE.Mesh(
-        new THREE.SphereGeometry(0.065, 12, 12),
-        helmetTrim
-      );
-      frontGem.position.set(0, 0.07, 0.45);
-      frontGem.scale.set(1, 0.65, 0.45);
-      frontGem.castShadow = true;
-      helmetGroup.add(frontGem);
-      addOutline(frontGem, 1.04);
     }
 
     function createCartoonEye() {
@@ -1257,8 +1195,8 @@
     function playerAttack() {
       if (playerAttackCooldown > 0 || stamina < 15 || isBlocking) return;
 
-      playerAttackTimer = 0.48;
-      playerAttackCooldown = 0.62;
+      playerAttackTimer = PLAYER_ATTACK_DURATION;
+      playerAttackCooldown = 0.82;
       playerHitDone = false;
       stamina -= 15;
     }
@@ -1302,6 +1240,9 @@
       if (move.lengthSq() > 0) {
         move.normalize();
 
+        player.moveLocalX = THREE.MathUtils.lerp(player.moveLocalX, move.dot(right), dt * 12);
+        player.moveLocalZ = THREE.MathUtils.lerp(player.moveLocalZ, move.dot(forward), dt * 12);
+
         const speed = isBlocking ? PLAYER_SPEED * 0.45 : PLAYER_SPEED;
         player.group.position.addScaledVector(move, speed * dt);
 
@@ -1315,6 +1256,8 @@
       } else {
         player.idleTime += dt;
         player.dustTimer = 0;
+        player.moveLocalX = THREE.MathUtils.lerp(player.moveLocalX, 0, dt * 8);
+        player.moveLocalZ = THREE.MathUtils.lerp(player.moveLocalZ, 0, dt * 8);
       }
 
       keepInsideArena(player.group.position);
@@ -1336,7 +1279,7 @@
       if (playerAttackTimer > 0 && !playerHitDone) {
         const dist = player.group.position.distanceTo(enemy.group.position);
 
-        if (dist < 3.15 && playerAttackTimer < 0.31) {
+        if (dist < 3.15 && playerAttackTimer < PLAYER_ATTACK_DURATION * 0.65) {
           const toEnemy = enemy.group.position.clone().sub(player.group.position).normalize();
           const facing = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
           const dot = facing.dot(toEnemy);
@@ -1365,16 +1308,19 @@
       const targetYaw = Math.atan2(toPlayer.x, toPlayer.z);
       enemy.group.rotation.y = lerpAngle(enemy.group.rotation.y, targetYaw, dt * 8);
 
-      /*
-        Enemy now moves closer before attacking.
-        Old behavior stopped too far away; this closes the gap enough for the sword to reach.
-      */
       const enemyStopDistance = 1.55;
       const enemyAttackStartDistance = 2.25;
 
       if (dist > enemyStopDistance && enemyAttackTimer <= 0) {
         enemy.group.position.addScaledVector(toPlayer, ENEMY_SPEED * dt);
         enemy.walkTime += dt * 9.2;
+
+        const enemyForward = new THREE.Vector3(Math.sin(enemy.group.rotation.y), 0, Math.cos(enemy.group.rotation.y));
+        const enemyRight = new THREE.Vector3(-Math.cos(enemy.group.rotation.y), 0, Math.sin(enemy.group.rotation.y));
+
+        enemy.moveLocalX = THREE.MathUtils.lerp(enemy.moveLocalX, toPlayer.dot(enemyRight), dt * 8);
+        enemy.moveLocalZ = THREE.MathUtils.lerp(enemy.moveLocalZ, toPlayer.dot(enemyForward), dt * 8);
+
         enemy.dustTimer -= dt;
 
         if (enemy.dustTimer <= 0) {
@@ -1385,6 +1331,8 @@
         enemy.idleTime += dt;
         enemy.walkTime += dt * 1.2;
         enemy.dustTimer = 0;
+        enemy.moveLocalX = THREE.MathUtils.lerp(enemy.moveLocalX, 0, dt * 8);
+        enemy.moveLocalZ = THREE.MathUtils.lerp(enemy.moveLocalZ, 0, dt * 8);
 
         if (enemyAttackCooldown <= 0 && enemyAttackTimer <= 0 && dist < enemyAttackStartDistance) {
           enemyAttackTimer = ENEMY_ATTACK_DURATION;
@@ -1421,11 +1369,6 @@
     function enemySwordTouchesPlayer() {
       scene.updateMatrixWorld(true);
 
-      /*
-        Larger sword hitbox:
-        Samples the whole blade and a little past the tip so the hitbox
-        accommodates the full visual length of the weapon.
-      */
       const swordSamples = [
         new THREE.Vector3(0, -0.55, 0),
         new THREE.Vector3(0, -0.85, 0),
@@ -1512,15 +1455,26 @@
         : enemy.group.position.distanceTo(player.group.position) > 1.65 && enemyAttackTimer <= 0;
 
       const walkSwing = moving ? Math.sin(g.walkTime) * 0.48 : 0;
-      const stepBob = moving ? Math.abs(Math.sin(g.walkTime * 1.05)) * 0.075 : Math.sin(clock.elapsedTime * 2.1 + g.idleTime) * 0.018;
-      const bodySway = moving ? Math.sin(g.walkTime * 0.5) * 0.075 : Math.sin(clock.elapsedTime * 1.7 + g.idleTime) * 0.035;
-      const shoulderSway = moving ? Math.sin(g.walkTime * 0.5) * 0.12 : Math.sin(clock.elapsedTime * 1.4 + g.idleTime) * 0.045;
+      const stepBob = moving ? Math.abs(Math.sin(g.walkTime * 1.05)) * 0.075 : 0;
+      const forwardLean = moving ? -g.moveLocalZ * 0.045 : 0;
+
+      /*
+        Sway is movement-reactive now:
+        - Move left = body leans/sways left
+        - Move right = body leans/sways right
+        No more constant side-to-side body rocking while standing.
+      */
+      g.targetSway = -g.moveLocalX * 0.18;
+      g.currentSway = THREE.MathUtils.lerp(g.currentSway, g.targetSway, dt * 9);
+
+      const shoulderSway = g.currentSway * 0.7;
 
       g.group.position.y = stepBob;
 
-      g.body.rotation.z = bodySway;
-      g.head.rotation.z = bodySway * -0.55;
-      g.head.rotation.x = moving ? Math.sin(g.walkTime) * 0.035 : Math.sin(clock.elapsedTime * 1.5 + g.idleTime) * 0.025;
+      g.body.rotation.z = g.currentSway;
+      g.body.rotation.x = forwardLean;
+      g.head.rotation.z = g.currentSway * -0.45;
+      g.head.rotation.x = moving ? Math.sin(g.walkTime) * 0.035 + forwardLean * 0.4 : 0;
 
       g.leftLegPivot.rotation.x = walkSwing;
       g.rightLegPivot.rotation.x = -walkSwing;
@@ -1534,24 +1488,20 @@
       if (isPlayer) {
         if (isBlocking) {
           g.leftArmPivot.rotation.x = -0.88;
-          g.leftArmPivot.rotation.z = -0.38;
+          g.leftArmPivot.rotation.z = -0.38 + g.currentSway * 0.2;
           g.leftArmPivot.rotation.y = 0.18;
           g.shieldPivot.rotation.x = -0.05;
           g.shieldPivot.rotation.y = 0.18;
           g.shieldPivot.rotation.z = Math.sin(clock.elapsedTime * 5) * 0.025;
           g.shieldPivot.position.z = 0.5;
         } else {
-          g.leftArmPivot.rotation.z = -0.18 + shoulderSway * 0.15;
+          g.leftArmPivot.rotation.z = -0.18 + g.currentSway * 0.2;
           g.shieldPivot.position.z = 0.12;
-          g.shieldPivot.rotation.set(
-            -0.06 + Math.sin(clock.elapsedTime * 1.6) * 0.025,
-            0.06,
-            Math.sin(clock.elapsedTime * 1.8) * 0.025
-          );
+          g.shieldPivot.rotation.set(-0.06, 0.06, g.currentSway * 0.08);
         }
 
         if (playerAttackTimer > 0) {
-          const t = 1 - playerAttackTimer / 0.48;
+          const t = 1 - playerAttackTimer / PLAYER_ATTACK_DURATION;
 
           if (t < 0.28) {
             const p = easeOut(t / 0.28);
@@ -1579,10 +1529,9 @@
             g.swordPivot.rotation.z = 1.25 - p * 1.6;
           }
         } else {
-          const idleSword = Math.sin(clock.elapsedTime * 1.8 + g.idleTime) * 0.035;
           g.rightArmPivot.rotation.x += -0.18;
-          g.rightArmPivot.rotation.z = 0.14 + idleSword;
-          g.swordPivot.rotation.set(-0.62 + idleSword, -0.1, -0.38 + idleSword);
+          g.rightArmPivot.rotation.z = 0.14 + g.currentSway * 0.1;
+          g.swordPivot.rotation.set(-0.62, -0.1, -0.38 + g.currentSway * 0.08);
         }
       } else {
         if (enemyAttackTimer > 0) {
@@ -1614,15 +1563,10 @@
             g.swordPivot.rotation.z = -1.35 + p * 1.73;
           }
         } else {
-          const idleSword = Math.sin(clock.elapsedTime * 1.7 + g.idleTime) * 0.035;
-          g.swordPivot.rotation.set(-0.62 + idleSword, 0.1, 0.38 - idleSword);
+          g.swordPivot.rotation.set(-0.62, 0.1, 0.38 - g.currentSway * 0.08);
           g.leftArmPivot.rotation.x = -0.28;
-          g.leftArmPivot.rotation.z = 0.32 + shoulderSway * 0.15;
-          g.shieldPivot.rotation.set(
-            -0.04 + Math.sin(clock.elapsedTime * 1.5 + g.idleTime) * 0.025,
-            -0.08,
-            Math.sin(clock.elapsedTime * 1.8 + g.idleTime) * 0.025
-          );
+          g.leftArmPivot.rotation.z = 0.32 + g.currentSway * 0.12;
+          g.shieldPivot.rotation.set(-0.04, -0.08, g.currentSway * 0.08);
         }
       }
     }
@@ -1663,6 +1607,14 @@
 
       camera.position.copy(desiredPosition);
       camera.lookAt(aimTarget);
+
+      /*
+        Subtle camera tilt based on movement direction.
+        Strafing right tilts one way, strafing left tilts the other.
+      */
+      const targetRoll = -player.moveLocalX * 0.055;
+      cameraRoll = THREE.MathUtils.lerp(cameraRoll, targetRoll, dt * 8);
+      camera.rotateZ(cameraRoll);
     }
 
     function damageEnemy(amount) {
@@ -2044,6 +1996,18 @@
       enemy.blinkTimer = Math.random() * 2;
       player.blinkDuration = 0;
       enemy.blinkDuration = 0;
+
+      player.moveLocalX = 0;
+      player.moveLocalZ = 0;
+      player.currentSway = 0;
+      player.targetSway = 0;
+
+      enemy.moveLocalX = 0;
+      enemy.moveLocalZ = 0;
+      enemy.currentSway = 0;
+      enemy.targetSway = 0;
+
+      cameraRoll = 0;
 
       player.body.rotation.set(0, 0, 0);
       enemy.body.rotation.set(0, 0, 0);
