@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>3D Gladiator Arena</title>
+  <title>3D Gladiator Arena - Armory Update</title>
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&display=swap');
 
-    html, body {
+    html,
+    body {
       margin: 0;
       overflow: hidden;
       background: #120b08;
@@ -143,86 +144,34 @@
       text-shadow: 0 2px 5px #000;
     }
 
-    #messagePanel {
+    #loadoutWrap {
       position: absolute;
-      left: 50%;
-      top: 48%;
-      transform: translate(-50%, -50%) scale(0.96);
-      min-width: min(520px, 86vw);
-      padding: 28px 30px 26px;
-      text-align: center;
-      opacity: 0;
-      transition: opacity 0.3s ease, transform 0.3s ease;
+      top: 108px;
+      right: 22px;
+      max-width: 280px;
+      padding: 10px 14px;
+      border: 2px solid #b98437;
+      border-radius: 10px;
       background:
-        radial-gradient(circle at top, rgba(255, 214, 132, 0.18), transparent 55%),
-        linear-gradient(135deg, rgba(65, 34, 14, 0.96), rgba(19, 11, 6, 0.98));
-      border: 4px ridge #b98437;
-      border-radius: 16px;
+        radial-gradient(circle at top, rgba(255, 215, 115, 0.14), transparent 70%),
+        linear-gradient(135deg, rgba(58, 29, 12, 0.88), rgba(14, 8, 5, 0.9));
       box-shadow:
-        0 0 0 3px rgba(34, 16, 5, 0.95),
-        0 18px 50px rgba(0,0,0,0.75),
-        inset 0 0 26px rgba(255, 177, 63, 0.12);
-      pointer-events: none;
-    }
-
-    #messagePanel.show {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-      pointer-events: auto;
-    }
-
-    #message {
-      font-size: clamp(42px, 8vw, 92px);
+        0 0 0 2px rgba(30, 13, 4, 0.8),
+        0 8px 22px rgba(0,0,0,0.5),
+        inset 0 0 16px rgba(255, 190, 58, 0.1);
+      font-size: 12px;
       font-weight: 900;
-      letter-spacing: 5px;
+      letter-spacing: 1px;
       text-transform: uppercase;
       color: #ffe1a1;
-      text-shadow:
-        0 4px 0 #4a1b0a,
-        0 8px 18px #000;
-      margin-bottom: 10px;
-    }
-
-    #subMessage {
-      font-size: 17px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      color: #f7d894;
       text-shadow: 0 2px 5px #000;
-      margin-bottom: 20px;
-      text-transform: uppercase;
+      text-align: right;
     }
 
-    #restartBtn {
-      pointer-events: auto;
-      cursor: pointer;
-      border: 3px solid #d6a14a;
-      border-radius: 8px;
-      background: linear-gradient(#8d5520, #4d260d);
-      color: #ffe7ad;
-      font-family: "Cinzel", Georgia, serif;
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      padding: 13px 24px;
-      box-shadow:
-        0 5px 0 #251006,
-        0 10px 18px rgba(0,0,0,0.5),
-        inset 0 2px 0 rgba(255,255,255,0.16);
-    }
-
-    #restartBtn:hover {
-      filter: brightness(1.18);
-      transform: translateY(-1px);
-    }
-
-    #restartBtn:active {
-      transform: translateY(3px);
-      box-shadow:
-        0 2px 0 #251006,
-        0 5px 12px rgba(0,0,0,0.5),
-        inset 0 2px 0 rgba(255,255,255,0.16);
+    #loadoutWrap span {
+      display: block;
+      color: #ffd86f;
+      margin-top: 3px;
     }
 
     #staminaWrap {
@@ -256,6 +205,205 @@
       font-weight: 700;
     }
 
+    #messagePanel {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(0.96);
+      width: min(760px, 92vw);
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 26px 28px 24px;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      background:
+        radial-gradient(circle at top, rgba(255, 214, 132, 0.18), transparent 55%),
+        linear-gradient(135deg, rgba(65, 34, 14, 0.96), rgba(19, 11, 6, 0.98));
+      border: 4px ridge #b98437;
+      border-radius: 16px;
+      box-shadow:
+        0 0 0 3px rgba(34, 16, 5, 0.95),
+        0 18px 50px rgba(0,0,0,0.75),
+        inset 0 0 26px rgba(255, 177, 63, 0.12);
+      pointer-events: none;
+    }
+
+    #messagePanel.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+      pointer-events: auto;
+    }
+
+    #message {
+      font-size: clamp(40px, 7vw, 82px);
+      font-weight: 900;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: #ffe1a1;
+      text-shadow:
+        0 4px 0 #4a1b0a,
+        0 8px 18px #000;
+      margin-bottom: 8px;
+    }
+
+    #subMessage {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #f7d894;
+      text-shadow: 0 2px 5px #000;
+      margin-bottom: 18px;
+      text-transform: uppercase;
+    }
+
+    #restartBtn,
+    .shopButton {
+      pointer-events: auto;
+      cursor: pointer;
+      border: 3px solid #d6a14a;
+      border-radius: 8px;
+      background: linear-gradient(#8d5520, #4d260d);
+      color: #ffe7ad;
+      font-family: "Cinzel", Georgia, serif;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      padding: 11px 16px;
+      box-shadow:
+        0 5px 0 #251006,
+        0 10px 18px rgba(0,0,0,0.5),
+        inset 0 2px 0 rgba(255,255,255,0.16);
+    }
+
+    #restartBtn:hover,
+    .shopButton:hover:not(:disabled) {
+      filter: brightness(1.18);
+      transform: translateY(-1px);
+    }
+
+    #restartBtn:active,
+    .shopButton:active:not(:disabled) {
+      transform: translateY(3px);
+      box-shadow:
+        0 2px 0 #251006,
+        0 5px 12px rgba(0,0,0,0.5),
+        inset 0 2px 0 rgba(255,255,255,0.16);
+    }
+
+    .shopButton {
+      width: 100%;
+      margin-top: 8px;
+      font-size: 12px;
+      padding: 8px 10px;
+      border-width: 2px;
+    }
+
+    .shopButton:disabled {
+      cursor: default;
+      opacity: 0.55;
+      filter: grayscale(0.25);
+    }
+
+    #shopPanel {
+      margin-top: 18px;
+      border-top: 2px solid rgba(214, 161, 74, 0.5);
+      padding-top: 16px;
+    }
+
+    #shopTitle {
+      color: #ffd86f;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-shadow: 0 3px 8px #000;
+      margin-bottom: 10px;
+    }
+
+    #shopCoinsLine {
+      margin-bottom: 14px;
+      font-size: 14px;
+      color: #ffe7ad;
+      text-transform: uppercase;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .shopGrid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 12px;
+      max-width: 680px;
+      margin: 0 auto 16px;
+    }
+
+    .shopColumn {
+      border: 2px solid rgba(184, 138, 68, 0.72);
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(32, 16, 7, 0.86), rgba(78, 41, 17, 0.74));
+      padding: 12px;
+      box-shadow: inset 0 0 18px rgba(255, 190, 58, 0.07);
+    }
+
+    .shopColumn h3 {
+      margin: 0 0 9px;
+      font-size: 15px;
+      color: #ffe1a1;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 5px #000;
+    }
+
+    .shopCard {
+      border: 2px solid rgba(93, 47, 17, 0.95);
+      border-radius: 8px;
+      background: linear-gradient(#7a4318, #34180a);
+      padding: 10px;
+      margin-bottom: 9px;
+      text-align: left;
+      box-shadow:
+        0 4px 0 rgba(20, 8, 3, 0.88),
+        inset 0 1px 0 rgba(255,255,255,0.12);
+    }
+
+    .shopCard.equipped {
+      border-color: #ffd86f;
+      box-shadow:
+        0 0 16px rgba(255, 216, 111, 0.25),
+        0 4px 0 rgba(20, 8, 3, 0.88),
+        inset 0 1px 0 rgba(255,255,255,0.16);
+    }
+
+    .shopCardName {
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: #ffd86f;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      text-shadow: 0 2px 4px #000;
+    }
+
+    .shopCardStats {
+      font-size: 11px;
+      line-height: 1.45;
+      color: #f7d894;
+      min-height: 32px;
+      text-shadow: 0 1px 3px #000;
+    }
+
+    #shopHint {
+      font-size: 11px;
+      line-height: 1.45;
+      color: #d9bb7e;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      max-width: 620px;
+      margin: 0 auto 16px;
+    }
+
     #damageFlash {
       position: fixed;
       inset: 0;
@@ -265,8 +413,22 @@
       pointer-events: none;
       z-index: 9;
     }
+
+    @media (max-width: 740px) {
+      .shopGrid {
+        grid-template-columns: 1fr;
+      }
+
+      #loadoutWrap {
+        top: 150px;
+        right: 50%;
+        transform: translateX(50%);
+        text-align: center;
+      }
+    }
   </style>
 </head>
+
 <body>
   <div id="damageFlash"></div>
 
@@ -289,6 +451,11 @@
 
     <div id="bloodCoinsWrap">BloodCoins: <span id="bloodCoinsCount">0</span></div>
 
+    <div id="loadoutWrap">
+      Weapon <span id="weaponLoadout">Bronze Gladius</span>
+      Shield <span id="shieldLoadout">Wooden Round Shield</span>
+    </div>
+
     <div id="staminaWrap">
       <div class="barOuter">
         <div id="stamina" class="barInner"></div>
@@ -299,6 +466,30 @@
     <div id="messagePanel">
       <div id="message"></div>
       <div id="subMessage"></div>
+
+      <div id="shopPanel">
+        <div id="shopTitle">Arena Armory</div>
+        <div id="shopCoinsLine">BloodCoins: <span id="shopCoins">0</span></div>
+
+        <div class="shopGrid">
+          <div class="shopColumn">
+            <h3>Weapons</h3>
+            <div id="weaponShop"></div>
+          </div>
+
+          <div class="shopColumn">
+            <h3>Shields</h3>
+            <div id="shieldShop"></div>
+          </div>
+        </div>
+
+        <div id="shopHint">
+          Buy gear with BloodCoins. Purchased gear stays unlocked after refresh.
+          Weapons change damage, reach, swing speed, and appearance.
+          Shields change block power, stamina drain, and appearance.
+        </div>
+      </div>
+
       <button id="restartBtn">Fight Again</button>
     </div>
   </div>
@@ -306,10 +497,14 @@
   <script type="module">
     import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
 
-    let scene, camera, renderer, clock;
-    let player, enemy;
-    let sword, shield;
-    let enemySword, enemyShield;
+    let scene;
+    let camera;
+    let renderer;
+    let clock;
+
+    let player;
+    let enemy;
+
     let keys = {};
     let mouseLocked = false;
 
@@ -334,9 +529,19 @@
     let currentEnemyName = "";
 
     let enemyDeathTimer = 0;
-    let enemyDeathDuration = 1.55;
+    const enemyDeathDuration = 1.55;
     let pendingVictoryText = "";
     let pendingVictoryDetail = "";
+
+    const ARENA_RADIUS = 28;
+    const PLAYER_SPEED = 7.2;
+    const ENEMY_SPEED = 3.36;
+    const ENEMY_ATTACK_DURATION = 1.25;
+    const PLAYER_ATTACK_DURATION = 0.624;
+
+    const particles = [];
+    const floatingTexts = [];
+    const bloodDecals = [];
 
     const opponentNames = [
       "Marcus Bloodfang",
@@ -361,15 +566,121 @@
       "Varrus Thunderfist"
     ];
 
-    const particles = [];
-    const floatingTexts = [];
-    const bloodDecals = [];
+    const weapons = [
+      {
+        id: "bronze_gladius",
+        name: "Bronze Gladius",
+        cost: 0,
+        damage: 1,
+        reach: 1,
+        cooldown: 1,
+        bladeColor: 0xdedede,
+        guardColor: 0xd7d7d7,
+        length: 1.55,
+        width: 0.13,
+        stats: "Balanced starter blade."
+      },
+      {
+        id: "iron_longsword",
+        name: "Iron Longsword",
+        cost: 75,
+        damage: 1.25,
+        reach: 1.22,
+        cooldown: 1.08,
+        bladeColor: 0xcfd6df,
+        guardColor: 0x9c9c9c,
+        length: 1.95,
+        width: 0.14,
+        stats: "+25% damage, +22% reach, slightly slower."
+      },
+      {
+        id: "crimson_sabre",
+        name: "Crimson Sabre",
+        cost: 140,
+        damage: 1.12,
+        reach: 1.1,
+        cooldown: 0.72,
+        bladeColor: 0xffd3c0,
+        guardColor: 0xb32222,
+        length: 1.72,
+        width: 0.12,
+        stats: "Fast attacks, good reach, lower damage."
+      },
+      {
+        id: "golden_executioner",
+        name: "Golden Executioner",
+        cost: 260,
+        damage: 1.75,
+        reach: 1.36,
+        cooldown: 1.28,
+        bladeColor: 0xffdf76,
+        guardColor: 0xc98a1c,
+        length: 2.15,
+        width: 0.18,
+        stats: "Huge damage and reach, very heavy."
+      }
+    ];
 
-    const ARENA_RADIUS = 28;
-    const PLAYER_SPEED = 7.2;
-    const ENEMY_SPEED = 3.36;
-    const ENEMY_ATTACK_DURATION = 1.25;
-    const PLAYER_ATTACK_DURATION = 0.624;
+    const shields = [
+      {
+        id: "wood_round",
+        name: "Wooden Round Shield",
+        cost: 0,
+        blockDamage: 0.25,
+        staminaDrain: 1,
+        staminaBlockCost: 1,
+        radius: 0.696,
+        color: 0x5b2619,
+        rimColor: 0xd7d7d7,
+        stats: "Balanced starter shield."
+      },
+      {
+        id: "iron_tower",
+        name: "Iron Tower Shield",
+        cost: 90,
+        blockDamage: 0.15,
+        staminaDrain: 1.28,
+        staminaBlockCost: 1.25,
+        radius: 0.86,
+        color: 0x3f4650,
+        rimColor: 0xc8c8c8,
+        stats: "Blocks more damage, drains more stamina."
+      },
+      {
+        id: "spiked_round",
+        name: "Spiked Round Shield",
+        cost: 150,
+        blockDamage: 0.22,
+        staminaDrain: 0.88,
+        staminaBlockCost: 0.85,
+        radius: 0.74,
+        color: 0x7d1818,
+        rimColor: 0xffd86f,
+        stats: "Efficient blocking and lower stamina cost."
+      },
+      {
+        id: "aegis_of_mars",
+        name: "Aegis of Mars",
+        cost: 300,
+        blockDamage: 0.08,
+        staminaDrain: 0.78,
+        staminaBlockCost: 0.7,
+        radius: 0.92,
+        color: 0x271509,
+        rimColor: 0xffb638,
+        stats: "Massive block power and stamina efficiency."
+      }
+    ];
+
+    const defaultSave = {
+      coins: 0,
+      ownedWeapons: ["bronze_gladius"],
+      ownedShields: ["wood_round"],
+      equippedWeapon: "bronze_gladius",
+      equippedShield: "wood_round"
+    };
+
+    let saveData = loadSave();
 
     const uiPlayerHealth = document.getElementById("playerHealth");
     const uiEnemyHealth = document.getElementById("enemyHealth");
@@ -381,9 +692,150 @@
     const messagePanel = document.getElementById("messagePanel");
     const restartBtn = document.getElementById("restartBtn");
     const damageFlash = document.getElementById("damageFlash");
+    const weaponShop = document.getElementById("weaponShop");
+    const shieldShop = document.getElementById("shieldShop");
+    const uiShopCoins = document.getElementById("shopCoins");
+    const weaponLoadout = document.getElementById("weaponLoadout");
+    const shieldLoadout = document.getElementById("shieldLoadout");
 
     init();
     animate();
+
+    function loadSave() {
+      try {
+        const raw = localStorage.getItem("gladiatorArmorySave");
+        if (!raw) return structuredClone(defaultSave);
+
+        const parsed = JSON.parse(raw);
+        return {
+          ...structuredClone(defaultSave),
+          ...parsed,
+          ownedWeapons: parsed.ownedWeapons || ["bronze_gladius"],
+          ownedShields: parsed.ownedShields || ["wood_round"]
+        };
+      } catch {
+        return structuredClone(defaultSave);
+      }
+    }
+
+    function saveGame() {
+      saveData.coins = bloodCoins;
+      localStorage.setItem("gladiatorArmorySave", JSON.stringify(saveData));
+    }
+
+    function getEquippedWeapon() {
+      return weapons.find(w => w.id === saveData.equippedWeapon) || weapons[0];
+    }
+
+    function getEquippedShield() {
+      return shields.find(s => s.id === saveData.equippedShield) || shields[0];
+    }
+
+    function ownsWeapon(id) {
+      return saveData.ownedWeapons.includes(id);
+    }
+
+    function ownsShield(id) {
+      return saveData.ownedShields.includes(id);
+    }
+
+    function buyOrEquipWeapon(id) {
+      const item = weapons.find(w => w.id === id);
+      if (!item) return;
+
+      if (ownsWeapon(id)) {
+        saveData.equippedWeapon = id;
+      } else if (bloodCoins >= item.cost) {
+        bloodCoins -= item.cost;
+        saveData.ownedWeapons.push(id);
+        saveData.equippedWeapon = id;
+        createFloatingText("-" + item.cost + " BloodCoins", player.group.position.clone().add(new THREE.Vector3(0, 3.2, 0)), 0xffd86f);
+      }
+
+      saveGame();
+      applyWeaponVisuals(player, getEquippedWeapon());
+      renderShop();
+      updateUI();
+    }
+
+    function buyOrEquipShield(id) {
+      const item = shields.find(s => s.id === id);
+      if (!item) return;
+
+      if (ownsShield(id)) {
+        saveData.equippedShield = id;
+      } else if (bloodCoins >= item.cost) {
+        bloodCoins -= item.cost;
+        saveData.ownedShields.push(id);
+        saveData.equippedShield = id;
+        createFloatingText("-" + item.cost + " BloodCoins", player.group.position.clone().add(new THREE.Vector3(0, 3.2, 0)), 0xffd86f);
+      }
+
+      saveGame();
+      applyShieldVisuals(player, getEquippedShield());
+      renderShop();
+      updateUI();
+    }
+
+    function renderShop() {
+      weaponShop.innerHTML = "";
+      shieldShop.innerHTML = "";
+      uiShopCoins.textContent = bloodCoins;
+
+      for (const item of weapons) {
+        const owned = ownsWeapon(item.id);
+        const equipped = saveData.equippedWeapon === item.id;
+
+        const card = document.createElement("div");
+        card.className = "shopCard" + (equipped ? " equipped" : "");
+
+        const buttonText = equipped
+          ? "Equipped"
+          : owned
+            ? "Equip"
+            : "Buy - " + item.cost + " BC";
+
+        card.innerHTML = `
+          <div class="shopCardName">${item.name}</div>
+          <div class="shopCardStats">${item.stats}</div>
+          <button class="shopButton" ${equipped || (!owned && bloodCoins < item.cost) ? "disabled" : ""}>
+            ${buttonText}
+          </button>
+        `;
+
+        const button = card.querySelector("button");
+        button.addEventListener("click", () => buyOrEquipWeapon(item.id));
+
+        weaponShop.appendChild(card);
+      }
+
+      for (const item of shields) {
+        const owned = ownsShield(item.id);
+        const equipped = saveData.equippedShield === item.id;
+
+        const card = document.createElement("div");
+        card.className = "shopCard" + (equipped ? " equipped" : "");
+
+        const buttonText = equipped
+          ? "Equipped"
+          : owned
+            ? "Equip"
+            : "Buy - " + item.cost + " BC";
+
+        card.innerHTML = `
+          <div class="shopCardName">${item.name}</div>
+          <div class="shopCardStats">${item.stats}</div>
+          <button class="shopButton" ${equipped || (!owned && bloodCoins < item.cost) ? "disabled" : ""}>
+            ${buttonText}
+          </button>
+        `;
+
+        const button = card.querySelector("button");
+        button.addEventListener("click", () => buyOrEquipShield(item.id));
+
+        shieldShop.appendChild(card);
+      }
+    }
 
     function randomOpponentName() {
       return opponentNames[Math.floor(Math.random() * opponentNames.length)];
@@ -394,29 +846,18 @@
       enemyNameLabel.textContent = currentEnemyName;
     }
 
-    function toonMaterial(color, extra = {}) {
-      return new THREE.MeshToonMaterial({
-        color,
-        gradientMap: createToonGradient(),
-        ...extra
-      });
-    }
-
     function createToonGradient() {
       const canvas = document.createElement("canvas");
       canvas.width = 4;
       canvas.height = 1;
-      const ctx = canvas.getContext("2d");
 
+      const ctx = canvas.getContext("2d");
       ctx.fillStyle = "#222";
       ctx.fillRect(0, 0, 1, 1);
-
       ctx.fillStyle = "#777";
       ctx.fillRect(1, 0, 1, 1);
-
       ctx.fillStyle = "#bbb";
       ctx.fillRect(2, 0, 1, 1);
-
       ctx.fillStyle = "#fff";
       ctx.fillRect(3, 0, 1, 1);
 
@@ -426,12 +867,35 @@
       return texture;
     }
 
+    function toonMaterial(color, extra = {}) {
+      return new THREE.MeshToonMaterial({
+        color,
+        gradientMap: createToonGradient(),
+        ...extra
+      });
+    }
+
+    function addOutline(mesh, scale = 1.045) {
+      if (!mesh.geometry) return;
+
+      const outline = new THREE.Mesh(
+        mesh.geometry,
+        new THREE.MeshBasicMaterial({
+          color: 0x160a05,
+          side: THREE.BackSide
+        })
+      );
+
+      outline.scale.copy(mesh.scale).multiplyScalar(scale);
+      mesh.add(outline);
+    }
+
     function createSandyTexture() {
       const canvas = document.createElement("canvas");
       canvas.width = 512;
       canvas.height = 512;
-      const ctx = canvas.getContext("2d");
 
+      const ctx = canvas.getContext("2d");
       const baseGradient = ctx.createRadialGradient(256, 256, 20, 256, 256, 390);
       baseGradient.addColorStop(0, "#b98248");
       baseGradient.addColorStop(0.45, "#9d6838");
@@ -453,11 +917,10 @@
         ctx.fill();
       }
 
-      for (let i = 0; i < 185; i++) {
+      for (let i = 0; i < 180; i++) {
         const x = Math.random() * canvas.width;
         const y = Math.random() * canvas.height;
         const length = 18 + Math.random() * 55;
-        const width = 1 + Math.random() * 2.5;
         const angle = Math.random() * Math.PI * 2;
 
         ctx.save();
@@ -466,27 +929,11 @@
         ctx.strokeStyle = Math.random() > 0.5
           ? "rgba(62, 36, 21, 0.18)"
           : "rgba(225, 170, 100, 0.14)";
-        ctx.lineWidth = width;
+        ctx.lineWidth = 1 + Math.random() * 2.5;
         ctx.beginPath();
         ctx.moveTo(-length * 0.5, 0);
         ctx.quadraticCurveTo(0, Math.random() * 12 - 6, length * 0.5, 0);
         ctx.stroke();
-        ctx.restore();
-      }
-
-      for (let i = 0; i < 75; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const w = 20 + Math.random() * 70;
-        const h = 8 + Math.random() * 28;
-
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(Math.random() * Math.PI * 2);
-        ctx.fillStyle = "rgba(72, 43, 24, 0.12)";
-        ctx.beginPath();
-        ctx.ellipse(0, 0, w, h, 0, 0, Math.PI * 2);
-        ctx.fill();
         ctx.restore();
       }
 
@@ -505,8 +952,8 @@
       const canvas = document.createElement("canvas");
       canvas.width = 512;
       canvas.height = 512;
-      const ctx = canvas.getContext("2d");
 
+      const ctx = canvas.getContext("2d");
       const gradient = ctx.createLinearGradient(0, 0, 512, 512);
       gradient.addColorStop(0, "#8f806d");
       gradient.addColorStop(0.45, "#625846");
@@ -544,23 +991,6 @@
         ctx.restore();
       }
 
-      for (let i = 0; i < 26; i++) {
-        const x = Math.random() * 512;
-        const y = Math.random() * 512;
-        const radius = 18 + Math.random() * 55;
-
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(Math.random() * Math.PI);
-        ctx.fillStyle = Math.random() > 0.5
-          ? "rgba(24, 21, 18, 0.14)"
-          : "rgba(205, 196, 178, 0.09)";
-        ctx.beginPath();
-        ctx.ellipse(0, 0, radius, radius * (0.25 + Math.random() * 0.45), 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-
       const texture = new THREE.CanvasTexture(canvas);
       texture.wrapS = THREE.RepeatWrapping;
       texture.wrapT = THREE.RepeatWrapping;
@@ -572,29 +1002,9 @@
       return texture;
     }
 
-    function addOutline(mesh, scale = 1.045) {
-      if (!mesh.geometry) return;
-
-      const outline = new THREE.Mesh(
-        mesh.geometry,
-        new THREE.MeshBasicMaterial({
-          color: 0x160a05,
-          side: THREE.BackSide
-        })
-      );
-
-      outline.position.copy(mesh.position);
-      outline.rotation.copy(mesh.rotation);
-      outline.scale.copy(mesh.scale).multiplyScalar(scale);
-      outline.castShadow = false;
-      outline.receiveShadow = false;
-
-      mesh.add(outline);
-      outline.position.set(0, 0, 0);
-      outline.rotation.set(0, 0, 0);
-    }
-
     function init() {
+      bloodCoins = saveData.coins || 0;
+
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x120b08);
       scene.fog = new THREE.Fog(0x120b08, 26, 70);
@@ -640,14 +1050,12 @@
       scene.add(player.group);
       scene.add(enemy.group);
 
-      sword = player.sword;
-      shield = player.shield;
-
-      enemySword = enemy.sword;
-      enemyShield = enemy.shield;
+      applyWeaponVisuals(player, getEquippedWeapon());
+      applyShieldVisuals(player, getEquippedShield());
 
       setupEvents();
       updateCamera(0);
+      renderShop();
       updateUI();
     }
 
@@ -682,23 +1090,17 @@
       const stoneTextureA = createStoneTexture();
       const stoneTextureB = createStoneTexture();
 
-      const groundMat = toonMaterial(0xc58a4c, {
-        map: sandyTexture
-      });
-
       const ground = new THREE.Mesh(
         new THREE.CircleGeometry(ARENA_RADIUS, 128),
-        groundMat
+        toonMaterial(0xc58a4c, { map: sandyTexture })
       );
       ground.rotation.x = -Math.PI / 2;
       ground.receiveShadow = true;
       scene.add(ground);
 
-      const ringMat = toonMaterial(0x3b2115);
-
       const wall = new THREE.Mesh(
         new THREE.TorusGeometry(ARENA_RADIUS, 0.55, 12, 128),
-        ringMat
+        toonMaterial(0x3b2115)
       );
       wall.rotation.x = Math.PI / 2;
       wall.position.y = 0.25;
@@ -732,6 +1134,7 @@
           new THREE.BoxGeometry(1.78, 0.22, 1.45),
           i % 2 ? pillarMatB : pillarMatA
         );
+
         cap.position.set(x, h - 0.02, z);
         cap.rotation.y = -angle;
         cap.castShadow = true;
@@ -901,19 +1304,15 @@
 
       const leftEye = createCartoonEye();
       const rightEye = createCartoonEye();
-
       leftEye.position.set(-0.17, 0.02, 0);
       rightEye.position.set(0.17, 0.02, 0);
-
       eyeGroup.add(leftEye);
       eyeGroup.add(rightEye);
 
       const leftArmPivot = new THREE.Group();
       const rightArmPivot = new THREE.Group();
-
       leftArmPivot.position.set(-0.84, 2.48, 0);
       rightArmPivot.position.set(0.84, 2.48, 0);
-
       group.add(leftArmPivot, rightArmPivot);
 
       const armGeo = new THREE.CapsuleGeometry(0.17, 0.82, 6, 12);
@@ -934,94 +1333,25 @@
       shieldPivot.position.set(0, -0.84, 0.12);
       leftArmPivot.add(shieldPivot);
 
-      const shieldRadius = 0.696;
-
-      const shield = new THREE.Mesh(
-        new THREE.CylinderGeometry(shieldRadius, shieldRadius, 0.16, 36),
-        toonMaterial(0x5b2619)
-      );
-      shield.rotation.x = Math.PI / 2;
-      shield.castShadow = true;
-      shieldPivot.add(shield);
-      addOutline(shield, 1.04);
-
-      const shieldRim = new THREE.Mesh(
-        new THREE.TorusGeometry(shieldRadius, 0.05, 10, 56),
-        armor
-      );
-      shieldRim.position.z = 0.095;
-      shieldRim.rotation.set(0, 0, 0);
-      shieldRim.castShadow = true;
-      shieldPivot.add(shieldRim);
-      addOutline(shieldRim, 1.035);
-
-      const innerShieldRing = new THREE.Mesh(
-        new THREE.TorusGeometry(0.372, 0.03, 8, 44),
-        armor
-      );
-      innerShieldRing.position.z = 0.105;
-      innerShieldRing.rotation.set(0, 0, 0);
-      innerShieldRing.castShadow = true;
-      shieldPivot.add(innerShieldRing);
-      addOutline(innerShieldRing, 1.035);
-
-      const shieldBoss = new THREE.Mesh(
-        new THREE.SphereGeometry(0.216, 16, 16),
-        armor
-      );
-      shieldBoss.position.z = 0.145;
-      shieldBoss.scale.z = 0.55;
-      shieldBoss.castShadow = true;
-      shieldPivot.add(shieldBoss);
-      addOutline(shieldBoss, 1.04);
+      const shield = createShieldMesh(0.696, 0x5b2619, 0xd7d7d7);
+      shieldPivot.add(shield.group);
 
       const swordPivot = new THREE.Group();
       swordPivot.position.set(0.04, -0.78, 0.02);
       rightArmPivot.add(swordPivot);
 
-      const blade = new THREE.Mesh(
-        new THREE.BoxGeometry(0.13, 1.55, 0.07),
-        toonMaterial(0xdedede)
-      );
-      blade.position.y = -0.98;
-      blade.castShadow = true;
-      swordPivot.add(blade);
-      addOutline(blade, 1.08);
-
-      const tip = new THREE.Mesh(
-        new THREE.ConeGeometry(0.09, 0.24, 4),
-        blade.material
-      );
-      tip.position.y = -1.87;
-      tip.rotation.y = Math.PI / 4;
-      tip.castShadow = true;
-      swordPivot.add(tip);
-      addOutline(tip, 1.08);
-
-      const guard = new THREE.Mesh(
-        new THREE.BoxGeometry(0.52, 0.09, 0.12),
-        armor
-      );
-      guard.position.y = -0.18;
-      guard.castShadow = true;
-      swordPivot.add(guard);
-      addOutline(guard, 1.05);
-
-      const handle = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.07, 0.07, 0.45, 12),
-        leather
-      );
-      handle.position.y = 0.05;
-      handle.castShadow = true;
-      swordPivot.add(handle);
-      addOutline(handle, 1.06);
+      const sword = createSwordMesh({
+        length: 1.55,
+        width: 0.13,
+        bladeColor: 0xdedede,
+        guardColor: 0xd7d7d7
+      });
+      swordPivot.add(sword.group);
 
       const leftLegPivot = new THREE.Group();
       const rightLegPivot = new THREE.Group();
-
       leftLegPivot.position.set(-0.34, 0.98, 0);
       rightLegPivot.position.set(0.34, 0.98, 0);
-
       group.add(leftLegPivot, rightLegPivot);
 
       const legGeo = new THREE.CapsuleGeometry(0.18, 0.95, 6, 12);
@@ -1066,8 +1396,11 @@
         rightLegPivot,
         swordPivot,
         shieldPivot,
-        sword: blade,
-        shield,
+        swordGroup: sword.group,
+        swordBlade: sword.blade,
+        shieldGroup: shield.group,
+        shieldFace: shield.face,
+        shieldRim: shield.rim,
         velocity: new THREE.Vector3(),
         walkTime: 0,
         idleTime: Math.random() * 100,
@@ -1080,6 +1413,127 @@
         targetSway: 0,
         currentSway: 0
       };
+    }
+
+    function createSwordMesh(config) {
+      const group = new THREE.Group();
+
+      const blade = new THREE.Mesh(
+        new THREE.BoxGeometry(config.width, config.length, 0.07),
+        toonMaterial(config.bladeColor)
+      );
+      blade.position.y = -0.18 - config.length * 0.52;
+      blade.castShadow = true;
+      group.add(blade);
+      addOutline(blade, 1.08);
+
+      const tip = new THREE.Mesh(
+        new THREE.ConeGeometry(config.width * 0.7, 0.24, 4),
+        blade.material
+      );
+      tip.position.y = blade.position.y - config.length * 0.5 - 0.12;
+      tip.rotation.y = Math.PI / 4;
+      tip.castShadow = true;
+      group.add(tip);
+      addOutline(tip, 1.08);
+
+      const guard = new THREE.Mesh(
+        new THREE.BoxGeometry(0.52, 0.09, 0.12),
+        toonMaterial(config.guardColor)
+      );
+      guard.position.y = -0.18;
+      guard.castShadow = true;
+      group.add(guard);
+      addOutline(guard, 1.05);
+
+      const handle = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.07, 0.07, 0.45, 12),
+        toonMaterial(0x7b4320)
+      );
+      handle.position.y = 0.05;
+      handle.castShadow = true;
+      group.add(handle);
+      addOutline(handle, 1.06);
+
+      return { group, blade };
+    }
+
+    function createShieldMesh(radius, color, rimColor) {
+      const group = new THREE.Group();
+
+      const face = new THREE.Mesh(
+        new THREE.CylinderGeometry(radius, radius, 0.16, 36),
+        toonMaterial(color)
+      );
+      face.rotation.x = Math.PI / 2;
+      face.castShadow = true;
+      group.add(face);
+      addOutline(face, 1.04);
+
+      const rim = new THREE.Mesh(
+        new THREE.TorusGeometry(radius, 0.05, 10, 56),
+        toonMaterial(rimColor)
+      );
+      rim.position.z = 0.095;
+      rim.castShadow = true;
+      group.add(rim);
+      addOutline(rim, 1.035);
+
+      const innerShieldRing = new THREE.Mesh(
+        new THREE.TorusGeometry(radius * 0.53, 0.03, 8, 44),
+        toonMaterial(rimColor)
+      );
+      innerShieldRing.position.z = 0.105;
+      innerShieldRing.castShadow = true;
+      group.add(innerShieldRing);
+      addOutline(innerShieldRing, 1.035);
+
+      const boss = new THREE.Mesh(
+        new THREE.SphereGeometry(radius * 0.31, 16, 16),
+        toonMaterial(rimColor)
+      );
+      boss.position.z = 0.145;
+      boss.scale.z = 0.55;
+      boss.castShadow = true;
+      group.add(boss);
+      addOutline(boss, 1.04);
+
+      return { group, face, rim };
+    }
+
+    function applyWeaponVisuals(g, weapon) {
+      if (!g || !g.swordPivot) return;
+
+      while (g.swordPivot.children.length) {
+        const child = g.swordPivot.children.pop();
+        child.traverse(obj => {
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) obj.material.dispose?.();
+        });
+      }
+
+      const sword = createSwordMesh(weapon);
+      g.swordPivot.add(sword.group);
+      g.swordGroup = sword.group;
+      g.swordBlade = sword.blade;
+    }
+
+    function applyShieldVisuals(g, shieldItem) {
+      if (!g || !g.shieldPivot) return;
+
+      while (g.shieldPivot.children.length) {
+        const child = g.shieldPivot.children.pop();
+        child.traverse(obj => {
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) obj.material.dispose?.();
+        });
+      }
+
+      const shield = createShieldMesh(shieldItem.radius, shieldItem.color, shieldItem.rimColor);
+      g.shieldPivot.add(shield.group);
+      g.shieldGroup = shield.group;
+      g.shieldFace = shield.face;
+      g.shieldRim = shield.rim;
     }
 
     function createCartoonEye() {
@@ -1116,12 +1570,10 @@
       );
       outline.scale.set(1.18, 1.43, 0.39);
       eye.add(outline);
-      outline.renderOrder = -1;
 
       eye.userData.white = whitePart;
       eye.userData.pupil = pupil;
       eye.userData.shine = shine;
-      eye.userData.originalScaleY = 1;
 
       return eye;
     }
@@ -1140,7 +1592,12 @@
       });
 
       document.body.addEventListener("click", e => {
-        if (e.target === restartBtn) return;
+        if (
+          e.target === restartBtn ||
+          e.target.classList.contains("shopButton")
+        ) {
+          return;
+        }
 
         if (!mouseLocked && !gameOver) {
           renderer.domElement.requestPointerLock();
@@ -1192,10 +1649,13 @@
     }
 
     function playerAttack() {
+      const weapon = getEquippedWeapon();
+      const cooldownFactor = weapon.cooldown;
+
       if (playerAttackCooldown > 0 || stamina < 15 || isBlocking) return;
 
-      playerAttackTimer = PLAYER_ATTACK_DURATION;
-      playerAttackCooldown = 0.82;
+      playerAttackTimer = PLAYER_ATTACK_DURATION * cooldownFactor;
+      playerAttackCooldown = 0.82 * cooldownFactor;
       playerHitDone = false;
       stamina -= 15;
     }
@@ -1209,9 +1669,7 @@
       updateEnemy(dt);
       updateAnimations(dt);
       updateEnemyDeath(dt);
-
       checkEnemySwordDamage();
-
       updateParticles(dt);
       updateFloatingTexts(dt);
       updateBloodDecals(dt);
@@ -1224,12 +1682,14 @@
     function updatePlayer(dt) {
       if (gameOver) return;
 
+      const weapon = getEquippedWeapon();
+      const shieldItem = getEquippedShield();
+
       playerAttackCooldown = Math.max(0, playerAttackCooldown - dt);
       playerAttackTimer = Math.max(0, playerAttackTimer - dt);
 
       const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
       const right = new THREE.Vector3(-Math.cos(yaw), 0, Math.sin(yaw));
-
       const move = new THREE.Vector3();
 
       if (keys.KeyW) move.add(forward);
@@ -1261,11 +1721,10 @@
       }
 
       keepInsideArena(player.group.position);
-
       player.group.rotation.y = yaw;
 
       if (isBlocking && stamina > 0) {
-        stamina -= 18 * dt;
+        stamina -= 18 * shieldItem.staminaDrain * dt;
       } else {
         stamina += 28 * dt;
       }
@@ -1277,15 +1736,17 @@
       }
 
       if (playerAttackTimer > 0 && !playerHitDone) {
+        const attackDuration = PLAYER_ATTACK_DURATION * weapon.cooldown;
         const dist = player.group.position.distanceTo(enemy.group.position);
+        const hitRange = 3.15 * weapon.reach;
 
-        if (dist < 3.15 && playerAttackTimer < PLAYER_ATTACK_DURATION * 0.65) {
+        if (dist < hitRange && playerAttackTimer < attackDuration * 0.65) {
           const toEnemy = enemy.group.position.clone().sub(player.group.position).normalize();
           const facing = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
           const dot = facing.dot(toEnemy);
 
           if (dot > 0.35) {
-            damageEnemy(18 + Math.random() * 10);
+            damageEnemy((18 + Math.random() * 10) * weapon.damage);
             playerHitDone = true;
           }
         }
@@ -1331,6 +1792,7 @@
         enemy.idleTime += dt;
         enemy.walkTime += dt * 1.2;
         enemy.dustTimer = 0;
+
         enemy.moveLocalX = THREE.MathUtils.lerp(enemy.moveLocalX, 0, dt * 8);
         enemy.moveLocalZ = THREE.MathUtils.lerp(enemy.moveLocalZ, 0, dt * 8);
 
@@ -1407,7 +1869,6 @@
 
       for (const sample of swordSamples) {
         const p = sample.clone().applyMatrix4(enemy.swordPivot.matrixWorld);
-
         const closestY = THREE.MathUtils.clamp(p.y, playerBase.y + 0.65, playerBase.y + 2.95);
         const closest = new THREE.Vector3(playerBase.x, closestY, playerBase.z);
         const dist = p.distanceTo(closest);
@@ -1482,10 +1943,6 @@
       const stepBob = moving ? Math.abs(Math.sin(g.walkTime * 1.05)) * 0.075 : 0;
       const forwardLean = moving ? -g.moveLocalZ * 0.04 : 0;
 
-      /*
-        Fixed: sway direction inverted and reduced.
-        It now leans into the movement direction more naturally.
-      */
       g.targetSway = g.moveLocalX * 0.11;
       g.currentSway = THREE.MathUtils.lerp(g.currentSway, g.targetSway, dt * 9);
 
@@ -1525,7 +1982,8 @@
         }
 
         if (playerAttackTimer > 0) {
-          const t = 1 - playerAttackTimer / PLAYER_ATTACK_DURATION;
+          const attackDuration = PLAYER_ATTACK_DURATION * getEquippedWeapon().cooldown;
+          const t = 1 - playerAttackTimer / attackDuration;
 
           if (t < 0.28) {
             const p = easeOut(t / 0.28);
@@ -1660,6 +2118,7 @@
       if (enemyHP <= 0) {
         const earned = 25;
         bloodCoins += earned;
+        saveGame();
         updateUI();
 
         gameOver = true;
@@ -1670,7 +2129,11 @@
         pendingVictoryText = "Victory";
         pendingVictoryDetail = currentEnemyName + " has fallen. +" + earned + " BloodCoins.";
 
-        createFloatingText("+" + earned + " BloodCoins", enemy.group.position.clone().add(new THREE.Vector3(0, 3.1, 0)), 0xffd86f);
+        createFloatingText(
+          "+" + earned + " BloodCoins",
+          enemy.group.position.clone().add(new THREE.Vector3(0, 3.1, 0)),
+          0xffd86f
+        );
 
         if (document.pointerLockElement) {
           document.exitPointerLock();
@@ -1681,11 +2144,12 @@
     function damagePlayer(amount) {
       if (gameOver) return;
 
+      const shieldItem = getEquippedShield();
       let finalDamage = amount;
 
       if (isBlocking && stamina > 5) {
-        finalDamage *= 0.25;
-        stamina = Math.max(0, stamina - 22);
+        finalDamage *= shieldItem.blockDamage;
+        stamina = Math.max(0, stamina - 22 * shieldItem.staminaBlockCost);
         createShieldBlockEffect(player.group.position.clone().add(new THREE.Vector3(0, 2.0, 0)));
         createFloatingText("BLOCK", player.group.position.clone().add(new THREE.Vector3(0, 2.8, 0)), 0x9de7ff);
       } else {
@@ -1871,7 +2335,6 @@
         }
 
         p.life -= dt;
-
         p.velocity.y -= (p.gravity || 0) * dt;
         p.mesh.position.addScaledVector(p.velocity, dt);
 
@@ -1973,7 +2436,12 @@
       uiPlayerHealth.style.width = playerHP + "%";
       uiEnemyHealth.style.width = enemyHP + "%";
       uiStamina.style.width = stamina + "%";
+
       uiBloodCoins.textContent = bloodCoins;
+      uiShopCoins.textContent = bloodCoins;
+
+      weaponLoadout.textContent = getEquippedWeapon().name;
+      shieldLoadout.textContent = getEquippedShield().name;
 
       if (stamina < 20) {
         uiStamina.style.filter = "brightness(0.75)";
@@ -2000,6 +2468,7 @@
       isBlocking = false;
       msg.textContent = text;
       subMessage.textContent = detail || "";
+      renderShop();
       messagePanel.classList.add("show");
 
       if (document.pointerLockElement) {
@@ -2061,6 +2530,9 @@
       player.shieldPivot.rotation.set(0, 0, 0);
       enemy.shieldPivot.rotation.set(0, 0, 0);
 
+      applyWeaponVisuals(player, getEquippedWeapon());
+      applyShieldVisuals(player, getEquippedShield());
+
       messagePanel.classList.remove("show");
 
       for (const p of particles) {
@@ -2075,11 +2547,14 @@
         scene.remove(d.mesh);
       }
 
-      particles.splice(0, particles.length, ...particles.filter(p => p.type === "flame"));
+      const flameParticles = particles.filter(p => p.type === "flame");
+      particles.length = 0;
+      particles.push(...flameParticles);
       floatingTexts.length = 0;
       bloodDecals.length = 0;
 
       updateUI();
+      renderShop();
     }
 
     function keepInsideArena(pos) {
