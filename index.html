@@ -126,6 +126,29 @@
       background: linear-gradient(90deg, #7a0b0b, #c62828, #ff8a2b);
     }
 
+    #bloodCoinsWrap {
+      position: absolute;
+      top: 108px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 9px 18px;
+      border: 2px solid #b98437;
+      border-radius: 999px;
+      background:
+        radial-gradient(circle at top, rgba(255, 215, 115, 0.2), transparent 65%),
+        linear-gradient(135deg, rgba(58, 29, 12, 0.92), rgba(14, 8, 5, 0.92));
+      box-shadow:
+        0 0 0 2px rgba(30, 13, 4, 0.85),
+        0 8px 22px rgba(0,0,0,0.55),
+        inset 0 0 16px rgba(255, 190, 58, 0.12);
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #ffd86f;
+      text-shadow: 0 2px 5px #000;
+    }
+
     #messagePanel {
       position: absolute;
       left: 50%;
@@ -271,6 +294,8 @@
       </div>
     </div>
 
+    <div id="bloodCoinsWrap">BloodCoins: <span id="bloodCoinsCount">0</span></div>
+
     <div id="staminaWrap">
       <div class="barOuter">
         <div id="stamina" class="barInner"></div>
@@ -301,6 +326,7 @@
     let playerHP = 100;
     let enemyHP = 100;
     let stamina = 100;
+    let bloodCoins = 0;
 
     let playerAttackTimer = 0;
     let playerAttackCooldown = 0;
@@ -343,10 +369,12 @@
     const ARENA_RADIUS = 28;
     const PLAYER_SPEED = 9;
     const ENEMY_SPEED = 4.2;
+    const ENEMY_ATTACK_DURATION = 1.25;
 
     const uiPlayerHealth = document.getElementById("playerHealth");
     const uiEnemyHealth = document.getElementById("enemyHealth");
     const uiStamina = document.getElementById("stamina");
+    const uiBloodCoins = document.getElementById("bloodCoinsCount");
     const enemyNameLabel = document.getElementById("enemyNameLabel");
     const msg = document.getElementById("message");
     const subMessage = document.getElementById("subMessage");
@@ -803,11 +831,13 @@
       addOutline(rightArm, 1.05);
 
       const shieldPivot = new THREE.Group();
-      shieldPivot.position.set(0, -0.84, 0.1);
+      shieldPivot.position.set(0, -0.84, 0.12);
       leftArmPivot.add(shieldPivot);
 
+      const shieldRadius = 0.696;
+
       const shield = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.58, 0.58, 0.16, 32),
+        new THREE.CylinderGeometry(shieldRadius, shieldRadius, 0.16, 36),
         toonMaterial(0x5b2619)
       );
       shield.rotation.x = Math.PI / 2;
@@ -816,7 +846,7 @@
       addOutline(shield, 1.04);
 
       const shieldRim = new THREE.Mesh(
-        new THREE.TorusGeometry(0.58, 0.045, 10, 48),
+        new THREE.TorusGeometry(shieldRadius, 0.05, 10, 56),
         armor
       );
       shieldRim.position.z = 0.095;
@@ -826,7 +856,7 @@
       addOutline(shieldRim, 1.035);
 
       const innerShieldRing = new THREE.Mesh(
-        new THREE.TorusGeometry(0.31, 0.025, 8, 40),
+        new THREE.TorusGeometry(0.372, 0.03, 8, 44),
         armor
       );
       innerShieldRing.position.z = 0.105;
@@ -836,7 +866,7 @@
       addOutline(innerShieldRing, 1.035);
 
       const shieldBoss = new THREE.Mesh(
-        new THREE.SphereGeometry(0.18, 16, 16),
+        new THREE.SphereGeometry(0.216, 16, 16),
         armor
       );
       shieldBoss.position.z = 0.145;
@@ -1063,8 +1093,6 @@
       playerAttackCooldown = 0.62;
       playerHitDone = false;
       stamina -= 15;
-
-      createSlashSpark(player.group.position.clone().add(new THREE.Vector3(0, 2.1, 0)));
     }
 
     function animate() {
@@ -1167,8 +1195,8 @@
         enemy.walkTime += dt * 1.2;
 
         if (enemyAttackCooldown <= 0 && enemyAttackTimer <= 0) {
-          enemyAttackTimer = 0.58;
-          enemyAttackCooldown = 1.15 + Math.random() * 0.6;
+          enemyAttackTimer = ENEMY_ATTACK_DURATION;
+          enemyAttackCooldown = 1.25 + Math.random() * 0.75;
           enemyHitDone = false;
         }
       }
@@ -1176,11 +1204,31 @@
       keepInsideArena(enemy.group.position);
 
       if (enemyAttackTimer > 0 && !enemyHitDone) {
-        if (enemyAttackTimer < 0.33 && dist < 2.65) {
-          damagePlayer(16 + Math.random() * 8);
-          enemyHitDone = true;
+        const progress = 1 - enemyAttackTimer / ENEMY_ATTACK_DURATION;
+
+        if (progress > 0.42 && progress < 0.78) {
+          const swordTip = getSwordTipWorld(enemy);
+          const playerTouchPoint = getClosestPointOnPlayerBody(swordTip);
+          const touchDistance = swordTip.distanceTo(playerTouchPoint);
+
+          if (touchDistance < 0.72) {
+            damagePlayer(16 + Math.random() * 8);
+            enemyHitDone = true;
+          }
         }
       }
+    }
+
+    function getSwordTipWorld(g) {
+      const localTip = new THREE.Vector3(0, -1.95, 0);
+      return localTip.applyMatrix4(g.swordPivot.matrixWorld);
+    }
+
+    function getClosestPointOnPlayerBody(point) {
+      const base = player.group.position.clone();
+      const y = THREE.MathUtils.clamp(point.y, base.y + 0.9, base.y + 2.75);
+
+      return new THREE.Vector3(base.x, y, base.z);
     }
 
     function updateAnimations(dt) {
@@ -1316,29 +1364,32 @@
         }
       } else {
         if (enemyAttackTimer > 0) {
-          const t = 1 - enemyAttackTimer / 0.58;
+          const t = 1 - enemyAttackTimer / ENEMY_ATTACK_DURATION;
 
-          if (t < 0.3) {
-            const p = easeOut(t / 0.3);
-            g.rightArmPivot.rotation.x = -0.35 - p * 1.05;
-            g.rightArmPivot.rotation.z = 0.25 + p * 1.0;
-            g.rightArmPivot.rotation.y = 0.1 + p * 0.2;
-            g.swordPivot.rotation.x = -0.55 - p * 0.6;
-            g.swordPivot.rotation.z = 0.4 + p * 1.35;
-          } else if (t < 0.72) {
-            const p = easeInOut((t - 0.3) / 0.42);
-            g.rightArmPivot.rotation.x = -1.4 + p * 2.05;
-            g.rightArmPivot.rotation.z = 1.25 - p * 1.95;
-            g.rightArmPivot.rotation.y = 0.3 - p * 0.42;
-            g.swordPivot.rotation.x = -1.15 + p * 1.25;
-            g.swordPivot.rotation.z = 1.75 - p * 3.05;
+          if (t < 0.38) {
+            const p = easeOut(t / 0.38);
+            g.rightArmPivot.rotation.x = -0.3 - p * 1.25;
+            g.rightArmPivot.rotation.z = 0.18 + p * 1.18;
+            g.rightArmPivot.rotation.y = 0.08 + p * 0.22;
+            g.swordPivot.rotation.x = -0.48 - p * 0.72;
+            g.swordPivot.rotation.y = 0.08;
+            g.swordPivot.rotation.z = 0.35 + p * 1.55;
+          } else if (t < 0.78) {
+            const p = easeInOut((t - 0.38) / 0.4);
+            g.rightArmPivot.rotation.x = -1.55 + p * 2.25;
+            g.rightArmPivot.rotation.z = 1.36 - p * 2.2;
+            g.rightArmPivot.rotation.y = 0.3 - p * 0.48;
+            g.swordPivot.rotation.x = -1.2 + p * 1.35;
+            g.swordPivot.rotation.y = 0.08 - p * 0.2;
+            g.swordPivot.rotation.z = 1.9 - p * 3.25;
           } else {
-            const p = easeOut((t - 0.72) / 0.28);
-            g.rightArmPivot.rotation.x = 0.65 - p * 0.86;
-            g.rightArmPivot.rotation.z = -0.7 + p * 0.95;
-            g.rightArmPivot.rotation.y = -0.12 + p * 0.12;
-            g.swordPivot.rotation.x = 0.1 - p * 0.72;
-            g.swordPivot.rotation.z = -1.3 + p * 1.68;
+            const p = easeOut((t - 0.78) / 0.22);
+            g.rightArmPivot.rotation.x = 0.7 - p * 0.9;
+            g.rightArmPivot.rotation.z = -0.84 + p * 1.08;
+            g.rightArmPivot.rotation.y = -0.18 + p * 0.18;
+            g.swordPivot.rotation.x = 0.15 - p * 0.77;
+            g.swordPivot.rotation.y = -0.12 + p * 0.22;
+            g.swordPivot.rotation.z = -1.35 + p * 1.73;
           }
         } else {
           const idleSword = Math.sin(clock.elapsedTime * 1.7 + g.idleTime) * 0.035;
@@ -1411,7 +1462,11 @@
       );
 
       if (enemyHP <= 0) {
-        endGame("Victory", currentEnemyName + " has fallen.");
+        const earned = 25;
+        bloodCoins += earned;
+        updateUI();
+        createFloatingText("+" + earned + " BloodCoins", enemy.group.position.clone().add(new THREE.Vector3(0, 3.1, 0)), 0xffd86f);
+        endGame("Victory", currentEnemyName + " has fallen. +" + earned + " BloodCoins.");
       }
     }
 
@@ -1524,32 +1579,6 @@
       });
     }
 
-    function createSlashSpark(position) {
-      for (let i = 0; i < 18; i++) {
-        const mesh = new THREE.Mesh(
-          new THREE.BoxGeometry(0.04, 0.04, 0.45),
-          new THREE.MeshBasicMaterial({ color: 0xffdd88 })
-        );
-
-        mesh.position.copy(position);
-        mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-        scene.add(mesh);
-
-        particles.push({
-          mesh,
-          velocity: new THREE.Vector3(
-            (Math.random() - 0.5) * 3.4,
-            Math.random() * 2.4,
-            (Math.random() - 0.5) * 3.4
-          ),
-          life: 0.24 + Math.random() * 0.2,
-          maxLife: 0.44,
-          gravity: 1.5,
-          type: "spark"
-        });
-      }
-    }
-
     function createShieldBlockEffect(position) {
       for (let i = 0; i < 22; i++) {
         const mesh = new THREE.Mesh(
@@ -1631,8 +1660,8 @@
 
     function createFloatingText(text, position, color) {
       const canvas = document.createElement("canvas");
-      canvas.width = 256;
-      canvas.height = 128;
+      canvas.width = 512;
+      canvas.height = 160;
 
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1641,9 +1670,9 @@
       ctx.textBaseline = "middle";
       ctx.lineWidth = 8;
       ctx.strokeStyle = "rgba(0,0,0,0.85)";
-      ctx.strokeText(text, 128, 64);
+      ctx.strokeText(text, 256, 80);
       ctx.fillStyle = "#" + color.toString(16).padStart(6, "0");
-      ctx.fillText(text, 128, 64);
+      ctx.fillText(text, 256, 80);
 
       const texture = new THREE.CanvasTexture(canvas);
 
@@ -1656,7 +1685,7 @@
       );
 
       sprite.position.copy(position);
-      sprite.scale.set(1.8, 0.9, 1);
+      sprite.scale.set(3.2, 1.0, 1);
       scene.add(sprite);
 
       floatingTexts.push({
@@ -1697,6 +1726,7 @@
       uiPlayerHealth.style.width = playerHP + "%";
       uiEnemyHealth.style.width = enemyHP + "%";
       uiStamina.style.width = stamina + "%";
+      uiBloodCoins.textContent = bloodCoins;
 
       if (stamina < 20) {
         uiStamina.style.filter = "brightness(0.75)";
