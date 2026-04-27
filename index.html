@@ -125,7 +125,6 @@ const world = {
     juice: 0,
     caught: 0,
     totalCaught: 0,
-    carTimer: 0,
     upgrades: {
         net: 1,
         tank: 1,
@@ -159,11 +158,10 @@ const nets = [];
 const particles = [];
 const floatingTexts = [];
 const cars = [];
+const windStreaks = [];
 
 const baseTrees = [];
-const forestTrees = [];
-const forestRocks = [];
-const forestBushes = [];
+const forestObjects = [];
 const fireflies = [];
 const grassTufts = [];
 
@@ -249,22 +247,54 @@ function shadeColor(hex, percent) {
     return "#" + (b | (g << 8) | (r << 16)).toString(16).padStart(6, "0");
 }
 
+function tryPlace(list, obj, minDist, attempts = 90) {
+    for (let i = 0; i < attempts; i++) {
+        let valid = true;
+
+        for (const other of list) {
+            const d = Math.hypot(obj.x - other.x, obj.y - other.y);
+            const required = minDist * ((obj.s || 1) + (other.s || 1)) * 0.5;
+
+            if (d < required) {
+                valid = false;
+                break;
+            }
+        }
+
+        if (valid) {
+            list.push(obj);
+            return true;
+        }
+
+        obj.x = rand(obj.minX, obj.maxX);
+        obj.y = rand(obj.minY, obj.maxY);
+    }
+
+    list.push(obj);
+    return false;
+}
+
 function generateDecor() {
     baseTrees.length = 0;
-    forestTrees.length = 0;
-    forestRocks.length = 0;
-    forestBushes.length = 0;
+    forestObjects.length = 0;
     fireflies.length = 0;
     grassTufts.length = 0;
 
     for (let i = 0; i < 24; i++) {
-        baseTrees.push({
+        const obj = {
+            type: "tree",
             x: rand(220, W - 70),
             y: rand(35, 145),
+            minX: 220,
+            maxX: W - 70,
+            minY: 35,
+            maxY: 145,
             s: rand(0.8, 1.28),
             sway: rand(0, 10),
-            type: Math.floor(rand(0, 3))
-        });
+            treeType: Math.floor(rand(0, 3))
+        };
+
+        tryPlace(baseTrees, obj, 70);
     }
 
     for (let i = 0; i < 180; i++) {
@@ -277,33 +307,62 @@ function generateDecor() {
         });
     }
 
-    for (let i = 0; i < 16; i++) {
-        forestTrees.push({
-            x: rand(30, W - 30),
-            y: rand(40, H - 120),
-            s: rand(0.85, 1.9),
-            sway: rand(0, 10),
-            type: Math.floor(rand(0, 4))
-        });
-    }
+    const placedForest = [];
 
-    for (let i = 0; i < 18; i++) {
-        forestRocks.push({
-            x: rand(40, W - 40),
-            y: rand(60, H - 150),
-            s: rand(0.8, 1.9),
-            rot: rand(0, Math.PI)
-        });
+    for (let i = 0; i < 16; i++) {
+        const obj = {
+            decor: "tree",
+            x: rand(55, W - 55),
+            y: rand(65, H - 145),
+            minX: 55,
+            maxX: W - 55,
+            minY: 65,
+            maxY: H - 145,
+            s: rand(0.85, 1.75),
+            sway: rand(0, 10),
+            treeType: Math.floor(rand(0, 4))
+        };
+
+        tryPlace(placedForest, obj, 95);
+        forestObjects.push(obj);
     }
 
     for (let i = 0; i < 14; i++) {
-        forestBushes.push({
-            x: rand(30, W - 30),
-            y: rand(70, H - 130),
-            s: rand(0.7, 1.6),
-            c: Math.random() < 0.5 ? "#275f3d" : "#1f4d34"
-        });
+        const obj = {
+            decor: "rock",
+            x: rand(50, W - 50),
+            y: rand(80, H - 155),
+            minX: 50,
+            maxX: W - 50,
+            minY: 80,
+            maxY: H - 155,
+            s: rand(0.75, 1.45),
+            rot: rand(0, Math.PI)
+        };
+
+        tryPlace(placedForest, obj, 62);
+        forestObjects.push(obj);
     }
+
+    for (let i = 0; i < 12; i++) {
+        const obj = {
+            decor: "bush",
+            x: rand(45, W - 45),
+            y: rand(80, H - 145),
+            minX: 45,
+            maxX: W - 45,
+            minY: 80,
+            maxY: H - 145,
+            s: rand(0.7, 1.4),
+            c: Math.random() < 0.5 ? "#275f3d" : "#1f4d34"
+        };
+
+        tryPlace(placedForest, obj, 58);
+        forestObjects.push(obj);
+    }
+
+    forestObjects.sort((a, b) => a.y - b.y);
+    baseTrees.sort((a, b) => a.y - b.y);
 
     for (let i = 0; i < 26; i++) {
         fireflies.push({
@@ -332,7 +391,7 @@ function createCar(x = CAR_STOP_X) {
 }
 
 function desiredQueueLength() {
-    return clamp(Math.floor((W - CAR_STOP_X) / CAR_SPACING), 3, 6);
+    return clamp(Math.ceil((W + 180 - CAR_STOP_X) / CAR_SPACING), 4, 13);
 }
 
 function rebuildCarLine() {
@@ -344,8 +403,8 @@ function rebuildCarLine() {
     const count = desiredQueueLength();
 
     for (let i = 0; i < count; i++) {
-        const oldCar = keep[i];
         const targetX = CAR_STOP_X + i * CAR_SPACING;
+        const oldCar = keep[i];
 
         if (oldCar) {
             oldCar.x = targetX;
@@ -370,6 +429,7 @@ function fillCarLine() {
         const index = queued.length;
         const targetX = CAR_STOP_X + index * CAR_SPACING;
         const c = createCar(targetX);
+
         c.x = targetX;
         c.targetX = targetX;
 
@@ -400,7 +460,7 @@ function spawnZombie() {
     zombies.push({
         x,
         y,
-        r: rand(19, 25),
+        r: rand(15, 20),
         speed: rand(0.45, 0.9),
         angle: rand(0, Math.PI * 2),
         wander: rand(0, 100),
@@ -410,7 +470,6 @@ function spawnZombie() {
         color: Math.random() < 0.5 ? "#8bd346" : "#a8e063",
         shirt: Math.random() < 0.5 ? "#6c63ff" : "#ef476f",
         pants: Math.random() < 0.5 ? "#34495e" : "#4b3f72",
-        hair: Math.random() < 0.5 ? "#26382f" : "#3a2c22",
         variant: Math.floor(rand(0, 3)),
         limp: rand(0, Math.PI * 2),
         facing: Math.random() < 0.5 ? 1 : -1
@@ -451,6 +510,20 @@ function addFloatingText(text, x, y, color = "#fff") {
         maxLife: 55,
         color,
         size: 30
+    });
+}
+
+function addWindStreak() {
+    if (game.screen !== "base") return;
+
+    windStreaks.push({
+        x: rand(-100, W * 0.7),
+        y: rand(185, H - 165),
+        vx: rand(2.2, 3.8),
+        life: rand(70, 110),
+        maxLife: 110,
+        len: rand(55, 120),
+        wave: rand(0, Math.PI * 2)
     });
 }
 
@@ -605,11 +678,11 @@ function updateCarriedZombies() {
         let targetY;
 
         if (game.screen === "base") {
-            targetX = player.x + 35 + offset * 26;
+            targetX = player.x + 35 + offset * 22;
             targetY = player.y + 16 + Math.sin(player.bob + i) * 7;
             z.facing = -1;
         } else {
-            targetX = player.x - player.facing * (28 + offset * 24);
+            targetX = player.x - player.facing * (28 + offset * 22);
             targetY = player.y + 18 + Math.sin(player.bob + i) * 7;
             z.facing = -player.facing;
         }
@@ -860,6 +933,24 @@ function updateFireflies() {
     }
 }
 
+function updateWind() {
+    if (game.screen === "base" && Math.random() < 0.012) {
+        addWindStreak();
+    }
+
+    for (let i = windStreaks.length - 1; i >= 0; i--) {
+        const w = windStreaks[i];
+
+        w.x += w.vx;
+        w.life--;
+        w.wave += 0.08;
+
+        if (w.life <= 0 || w.x > W + 180) {
+            windStreaks.splice(i, 1);
+        }
+    }
+}
+
 function drawWorld() {
     if (game.screen === "base") {
         drawBaseWorld();
@@ -878,6 +969,7 @@ function drawBaseWorld() {
 
     drawBaseHills();
     drawBaseGrassTexture();
+    drawWindStreaks();
     drawRoad();
     drawBaseDecor();
     drawPortalSign();
@@ -943,6 +1035,30 @@ function drawBaseGrassTexture() {
     }
 }
 
+function drawWindStreaks() {
+    ctx.save();
+
+    for (const w of windStreaks) {
+        const alpha = clamp(w.life / w.maxLife, 0, 1) * 0.22;
+
+        ctx.strokeStyle = `rgba(235,255,235,${alpha})`;
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+
+        ctx.beginPath();
+        ctx.moveTo(w.x, w.y);
+        ctx.quadraticCurveTo(
+            w.x + w.len * 0.45,
+            w.y + Math.sin(w.wave) * 9,
+            w.x + w.len,
+            w.y + Math.sin(w.wave + 1.2) * 7
+        );
+        ctx.stroke();
+    }
+
+    ctx.restore();
+}
+
 function drawRoad() {
     ctx.fillStyle = "#3f4b4f";
     ctx.fillRect(0, H - 125, W, 125);
@@ -970,7 +1086,8 @@ function drawBaseDecor() {
 
 function drawPortalSign() {
     ctx.save();
-    ctx.translate(W - 115, H / 2 - 145);
+    ctx.translate(W - 105, H / 2 - 145);
+    ctx.scale(0.7, 0.7);
 
     ctx.fillStyle = "#7b4f2e";
     ctx.strokeStyle = "#2f241b";
@@ -1004,28 +1121,17 @@ function drawForestWorld() {
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, W, H);
 
-    drawMoon();
     drawForestBackTrees();
 
-    for (const b of forestBushes) drawForestBush(b);
-    for (const r of forestRocks) drawRock(r, true);
-    for (const t of forestTrees) drawTree(t, true);
+    for (const obj of forestObjects) {
+        if (obj.decor === "bush") drawForestBush(obj);
+        if (obj.decor === "rock") drawRock(obj, true);
+        if (obj.decor === "tree") drawTree(obj, true);
+    }
 
     drawFireflies();
     drawForestExitSign();
     drawVignette();
-}
-
-function drawMoon() {
-    ctx.fillStyle = "rgba(212, 232, 204, 0.55)";
-    ctx.beginPath();
-    ctx.arc(W - 130, 95, 42, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "rgba(23, 44, 45, 0.65)";
-    ctx.beginPath();
-    ctx.arc(W - 112, 83, 39, 0, Math.PI * 2);
-    ctx.fill();
 }
 
 function drawForestBackTrees() {
@@ -1081,6 +1187,7 @@ function drawFireflies() {
 function drawForestExitSign() {
     ctx.save();
     ctx.translate(82, H / 2 - 130);
+    ctx.scale(0.7, 0.7);
 
     ctx.fillStyle = "#5e3d27";
     ctx.strokeStyle = "#151a16";
@@ -1599,7 +1706,7 @@ function drawZombie(z) {
     const facing = z.facing || 1;
     const squash = Math.sin(z.squish) * 0.07;
 
-    ctx.scale(facing * (1 + squash), 1 - squash);
+    ctx.scale(facing * (1 + squash) * 0.8, (1 - squash) * 0.8);
 
     const limp = Math.sin(z.limp);
 
@@ -1672,20 +1779,6 @@ function drawZombie(z) {
         ctx.fill();
     }
 
-    ctx.fillStyle = z.hair;
-    ctx.strokeStyle = "#101820";
-    ctx.lineWidth = 3;
-
-    ctx.beginPath();
-    ctx.moveTo(-15, -43);
-    ctx.lineTo(-5, -56);
-    ctx.lineTo(0, -42);
-    ctx.lineTo(8, -55);
-    ctx.lineTo(16, -41);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
     drawZombieEye(-8, -26);
     drawZombieEye(8, -27);
 
@@ -1698,7 +1791,7 @@ function drawZombie(z) {
     ctx.fillRect(-3, -12, 3, 6);
     ctx.fillRect(3, -12, 3, 5);
 
-    if (z.scared > 0) {
+    if (z.scared > 0 && !z.caught) {
         ctx.fillStyle = "#fff";
         ctx.strokeStyle = "#101820";
         ctx.lineWidth = 3;
@@ -1772,8 +1865,8 @@ function drawCar(c) {
     roundedRect(-c.w / 8, -c.h / 2 - 13, c.w * 0.22, 18, 6);
     ctx.fill();
 
-    const tireR = 20;
-    const hubR = 8;
+    const tireR = 14;
+    const hubR = 5.5;
 
     ctx.fillStyle = "#101820";
 
@@ -1909,6 +2002,7 @@ function update() {
     updateParticles();
     updateFloatingTexts();
     updateFireflies();
+    updateWind();
 }
 
 function draw() {
