@@ -362,6 +362,54 @@
         inset 0 -8px 12px rgba(0,0,0,0.24);
     }
 
+    #tournamentWrap {
+      position: absolute;
+      top: 108px;
+      right: 28px;
+      min-width: 260px;
+      padding: 12px 16px;
+      border: 3px ridge #b98437;
+      border-radius: 12px;
+      background:
+        radial-gradient(circle at top, rgba(255, 214, 132, 0.16), transparent 62%),
+        repeating-linear-gradient(135deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 7px),
+        linear-gradient(135deg, rgba(61, 31, 12, 0.94), rgba(13, 8, 5, 0.96));
+      box-shadow:
+        0 0 0 2px rgba(30, 13, 4, 0.9),
+        0 10px 26px rgba(0,0,0,0.58),
+        inset 0 0 18px rgba(255, 190, 58, 0.11);
+      color: #ffe2a0;
+      text-shadow: 0 2px 5px #000;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    #tournamentWrap::before {
+      content: "⚜ Tournament Scroll ⚜";
+      display: block;
+      margin-bottom: 8px;
+      color: #ffd86f;
+      font-size: 12px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 216, 111, 0.38);
+      padding-bottom: 6px;
+    }
+
+    .tournamentLine {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 3px 0;
+      border-bottom: 1px solid rgba(255, 220, 145, 0.08);
+    }
+
+    .tournamentLine span:last-child {
+      color: #ffd86f;
+      text-align: right;
+    }
   </style>
 </head>
 <body>
@@ -386,6 +434,13 @@
 
     <div id="bloodCoinsWrap">BloodCoins: <span id="bloodCoinsCount">0</span></div>
 
+    <div id="tournamentWrap">
+      <div class="tournamentLine"><span>Rank</span><span id="tournamentRankText">Sand Rookie</span></div>
+      <div class="tournamentLine"><span>Round</span><span id="tournamentRoundText">1</span></div>
+      <div class="tournamentLine"><span>Opponent HP</span><span id="opponentHealthText">100 / 100</span></div>
+      <div class="tournamentLine"><span>Club Damage</span><span id="opponentDamageText">11 - 17</span></div>
+    </div>
+
 
     <div id="messagePanel">
       <div id="message"></div>
@@ -408,9 +463,17 @@
     let pitch = 0;
     let cameraRoll = 0;
 
-    let playerHP = 100;
-    let enemyHP = 100;
+    let playerMaxHP = 100;
+    let playerHP = playerMaxHP;
+    let enemyMaxHP = 100;
+    let enemyHP = enemyMaxHP;
     let bloodCoins = 0;
+
+    let tournamentRound = 1;
+    let roundWon = false;
+    let enemyDamageMultiplier = 1;
+    let enemySpeedMultiplier = 1;
+    let enemyCooldownMultiplier = 1;
 
     let playerAttackType = "sideRight";
     let previousPlayerAttackType = "";
@@ -469,9 +532,25 @@
     const FINISHER_SLOWMO_DURATION = 0.82;
     const FINISHER_SLOWMO_SCALE = 0.24;
 
+    // Clubs deal 30% less damage than the old swords.
+    const PLAYER_CLUB_DAMAGE_MIN = 12.6;
+    const PLAYER_CLUB_DAMAGE_BONUS = 7.0;
+    const ENEMY_CLUB_DAMAGE_MIN = 11.2;
+    const ENEMY_CLUB_DAMAGE_BONUS = 5.6;
+
+    const ENEMY_BASE_HP = 100;
+    const ENEMY_HP_PER_ROUND = 24;
+    const ENEMY_DAMAGE_GROWTH = 0.12;
+    const ENEMY_SPEED_GROWTH = 0.045;
+    const ENEMY_COOLDOWN_REDUCTION = 0.045;
+
     const uiPlayerHealth = document.getElementById("playerHealth");
     const uiEnemyHealth = document.getElementById("enemyHealth");
     const uiBloodCoins = document.getElementById("bloodCoinsCount");
+    const tournamentRankText = document.getElementById("tournamentRankText");
+    const tournamentRoundText = document.getElementById("tournamentRoundText");
+    const opponentHealthText = document.getElementById("opponentHealthText");
+    const opponentDamageText = document.getElementById("opponentDamageText");
     const enemyNameLabel = document.getElementById("enemyNameLabel");
     const msg = document.getElementById("message");
     const subMessage = document.getElementById("subMessage");
@@ -486,9 +565,42 @@
       return opponentNames[Math.floor(Math.random() * opponentNames.length)];
     }
 
+    function getTournamentRankName(round = tournamentRound) {
+      if (round >= 16) return "Arena Legend";
+      if (round >= 12) return "Imperial Champion";
+      if (round >= 9) return "Colosseum Terror";
+      if (round >= 6) return "Blood Pit Veteran";
+      if (round >= 3) return "Bronze Brawler";
+      return "Sand Rookie";
+    }
+
+    function getEnemyDamageMin() {
+      return ENEMY_CLUB_DAMAGE_MIN * enemyDamageMultiplier;
+    }
+
+    function getEnemyDamageMax() {
+      return (ENEMY_CLUB_DAMAGE_MIN + ENEMY_CLUB_DAMAGE_BONUS) * enemyDamageMultiplier;
+    }
+
+    function getEnemyClubDamage() {
+      return (ENEMY_CLUB_DAMAGE_MIN + Math.random() * ENEMY_CLUB_DAMAGE_BONUS) * enemyDamageMultiplier;
+    }
+
+    function getPlayerClubDamage() {
+      return PLAYER_CLUB_DAMAGE_MIN + Math.random() * PLAYER_CLUB_DAMAGE_BONUS;
+    }
+
     function setNewOpponentName() {
       currentEnemyName = randomOpponentName();
-      enemyNameLabel.textContent = currentEnemyName;
+    }
+
+    function configureOpponentForRound() {
+      setNewOpponentName();
+      enemyMaxHP = ENEMY_BASE_HP + (tournamentRound - 1) * ENEMY_HP_PER_ROUND;
+      enemyHP = enemyMaxHP;
+      enemyDamageMultiplier = 1 + (tournamentRound - 1) * ENEMY_DAMAGE_GROWTH;
+      enemySpeedMultiplier = 1 + (tournamentRound - 1) * ENEMY_SPEED_GROWTH;
+      enemyCooldownMultiplier = Math.max(0.55, 1 - (tournamentRound - 1) * ENEMY_COOLDOWN_REDUCTION);
     }
 
     function toonMaterial(color, extra = {}) {
@@ -712,7 +824,7 @@
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       document.body.appendChild(renderer.domElement);
 
-      setNewOpponentName();
+      configureOpponentForRound();
       addLights();
       createArena();
 
@@ -1085,42 +1197,70 @@
       swordPivot.position.set(0.04, -0.78, 0.02);
       rightArmPivot.add(swordPivot);
 
-      const blade = new THREE.Mesh(
-        new THREE.BoxGeometry(0.13, 1.55, 0.07),
-        toonMaterial(0xdedede)
-      );
-      blade.position.y = -0.98;
-      blade.castShadow = true;
-      swordPivot.add(blade);
-      addOutline(blade, 1.08);
-
-      const tip = new THREE.Mesh(
-        new THREE.ConeGeometry(0.09, 0.24, 4),
-        blade.material
-      );
-      tip.position.y = -1.87;
-      tip.rotation.y = Math.PI / 4;
-      tip.castShadow = true;
-      swordPivot.add(tip);
-      addOutline(tip, 1.08);
-
-      const guard = new THREE.Mesh(
-        new THREE.BoxGeometry(0.52, 0.09, 0.12),
-        armor
-      );
-      guard.position.y = -0.18;
-      guard.castShadow = true;
-      swordPivot.add(guard);
-      addOutline(guard, 1.05);
+      const clubWood = toonMaterial(0x7b421f);
+      const darkWood = toonMaterial(0x4a2412);
+      const wrapMat = toonMaterial(0x2a160c);
 
       const handle = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.07, 0.07, 0.45, 12),
-        leather
+        new THREE.CylinderGeometry(0.07, 0.1, 0.85, 12),
+        darkWood
       );
-      handle.position.y = 0.05;
+      handle.position.y = -0.33;
       handle.castShadow = true;
       swordPivot.add(handle);
       addOutline(handle, 1.06);
+
+      const clubHead = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.27, 0.2, 1.05, 14),
+        clubWood
+      );
+      clubHead.position.y = -1.16;
+      clubHead.rotation.z = 0.08;
+      clubHead.castShadow = true;
+      swordPivot.add(clubHead);
+      addOutline(clubHead, 1.055);
+
+      for (let i = 0; i < 5; i++) {
+        const knot = new THREE.Mesh(
+          new THREE.SphereGeometry(0.045 + Math.random() * 0.035, 8, 8),
+          darkWood
+        );
+        const a = i * Math.PI * 0.73;
+        knot.position.set(Math.cos(a) * 0.23, -0.82 - i * 0.15, Math.sin(a) * 0.23);
+        knot.scale.set(1.1, 0.65, 1.1);
+        knot.castShadow = true;
+        swordPivot.add(knot);
+        addOutline(knot, 1.08);
+      }
+
+      const topWrap = new THREE.Mesh(
+        new THREE.TorusGeometry(0.215, 0.025, 8, 24),
+        wrapMat
+      );
+      topWrap.position.y = -0.66;
+      topWrap.rotation.x = Math.PI / 2;
+      topWrap.castShadow = true;
+      swordPivot.add(topWrap);
+      addOutline(topWrap, 1.06);
+
+      const bottomWrap = new THREE.Mesh(
+        new THREE.TorusGeometry(0.25, 0.026, 8, 24),
+        wrapMat
+      );
+      bottomWrap.position.y = -1.68;
+      bottomWrap.rotation.x = Math.PI / 2;
+      bottomWrap.castShadow = true;
+      swordPivot.add(bottomWrap);
+      addOutline(bottomWrap, 1.06);
+
+      const leatherGrip = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.083, 0.083, 0.34, 12),
+        leather
+      );
+      leatherGrip.position.y = 0.04;
+      leatherGrip.castShadow = true;
+      swordPivot.add(leatherGrip);
+      addOutline(leatherGrip, 1.06);
 
       const leftLegPivot = new THREE.Group();
       const rightLegPivot = new THREE.Group();
@@ -1173,7 +1313,7 @@
         rightLegPivot,
         swordPivot,
         shieldPivot,
-        sword: blade,
+        sword: clubHead,
         shield,
         velocity: new THREE.Vector3(),
         walkTime: 0,
@@ -1189,7 +1329,8 @@
         headLookYaw: 0,
         headLookPitch: 0,
         baseHeadPitch: 0,
-        baseHeadRoll: 0
+        baseHeadRoll: 0,
+        isDead: false
       };
     }
 
@@ -1218,6 +1359,19 @@
       shine.position.set(-0.018, 0.03, 0.112);
       eye.add(shine);
 
+      const xMark = new THREE.Group();
+      xMark.visible = false;
+
+      const xMat = new THREE.MeshBasicMaterial({ color: 0x090302 });
+      const xBarA = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.026, 0.022), xMat);
+      const xBarB = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.026, 0.022), xMat);
+      xBarA.rotation.z = Math.PI / 4;
+      xBarB.rotation.z = -Math.PI / 4;
+      xBarA.position.z = 0.125;
+      xBarB.position.z = 0.126;
+      xMark.add(xBarA, xBarB);
+      eye.add(xMark);
+
       const outline = new THREE.Mesh(
         new THREE.SphereGeometry(0.12, 20, 20),
         new THREE.MeshBasicMaterial({
@@ -1232,9 +1386,21 @@
       eye.userData.white = whitePart;
       eye.userData.pupil = pupil;
       eye.userData.shine = shine;
+      eye.userData.xMark = xMark;
       eye.userData.originalScaleY = 1;
 
       return eye;
+    }
+
+    function setDeadEyes(g, dead) {
+      g.isDead = dead;
+
+      for (const eye of [g.leftEye, g.rightEye]) {
+        eye.scale.y = 1;
+        eye.userData.pupil.visible = !dead;
+        eye.userData.shine.visible = !dead;
+        eye.userData.xMark.visible = dead;
+      }
     }
 
     function setupEvents() {
@@ -1390,7 +1556,7 @@
           const requiredFacing = playerAttackType === "sideLeft" || playerAttackType === "sideRight" ? 0.24 : 0.35;
 
           if (dot > requiredFacing) {
-            damageEnemy(18 + Math.random() * 10);
+            damageEnemy(getPlayerClubDamage());
             playerHitDone = true;
           }
         }
@@ -1417,7 +1583,7 @@
       const enemyAttackStartDistance = 2.25;
 
       if (dist > enemyStopDistance && enemyAttackTimer <= 0) {
-        enemy.group.position.addScaledVector(toPlayer, ENEMY_SPEED * dt);
+        enemy.group.position.addScaledVector(toPlayer, ENEMY_SPEED * enemySpeedMultiplier * dt);
         enemy.walkTime += dt * 9.2;
 
         const enemyForward = new THREE.Vector3(Math.sin(enemy.group.rotation.y), 0, Math.cos(enemy.group.rotation.y));
@@ -1441,7 +1607,7 @@
 
         if (enemyAttackCooldown <= 0 && enemyAttackTimer <= 0 && dist < enemyAttackStartDistance) {
           enemyAttackTimer = ENEMY_ATTACK_DURATION;
-          enemyAttackCooldown = 1.25 + Math.random() * 0.75;
+          enemyAttackCooldown = (1.25 + Math.random() * 0.75) * enemyCooldownMultiplier;
           enemyHitDone = false;
         }
       }
@@ -1490,7 +1656,7 @@
       if (enemyFacing.dot(toPlayer) < 0.2) return;
 
       if (enemySwordTouchesPlayer()) {
-        damagePlayer(16 + Math.random() * 8);
+        damagePlayer(getEnemyClubDamage());
         enemyHitDone = true;
       }
     }
@@ -1530,7 +1696,8 @@
       animateGladiator(enemy, dt, false);
       updateBlinking(player, dt);
       updateBlinking(enemy, dt);
-      updatePlayerHeadTracking(dt);
+      updateHeadTracking(player, enemy, dt);
+      updateHeadTracking(enemy, player, dt);
       updateEyeFocus(player, enemy.group.position.clone().add(new THREE.Vector3(0, 2.45, 0)));
       updateEyeFocus(enemy, player.group.position.clone().add(new THREE.Vector3(0, 2.45, 0)));
 
@@ -1547,6 +1714,12 @@
     }
 
     function updateBlinking(g, dt) {
+      if (g.isDead) {
+        g.leftEye.scale.y = 1;
+        g.rightEye.scale.y = 1;
+        return;
+      }
+
       g.blinkTimer -= dt;
 
       if (g.blinkTimer <= 0 && g.blinkDuration <= 0) {
@@ -1590,20 +1763,19 @@
       );
     }
 
-    function updatePlayerHeadTracking(dt) {
-      if (!player || !enemy || !player.headPivot) return;
+    function updateHeadTracking(lookG, targetG, dt) {
+      if (!lookG || !targetG || !lookG.headPivot || lookG.isDead) return;
 
-      const target = enemy.group.position.clone().add(new THREE.Vector3(0, 2.65, 0));
-      const localTarget = player.group.worldToLocal(target);
-      const headLocal = player.headPivot.position.clone();
+      const target = targetG.group.position.clone().add(new THREE.Vector3(0, 2.65, 0));
+      const localTarget = lookG.group.worldToLocal(target);
+      const headLocal = lookG.headPivot.position.clone();
       const toTarget = localTarget.sub(headLocal);
       const horizontalDistance = Math.max(0.001, Math.hypot(toTarget.x, toTarget.z));
 
       let wantedYaw = Math.atan2(toTarget.x, toTarget.z);
       let wantedPitch = -Math.atan2(toTarget.y, horizontalDistance);
 
-      // Never let the head twist around to look behind the player.
-      // If the opponent is behind, the head only gives a small side glance.
+      // Prevent scary neck twisting when the target gets behind the fighter.
       if (toTarget.z < 0.15) {
         wantedYaw = THREE.MathUtils.clamp(toTarget.x * 0.16, -0.42, 0.42);
         wantedPitch = 0;
@@ -1612,14 +1784,14 @@
         wantedPitch = THREE.MathUtils.clamp(wantedPitch, -0.26, 0.34);
       }
 
-      player.headLookYaw = THREE.MathUtils.lerp(player.headLookYaw, wantedYaw, dt * 9);
-      player.headLookPitch = THREE.MathUtils.lerp(player.headLookPitch, wantedPitch, dt * 9);
+      lookG.headLookYaw = THREE.MathUtils.lerp(lookG.headLookYaw, wantedYaw, dt * 9);
+      lookG.headLookPitch = THREE.MathUtils.lerp(lookG.headLookPitch, wantedPitch, dt * 9);
 
       setHeadPose(
-        player,
-        player.baseHeadPitch + player.headLookPitch,
-        player.headLookYaw,
-        player.baseHeadRoll
+        lookG,
+        lookG.baseHeadPitch + lookG.headLookPitch,
+        lookG.headLookYaw,
+        lookG.baseHeadRoll
       );
     }
 
@@ -1950,8 +2122,10 @@
 
       if (enemyHP <= 0) {
         triggerFinisherSlowMotion();
+        setDeadEyes(enemy, true);
+        roundWon = true;
 
-        const earned = 25;
+        const earned = 25 + (tournamentRound - 1) * 5;
         bloodCoins += earned;
         updateUI();
 
@@ -1960,8 +2134,9 @@
         enemyAttackTimer = 0;
         enemyDeathTimer = enemyDeathDuration;
 
-        pendingVictoryText = "Victory";
-        pendingVictoryDetail = currentEnemyName + " has fallen. +" + earned + " BloodCoins.";
+        pendingVictoryText = "Round " + tournamentRound + " Cleared";
+        pendingVictoryDetail = currentEnemyName + " was clubbed down. Next opponent awaits. +" + earned + " BloodCoins.";
+        restartBtn.textContent = "Next Round";
 
         createFloatingText("+" + earned + " BloodCoins", enemy.group.position.clone().add(new THREE.Vector3(0, 3.1, 0)), 0xffd86f);
 
@@ -1999,7 +2174,10 @@
       createFloatingText("-" + Math.round(finalDamage), player.group.position.clone().add(new THREE.Vector3(0, 2.4, 0)), 0xff3b30);
 
       if (playerHP <= 0) {
-        endGame("Defeat", currentEnemyName + " claims victory.");
+        setDeadEyes(player, true);
+        roundWon = false;
+        restartBtn.textContent = "Restart Tournament";
+        endGame("Defeat", currentEnemyName + " ends your tournament run at Round " + tournamentRound + ".");
       }
     }
 
@@ -2262,9 +2440,15 @@
     }
 
     function updateUI() {
-      uiPlayerHealth.style.width = playerHP + "%";
-      uiEnemyHealth.style.width = enemyHP + "%";
+      uiPlayerHealth.style.width = THREE.MathUtils.clamp((playerHP / playerMaxHP) * 100, 0, 100) + "%";
+      uiEnemyHealth.style.width = THREE.MathUtils.clamp((enemyHP / enemyMaxHP) * 100, 0, 100) + "%";
       uiBloodCoins.textContent = bloodCoins;
+
+      enemyNameLabel.textContent = currentEnemyName + "  •  HP " + Math.ceil(enemyHP) + "/" + enemyMaxHP + "  •  DMG " + Math.round(getEnemyDamageMin()) + "-" + Math.round(getEnemyDamageMax());
+      tournamentRankText.textContent = getTournamentRankName();
+      tournamentRoundText.textContent = tournamentRound;
+      opponentHealthText.textContent = Math.ceil(enemyHP) + " / " + enemyMaxHP;
+      opponentDamageText.textContent = Math.round(getEnemyDamageMin()) + " - " + Math.round(getEnemyDamageMax());
     }
 
     function flashDamage() {
@@ -2283,6 +2467,7 @@
     function endGame(text, detail) {
       gameOver = true;
       isBlocking = false;
+      restartBtn.textContent = roundWon ? "Next Round" : "Restart Tournament";
       msg.textContent = text;
       subMessage.textContent = detail || "";
       messagePanel.classList.add("show");
@@ -2293,12 +2478,19 @@
     }
 
     function restartGame() {
-      playerHP = 100;
-      enemyHP = 100;
+      if (roundWon) {
+        tournamentRound += 1;
+      } else {
+        tournamentRound = 1;
+      }
+
+      roundWon = false;
+      configureOpponentForRound();
+
+      playerHP = playerMaxHP;
       gameOver = false;
       isBlocking = false;
-
-      setNewOpponentName();
+      restartBtn.textContent = "Fight Again";
 
       player.group.position.set(0, 0, 8);
       enemy.group.position.set(0, 0, -8);
@@ -2318,6 +2510,9 @@
       enemyDeathTimer = 0;
       pendingVictoryText = "";
       pendingVictoryDetail = "";
+
+      setDeadEyes(player, false);
+      setDeadEyes(enemy, false);
 
       player.blinkTimer = Math.random() * 2;
       enemy.blinkTimer = Math.random() * 2;
