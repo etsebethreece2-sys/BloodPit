@@ -1,1109 +1,1186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Cartoon Tugboat Ocean</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zombie Juice Drive-Thru</title>
+<style>
+    * {
+        box-sizing: border-box;
+        user-select: none;
+    }
 
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: #9fe7ff;
-      font-family: Arial, sans-serif;
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: #101820;
+        font-family: "Trebuchet MS", Arial, sans-serif;
     }
 
     canvas {
-      display: block;
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        background: #7fcf7a;
+        image-rendering: auto;
     }
-  </style>
+
+    #ui {
+        position: fixed;
+        left: 16px;
+        top: 16px;
+        color: #fff;
+        text-shadow: 2px 2px 0 #1b2b24;
+        font-weight: 900;
+        font-size: 18px;
+        line-height: 1.6;
+        pointer-events: none;
+    }
+
+    #shop {
+        position: fixed;
+        right: 16px;
+        top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    button {
+        border: 4px solid #26382f;
+        background: #ffd166;
+        color: #26382f;
+        padding: 10px 14px;
+        border-radius: 14px;
+        font-weight: 900;
+        cursor: pointer;
+        box-shadow: 0 5px 0 #b88128;
+        transition: transform 0.08s, box-shadow 0.08s;
+    }
+
+    button:hover {
+        background: #ffe08d;
+    }
+
+    button:active {
+        transform: translateY(5px);
+        box-shadow: 0 0 0 #b88128;
+    }
+
+    #help {
+        position: fixed;
+        left: 50%;
+        bottom: 16px;
+        transform: translateX(-50%);
+        background: rgba(20, 30, 25, 0.75);
+        color: white;
+        border: 3px solid white;
+        border-radius: 18px;
+        padding: 10px 18px;
+        font-weight: 900;
+        text-align: center;
+    }
+</style>
 </head>
 <body>
-  <script type="module">
-    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+<canvas id="game"></canvas>
 
-    let scene, camera, renderer;
-    let boat, boatBody, propeller;
-    let water;
-    let clock = new THREE.Clock();
+<div id="ui"></div>
 
-    const keys = {};
-    const wakeParticles = [];
-    const splashParticles = [];
-    const floatingProps = [];
-    const waterVertices = [];
+<div id="shop">
+    <button onclick="buyUpgrade('speed')">Upgrade Speed</button>
+    <button onclick="buyUpgrade('net')">Upgrade Net</button>
+    <button onclick="buyUpgrade('tank')">Upgrade Tank</button>
+    <button onclick="buyUpgrade('factory')">Upgrade Factory</button>
+</div>
 
-    const waterSize = 260;
+<div id="help">
+    WASD / Arrows: Move &nbsp; | &nbsp; Mouse: Aim &nbsp; | &nbsp; Click: Shoot Net &nbsp; | &nbsp; Bring zombies to the factory to make juice
+</div>
 
-    // PERFORMANCE CHANGE:
-    // Lower grid means fewer animated water vertices.
-    const waveGrid = 70;
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const ui = document.getElementById("ui");
 
-    const boatState = {
-      position: new THREE.Vector3(0, 0, 0),
-      velocity: new THREE.Vector3(0, 0, 0),
-      angle: 0,
-      angularVelocity: 0,
-      speed: 0,
-      accelerating: false
-    };
+let W = 0;
+let H = 0;
 
-    const cameraState = {
-      yaw: 0,
-      pitch: 0.42,
-      distance: 18,
-      rightMouseDown: false,
-      targetYaw: 0,
-      targetPitch: 0.42
-    };
+function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
 
-    init();
-    animate();
+const keys = {};
+const mouse = {
+    x: W / 2,
+    y: H / 2,
+    down: false
+};
 
-    function init() {
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x9fe7ff);
-      scene.fog = new THREE.Fog(0x9fe7ff, 70, 210);
+window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+window.addEventListener("mousemove", e => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+});
+window.addEventListener("mousedown", () => {
+    mouse.down = true;
+    shootNet();
+});
+window.addEventListener("mouseup", () => mouse.down = false);
 
-      camera = new THREE.PerspectiveCamera(
-        60,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        1000
-      );
+function rand(min, max) {
+    return Math.random() * (max - min) + min;
+}
 
-      renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
+function dist(a, b) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
+}
 
-      // PERFORMANCE CHANGE:
-      // Locks pixel ratio to 1 for smoother performance on high-res screens.
-      renderer.setPixelRatio(1);
+function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+}
 
-      renderer.shadowMap.enabled = false;
-      document.body.appendChild(renderer.domElement);
+function angleTo(a, b) {
+    return Math.atan2(b.y - a.y, b.x - a.x);
+}
 
-      setupLights();
-      createWater();
-      createBoat();
-      createSkyDecorations();
-
-      window.addEventListener("resize", onResize);
-
-      document.addEventListener("contextmenu", e => e.preventDefault());
-
-      document.addEventListener("keydown", e => {
-        keys[e.key.toLowerCase()] = true;
-      });
-
-      document.addEventListener("keyup", e => {
-        keys[e.key.toLowerCase()] = false;
-      });
-
-      document.addEventListener("mousedown", e => {
-        if (e.button === 2) {
-          cameraState.rightMouseDown = true;
-          document.body.style.cursor = "grabbing";
-        }
-      });
-
-      document.addEventListener("mouseup", e => {
-        if (e.button === 2) {
-          cameraState.rightMouseDown = false;
-          document.body.style.cursor = "default";
-        }
-      });
-
-      document.addEventListener("mousemove", e => {
-        if (!cameraState.rightMouseDown) return;
-
-        cameraState.targetYaw -= e.movementX * 0.004;
-
-        // Fixed up/down camera movement.
-        cameraState.targetPitch += e.movementY * 0.003;
-
-        cameraState.targetPitch = THREE.MathUtils.clamp(
-          cameraState.targetPitch,
-          -0.15,
-          1.15
-        );
-      });
-
-      document.addEventListener("wheel", e => {
-        cameraState.distance += e.deltaY * 0.015;
-        cameraState.distance = THREE.MathUtils.clamp(cameraState.distance, 10, 34);
-      });
+const world = {
+    money: 0,
+    juice: 0,
+    caught: 0,
+    totalCaught: 0,
+    totalSold: 0,
+    dayTimer: 0,
+    spawnTimer: 0,
+    carTimer: 0,
+    upgrades: {
+        speed: 1,
+        net: 1,
+        tank: 1,
+        factory: 1
     }
+};
 
-    function setupLights() {
-      const hemi = new THREE.HemisphereLight(0xffffff, 0x4bb7ff, 1.6);
-      scene.add(hemi);
+const factory = {
+    x: 130,
+    y: H / 2,
+    w: 170,
+    h: 210,
+    processTimer: 0
+};
 
-      const sun = new THREE.DirectionalLight(0xffffff, 2.6);
-      sun.position.set(40, 80, 30);
-      scene.add(sun);
+const player = {
+    x: W / 2,
+    y: H / 2,
+    r: 22,
+    speed: 3.2,
+    angle: 0,
+    bob: 0,
+    cooldown: 0,
+    carry: [],
+    maxCarry: 3
+};
 
-      const rim = new THREE.DirectionalLight(0x7be7ff, 1.2);
-      rim.position.set(-40, 30, -60);
-      scene.add(rim);
-    }
+const zombies = [];
+const nets = [];
+const particles = [];
+const cars = [];
+const trees = [];
+const rocks = [];
+const flowers = [];
 
-    function toonMaterial(color, emissive = 0x000000) {
-      return new THREE.MeshToonMaterial({
-        color,
-        emissive,
-        emissiveIntensity: 0.06
-      });
-    }
+function generateDecor() {
+    trees.length = 0;
+    rocks.length = 0;
+    flowers.length = 0;
 
-    function basicMaterial(color) {
-      return new THREE.MeshBasicMaterial({ color });
-    }
-
-    function outlineObject(mesh, scale = 1.04) {
-      if (!mesh.parent) return;
-
-      const outlineMat = new THREE.MeshBasicMaterial({
-        color: 0x1d3140,
-        side: THREE.BackSide
-      });
-
-      const outline = new THREE.Mesh(mesh.geometry.clone(), outlineMat);
-      outline.scale.copy(mesh.scale).multiplyScalar(scale);
-      outline.position.copy(mesh.position);
-      outline.rotation.copy(mesh.rotation);
-      outline.renderOrder = -1;
-
-      mesh.parent.add(outline);
-      return outline;
-    }
-
-    function createWater() {
-      const geometry = new THREE.PlaneGeometry(
-        waterSize,
-        waterSize,
-        waveGrid,
-        waveGrid
-      );
-
-      geometry.rotateX(-Math.PI / 2);
-
-      const positions = geometry.attributes.position;
-
-      for (let i = 0; i < positions.count; i++) {
-        const x = positions.getX(i);
-        const z = positions.getZ(i);
-
-        waterVertices.push({
-          x,
-          z,
-          offset: Math.random() * Math.PI * 2
+    for (let i = 0; i < 45; i++) {
+        trees.push({
+            x: rand(250, W - 70),
+            y: rand(70, H - 170),
+            s: rand(0.75, 1.45),
+            sway: rand(0, 10)
         });
-      }
-
-      const material = new THREE.MeshToonMaterial({
-        color: 0x1699bf,
-        transparent: true,
-        opacity: 0.96
-      });
-
-      water = new THREE.Mesh(geometry, material);
-      scene.add(water);
-
-      const lineMaterial = new THREE.LineBasicMaterial({
-        color: 0x67d9ee,
-        transparent: true,
-        opacity: 0.28
-      });
-
-      // PERFORMANCE CHANGE:
-      // Reduced ocean decorative streaks from 55 to 25.
-      for (let i = 0; i < 25; i++) {
-        const curve = new THREE.CatmullRomCurve3([
-          new THREE.Vector3(-8, 0.08, 0),
-          new THREE.Vector3(-4, 0.14, Math.sin(i) * 1.2),
-          new THREE.Vector3(0, 0.08, 0),
-          new THREE.Vector3(4, 0.14, Math.cos(i) * 1.2),
-          new THREE.Vector3(8, 0.08, 0)
-        ]);
-
-        const points = curve.getPoints(20);
-        const geo = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(geo, lineMaterial);
-
-        line.position.set(
-          randomRange(-waterSize / 2, waterSize / 2),
-          0.35,
-          randomRange(-waterSize / 2, waterSize / 2)
-        );
-
-        line.rotation.y = Math.random() * Math.PI;
-        line.userData.floatOffset = Math.random() * 100;
-
-        scene.add(line);
-        floatingProps.push(line);
-      }
     }
 
-    function createBoat() {
-      boat = new THREE.Group();
-      scene.add(boat);
+    for (let i = 0; i < 35; i++) {
+        rocks.push({
+            x: rand(260, W - 60),
+            y: rand(70, H - 170),
+            s: rand(0.7, 1.6),
+            rot: rand(0, Math.PI)
+        });
+    }
 
-      boatBody = new THREE.Group();
-      boat.add(boatBody);
+    for (let i = 0; i < 80; i++) {
+        flowers.push({
+            x: rand(230, W - 40),
+            y: rand(60, H - 150),
+            s: rand(0.7, 1.2),
+            c: Math.random() < 0.5 ? "#ff7eb6" : "#ffe66d"
+        });
+    }
+}
+generateDecor();
+window.addEventListener("resize", generateDecor);
 
-      const hullMat = toonMaterial(0xe94b5b);
-      const darkHullMat = toonMaterial(0x9e2434);
-      const deckMat = toonMaterial(0xffd36e);
-      const cabinMat = toonMaterial(0xffffff);
-      const roofMat = toonMaterial(0x1f7bbb);
-      const windowMat = toonMaterial(0x2bdfff, 0x0abfff);
-      const blackMat = toonMaterial(0x233142);
-      const metalMat = toonMaterial(0x8fa7b3);
-      const darkMetalMat = toonMaterial(0x4a6070);
-      const ropeMat = toonMaterial(0xd49d56);
+function spawnZombie() {
+    let side = Math.floor(rand(0, 4));
+    let x, y;
 
-      const hull = new THREE.Mesh(
-        new THREE.BoxGeometry(3.8, 1.1, 7),
-        hullMat
-      );
-      hull.position.y = 0.55;
-      hull.scale.x = 1.05;
-      boatBody.add(hull);
-      outlineObject(hull);
+    if (side === 0) {
+        x = rand(300, W - 40);
+        y = 50;
+    } else if (side === 1) {
+        x = W - 50;
+        y = rand(80, H - 190);
+    } else if (side === 2) {
+        x = rand(300, W - 40);
+        y = H - 190;
+    } else {
+        x = 300;
+        y = rand(80, H - 190);
+    }
 
-      const hullFront = new THREE.Mesh(
-        new THREE.ConeGeometry(1.95, 2.6, 4),
-        hullMat
-      );
-      hullFront.rotation.y = Math.PI / 4;
-      hullFront.rotation.x = Math.PI / 2;
-      hullFront.position.set(0, 0.55, -4.45);
-      hullFront.scale.set(1.05, 1.25, 0.85);
-      boatBody.add(hullFront);
-      outlineObject(hullFront);
+    zombies.push({
+        x,
+        y,
+        r: rand(18, 25),
+        speed: rand(0.45, 0.9),
+        angle: rand(0, Math.PI * 2),
+        wander: rand(0, 100),
+        scared: 0,
+        caught: false,
+        squish: rand(0, 10),
+        color: Math.random() < 0.5 ? "#8bd346" : "#a8e063"
+    });
+}
 
-      const lowerHull = new THREE.Mesh(
-        new THREE.BoxGeometry(3.4, 0.7, 6.6),
-        darkHullMat
-      );
-      lowerHull.position.y = 0.05;
-      boatBody.add(lowerHull);
-      outlineObject(lowerHull, 1.035);
+for (let i = 0; i < 9; i++) spawnZombie();
 
-      const deck = new THREE.Mesh(
-        new THREE.BoxGeometry(3.4, 0.28, 5.7),
-        deckMat
-      );
-      deck.position.y = 1.23;
-      boatBody.add(deck);
-      outlineObject(deck, 1.035);
+function spawnCar() {
+    const colors = ["#ef476f", "#118ab2", "#ffd166", "#06d6a0", "#9b5de5"];
+    cars.push({
+        x: W + 120,
+        y: H - 75,
+        w: rand(92, 122),
+        h: 45,
+        speed: rand(1.2, 1.8),
+        color: colors[Math.floor(rand(0, colors.length))],
+        state: "arriving",
+        wait: 0,
+        bought: false,
+        bounce: rand(0, 10)
+    });
+}
 
-      const cabin = new THREE.Mesh(
-        new THREE.BoxGeometry(2.35, 1.7, 2.25),
-        cabinMat
-      );
-      cabin.position.set(0, 2.25, 0.25);
-      boatBody.add(cabin);
-      outlineObject(cabin);
+function addParticle(x, y, color, count = 8, power = 2) {
+    for (let i = 0; i < count; i++) {
+        particles.push({
+            x,
+            y,
+            vx: rand(-power, power),
+            vy: rand(-power, power),
+            life: rand(25, 55),
+            maxLife: 55,
+            r: rand(2, 6),
+            color
+        });
+    }
+}
 
-      const roof = new THREE.Mesh(
-        new THREE.BoxGeometry(2.75, 0.35, 2.65),
-        roofMat
-      );
-      roof.position.set(0, 3.28, 0.25);
-      boatBody.add(roof);
-      outlineObject(roof);
+function shootNet() {
+    if (player.cooldown > 0) return;
 
-      const chimney = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.28, 0.36, 1.1, 12),
-        blackMat
-      );
-      chimney.position.set(0.65, 3.95, 0.35);
-      boatBody.add(chimney);
-      outlineObject(chimney);
+    const netLevel = world.upgrades.net;
+    const a = angleTo(player, mouse);
 
-      const chimneyTop = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.45, 0.45, 0.22, 12),
-        darkHullMat
-      );
-      chimneyTop.position.set(0.65, 4.58, 0.35);
-      boatBody.add(chimneyTop);
-      outlineObject(chimneyTop);
+    nets.push({
+        x: player.x + Math.cos(a) * 25,
+        y: player.y + Math.sin(a) * 25,
+        vx: Math.cos(a) * (8 + netLevel * 0.8),
+        vy: Math.sin(a) * (8 + netLevel * 0.8),
+        r: 12 + netLevel * 3,
+        life: 60 + netLevel * 6,
+        spin: 0
+    });
 
-      createWindow(0, 2.45, -0.9, 1.35, 0.55, 0.08);
-      createWindow(-1.2, 2.45, 0.4, 0.08, 0.5, 0.8);
-      createWindow(1.2, 2.45, 0.4, 0.08, 0.5, 0.8);
+    player.cooldown = Math.max(14, 38 - netLevel * 4);
+    addParticle(player.x + Math.cos(a) * 30, player.y + Math.sin(a) * 30, "#ffffff", 8, 1.5);
+}
 
-      createRearEngine();
+function buyUpgrade(type) {
+    const level = world.upgrades[type];
+    const cost = 35 + level * level * 40;
 
-      const tirePositions = [
-        [-2.05, 0.9, -2.3],
-        [-2.05, 0.9, 0.1],
-        [-2.05, 0.9, 2.2],
-        [2.05, 0.9, -2.3],
-        [2.05, 0.9, 0.1],
-        [2.05, 0.9, 2.2]
-      ];
+    if (world.money < cost) {
+        addParticle(W - 160, 80, "#ff4d6d", 18, 3);
+        return;
+    }
 
-      tirePositions.forEach(p => {
-        const tire = new THREE.Mesh(
-          new THREE.TorusGeometry(0.42, 0.13, 8, 18),
-          blackMat
-        );
+    world.money -= cost;
+    world.upgrades[type]++;
 
-        tire.position.set(p[0], p[1], p[2]);
-        tire.rotation.y = Math.PI / 2;
-        boatBody.add(tire);
-      });
+    if (type === "speed") {
+        player.speed += 0.35;
+    }
 
-      const railMat = toonMaterial(0xffffff);
+    if (type === "tank") {
+        player.maxCarry++;
+    }
 
-      for (let side of [-1, 1]) {
-        for (let i = -2; i <= 2; i++) {
-          const post = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.05, 0.05, 0.65, 8),
-            railMat
-          );
-          post.position.set(side * 1.75, 1.75, i * 1.1);
-          boatBody.add(post);
+    addParticle(W - 160, 80, "#ffe66d", 30, 4);
+}
+
+function updatePlayer() {
+    let dx = 0;
+    let dy = 0;
+
+    if (keys["w"] || keys["arrowup"]) dy--;
+    if (keys["s"] || keys["arrowdown"]) dy++;
+    if (keys["a"] || keys["arrowleft"]) dx--;
+    if (keys["d"] || keys["arrowright"]) dx++;
+
+    if (dx || dy) {
+        const len = Math.hypot(dx, dy);
+        dx /= len;
+        dy /= len;
+
+        player.x += dx * player.speed;
+        player.y += dy * player.speed;
+        player.bob += 0.25;
+
+        addFootDust();
+    } else {
+        player.bob += 0.05;
+    }
+
+    player.x = clamp(player.x, 40, W - 40);
+    player.y = clamp(player.y, 40, H - 135);
+
+    player.angle = angleTo(player, mouse);
+
+    if (player.cooldown > 0) player.cooldown--;
+
+    for (let i = player.carry.length - 1; i >= 0; i--) {
+        const z = player.carry[i];
+        const offset = i + 1;
+        const targetX = player.x - Math.cos(player.angle) * (28 + offset * 24);
+        const targetY = player.y - Math.sin(player.angle) * (28 + offset * 24);
+
+        z.x += (targetX - z.x) * 0.18;
+        z.y += (targetY - z.y) * 0.18;
+        z.squish += 0.15;
+    }
+
+    const insideFactory =
+        player.x > factory.x - factory.w / 2 &&
+        player.x < factory.x + factory.w / 2 &&
+        player.y > factory.y - factory.h / 2 &&
+        player.y < factory.y + factory.h / 2;
+
+    if (insideFactory && player.carry.length > 0) {
+        const amount = player.carry.length;
+        player.carry.length = 0;
+        world.caught += amount;
+        addParticle(factory.x, factory.y, "#a8ff60", 35, 4);
+    }
+}
+
+let dustTimer = 0;
+
+function addFootDust() {
+    dustTimer--;
+    if (dustTimer > 0) return;
+
+    dustTimer = 7;
+
+    addParticle(
+        player.x + rand(-8, 8),
+        player.y + player.r + 8,
+        "rgba(120,80,45,0.7)",
+        4,
+        0.8
+    );
+}
+
+function updateZombies() {
+    for (let i = zombies.length - 1; i >= 0; i--) {
+        const z = zombies[i];
+
+        if (z.caught) continue;
+
+        z.wander--;
+
+        const d = dist(z, player);
+
+        if (d < 160) {
+            z.scared = 60;
+            z.angle = angleTo(player, z);
         }
 
-        const rail = new THREE.Mesh(
-          new THREE.BoxGeometry(0.12, 0.12, 5.1),
-          railMat
-        );
-        rail.position.set(side * 1.75, 2.08, 0);
-        boatBody.add(rail);
-      }
-
-      const frontBumper = new THREE.Mesh(
-        new THREE.TorusGeometry(0.75, 0.1, 8, 20),
-        ropeMat
-      );
-      frontBumper.position.set(0, 1.28, -4.1);
-      frontBumper.rotation.x = Math.PI / 2;
-      boatBody.add(frontBumper);
-
-      // Keeps the boat visually swapped so the engine appears at the back.
-      boatBody.rotation.y = Math.PI;
-
-      function createWindow(x, y, z, sx, sy, sz) {
-        const win = new THREE.Mesh(
-          new THREE.BoxGeometry(sx, sy, sz),
-          windowMat
-        );
-        win.position.set(x, y, z);
-        boatBody.add(win);
-        outlineObject(win, 1.08);
-      }
-
-      function createRearEngine() {
-        const engineGroup = new THREE.Group();
-        engineGroup.position.set(0, 0, 0);
-        boatBody.add(engineGroup);
-
-        const engineBlock = new THREE.Mesh(
-          new THREE.BoxGeometry(1.65, 0.82, 1.12),
-          darkMetalMat
-        );
-        engineBlock.position.set(0, 1.68, 3.3);
-        engineGroup.add(engineBlock);
-        outlineObject(engineBlock, 1.045);
-
-        const roundedTank = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.42, 0.42, 1.45, 14),
-          metalMat
-        );
-        roundedTank.position.set(0, 2.18, 3.3);
-        roundedTank.rotation.z = Math.PI / 2;
-        engineGroup.add(roundedTank);
-        outlineObject(roundedTank, 1.045);
-
-        const engineTopCap = new THREE.Mesh(
-          new THREE.BoxGeometry(1.25, 0.24, 0.75),
-          metalMat
-        );
-        engineTopCap.position.set(0, 2.62, 3.3);
-        engineGroup.add(engineTopCap);
-        outlineObject(engineTopCap, 1.045);
-
-        for (let i = -1; i <= 1; i++) {
-          const vent = new THREE.Mesh(
-            new THREE.BoxGeometry(0.18, 0.42, 0.07),
-            blackMat
-          );
-          vent.position.set(i * 0.38, 1.72, 3.9);
-          engineGroup.add(vent);
+        if (z.wander <= 0) {
+            z.wander = rand(40, 120);
+            z.angle += rand(-1.8, 1.8);
         }
 
-        const exhaustPipe = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.13, 0.15, 1.25, 12),
-          blackMat
-        );
-        exhaustPipe.position.set(0.72, 2.58, 3.25);
-        exhaustPipe.rotation.x = 0.2;
-        engineGroup.add(exhaustPipe);
-        outlineObject(exhaustPipe, 1.045);
+        const spd = z.scared > 0 ? z.speed * 2.6 : z.speed;
 
-        const exhaustLip = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.21, 0.21, 0.16, 12),
-          blackMat
-        );
-        exhaustLip.position.set(0.72, 3.23, 3.39);
-        exhaustLip.rotation.x = 0.2;
-        engineGroup.add(exhaustLip);
-        outlineObject(exhaustLip, 1.045);
+        z.x += Math.cos(z.angle) * spd;
+        z.y += Math.sin(z.angle) * spd;
 
-        const shaft = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.11, 0.11, 0.95, 12),
-          metalMat
-        );
-        shaft.position.set(0, 0.28, 4.0);
-        shaft.rotation.x = Math.PI / 2;
-        engineGroup.add(shaft);
+        z.x = clamp(z.x, 260, W - 35);
+        z.y = clamp(z.y, 45, H - 165);
 
-        const propellerHub = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.2, 0.2, 0.24, 12),
-          metalMat
-        );
-        propellerHub.position.set(0, 0.28, 4.55);
-        propellerHub.rotation.x = Math.PI / 2;
-        engineGroup.add(propellerHub);
+        if (z.x <= 260 || z.x >= W - 35) z.angle = Math.PI - z.angle;
+        if (z.y <= 45 || z.y >= H - 165) z.angle = -z.angle;
 
-        propeller = new THREE.Group();
-        propeller.position.set(0, 0.28, 4.68);
-        engineGroup.add(propeller);
-
-        for (let i = 0; i < 4; i++) {
-          const blade = new THREE.Mesh(
-            new THREE.BoxGeometry(0.2, 0.95, 0.08),
-            metalMat
-          );
-
-          blade.position.y = 0.43;
-          blade.rotation.z = i * Math.PI / 2;
-          propeller.add(blade);
-
-          // PERFORMANCE CHANGE:
-          // No outline on propeller blades.
+        if (z.scared > 0) {
+            z.scared--;
+            if (Math.random() < 0.05) {
+                addParticle(z.x, z.y, "#c4f06a", 2, 0.9);
+            }
         }
 
-        const propGuard = new THREE.Mesh(
-          new THREE.TorusGeometry(0.78, 0.055, 8, 24),
-          blackMat
-        );
-        propGuard.position.set(0, 0.28, 4.66);
-        propGuard.rotation.x = Math.PI / 2;
-        engineGroup.add(propGuard);
-
-        const rudder = new THREE.Mesh(
-          new THREE.BoxGeometry(0.18, 0.85, 0.55),
-          darkHullMat
-        );
-        rudder.position.set(0, -0.05, 4.55);
-        engineGroup.add(rudder);
-        outlineObject(rudder);
-      }
+        z.squish += 0.16;
     }
+}
 
-    function createSkyDecorations() {
-      const sun = new THREE.Mesh(
-        new THREE.SphereGeometry(7, 24, 24),
-        new THREE.MeshBasicMaterial({ color: 0xffee7a })
-      );
-      sun.position.set(-60, 65, -90);
-      scene.add(sun);
+function updateNets() {
+    for (let i = nets.length - 1; i >= 0; i--) {
+        const n = nets[i];
 
-      for (let i = 0; i < 12; i++) {
-        const cloud = new THREE.Group();
+        n.x += n.vx;
+        n.y += n.vy;
+        n.vx *= 0.985;
+        n.vy *= 0.985;
+        n.spin += 0.35;
+        n.life--;
 
-        // PERFORMANCE CHANGE:
-        // Basic material is cheaper for clouds.
-        const mat = basicMaterial(0xffffff);
+        addParticle(n.x, n.y, "rgba(255,255,255,0.45)", 1, 0.4);
 
-        for (let j = 0; j < 5; j++) {
-          const puff = new THREE.Mesh(
-            new THREE.SphereGeometry(randomRange(1.8, 3.5), 10, 10),
-            mat
-          );
-          puff.position.set(
-            j * 2.4 + randomRange(-0.8, 0.8),
-            randomRange(-0.3, 0.8),
-            randomRange(-0.6, 0.6)
-          );
-          cloud.add(puff);
+        for (let j = zombies.length - 1; j >= 0; j--) {
+            const z = zombies[j];
+
+            if (z.caught) continue;
+
+            if (Math.hypot(n.x - z.x, n.y - z.y) < n.r + z.r) {
+                if (player.carry.length < player.maxCarry) {
+                    z.caught = true;
+                    zombies.splice(j, 1);
+                    player.carry.push(z);
+                    world.totalCaught++;
+
+                    addParticle(z.x, z.y, "#eaff80", 34, 3.5);
+                    nets.splice(i, 1);
+                    break;
+                } else {
+                    addParticle(player.x, player.y, "#ff4d6d", 22, 3);
+                }
+            }
         }
 
-        cloud.position.set(
-          randomRange(-120, 120),
-          randomRange(34, 55),
-          randomRange(-120, 20)
-        );
-
-        cloud.scale.setScalar(randomRange(0.8, 1.6));
-        scene.add(cloud);
-      }
-
-      createIslands();
-    }
-
-    function createIslands() {
-      // PERFORMANCE CHANGE:
-      // Reduced islands from 24 to 14.
-      for (let i = 0; i < 14; i++) {
-        const island = new THREE.Group();
-
-        const islandScale = randomRange(0.55, 2.4);
-        const islandWidth = randomRange(2.2, 5.8) * islandScale;
-        const islandDepth = randomRange(1.4, 4.6) * islandScale;
-
-        const sand = new THREE.Mesh(
-          new THREE.CylinderGeometry(
-            islandWidth,
-            islandWidth * randomRange(0.85, 1.25),
-            0.5 * islandScale,
-            14
-          ),
-          toonMaterial(0xffd785)
-        );
-
-        sand.scale.z = islandDepth / islandWidth;
-        island.add(sand);
-        outlineObject(sand, 1.025);
-
-        const grass = new THREE.Mesh(
-          new THREE.CylinderGeometry(
-            islandWidth * 0.72,
-            islandWidth * 0.84,
-            0.28 * islandScale,
-            14
-          ),
-          toonMaterial(0x4bd76d)
-        );
-
-        grass.position.y = 0.32 * islandScale;
-        grass.scale.z = (islandDepth / islandWidth) * randomRange(0.75, 0.95);
-        island.add(grass);
-        outlineObject(grass, 1.025);
-
-        // PERFORMANCE CHANGE:
-        // Fewer trees per island.
-        const treeCount = Math.floor(randomRange(1, 3 + islandScale));
-
-        for (let t = 0; t < treeCount; t++) {
-          const tree = createPalmTree(randomRange(0.7, 1.4) * islandScale);
-
-          const angle = Math.random() * Math.PI * 2;
-          const radiusX = randomRange(0.1, islandWidth * 0.55);
-          const radiusZ = randomRange(0.1, islandDepth * 0.45);
-
-          tree.position.set(
-            Math.cos(angle) * radiusX,
-            0.35 * islandScale,
-            Math.sin(angle) * radiusZ
-          );
-
-          tree.rotation.y = Math.random() * Math.PI * 2;
-          island.add(tree);
+        if (n.life <= 0 || n.x < 0 || n.x > W || n.y < 0 || n.y > H) {
+            nets.splice(i, 1);
         }
+    }
+}
 
-        for (let r = 0; r < Math.floor(randomRange(0, 3)); r++) {
-          const rock = new THREE.Mesh(
-            new THREE.DodecahedronGeometry(randomRange(0.25, 0.7) * islandScale, 0),
-            toonMaterial(0x9aa6a8)
-          );
+function updateFactory() {
+    if (world.caught > 0) {
+        factory.processTimer++;
 
-          const angle = Math.random() * Math.PI * 2;
-          rock.position.set(
-            Math.cos(angle) * islandWidth * randomRange(0.25, 0.7),
-            0.55 * islandScale,
-            Math.sin(angle) * islandDepth * randomRange(0.2, 0.65)
-          );
+        const needed = Math.max(35, 95 - world.upgrades.factory * 12);
 
-          rock.scale.y = randomRange(0.45, 0.9);
-          island.add(rock);
-
-          // PERFORMANCE CHANGE:
-          // No outline on small rocks.
+        if (factory.processTimer >= needed) {
+            factory.processTimer = 0;
+            world.caught--;
+            world.juice++;
+            addParticle(factory.x + 50, factory.y + 30, "#77ff66", 22, 3);
         }
+    }
+}
 
-        let x = randomRange(-125, 125);
-        let z = randomRange(-125, 125);
+function updateCars() {
+    world.carTimer--;
 
-        if (Math.abs(x) < 35 && Math.abs(z) < 35) {
-          x += Math.sign(x || 1) * 55;
-          z += Math.sign(z || 1) * 55;
+    if (world.carTimer <= 0) {
+        spawnCar();
+        world.carTimer = rand(220, 360);
+    }
+
+    const stopX = 215;
+
+    for (let i = cars.length - 1; i >= 0; i--) {
+        const c = cars[i];
+
+        c.bounce += 0.15;
+
+        if (c.state === "arriving") {
+            c.x -= c.speed;
+
+            let queueIndex = 0;
+            for (const other of cars) {
+                if (other !== c && other.state !== "leaving" && other.x < c.x) {
+                    queueIndex++;
+                }
+            }
+
+            const targetStop = stopX + queueIndex * 135;
+
+            if (c.x <= targetStop) {
+                c.x = targetStop;
+                c.state = "waiting";
+                c.wait = 110;
+            }
+        } else if (c.state === "waiting") {
+            c.wait--;
+
+            if (!c.bought && world.juice > 0) {
+                c.bought = true;
+                world.juice--;
+
+                const pay = 15 + Math.floor(rand(0, 10)) + world.upgrades.factory * 2;
+                world.money += pay;
+                world.totalSold++;
+
+                addParticle(c.x, c.y - 30, "#ffe66d", 30, 3.5);
+                addParticle(factory.x + 70, factory.y + 65, "#77ff66", 20, 2.5);
+
+                c.wait = 45;
+            }
+
+            if (c.wait <= 0) {
+                c.state = "leaving";
+            }
+        } else if (c.state === "leaving") {
+            c.x -= c.speed * 2.4;
+
+            if (c.x < -180) {
+                cars.splice(i, 1);
+            }
         }
-
-        island.position.set(x, 0.1, z);
-        island.rotation.y = Math.random() * Math.PI;
-        scene.add(island);
-      }
     }
-
-    function createPalmTree(scale) {
-      const tree = new THREE.Group();
-
-      const trunkMat = toonMaterial(0xb8753a);
-
-      // PERFORMANCE CHANGE:
-      // Basic material for leaves is cheaper and still cartoony.
-      const leafMats = [
-        basicMaterial(0x31bd64),
-        basicMaterial(0x3edb76),
-        basicMaterial(0x239d55)
-      ];
-
-      const trunkSegments = Math.floor(randomRange(2, 4));
-      const trunkHeight = randomRange(2.3, 4.4) * scale;
-
-      for (let i = 0; i < trunkSegments; i++) {
-        const segment = new THREE.Mesh(
-          new THREE.CylinderGeometry(
-            0.16 * scale,
-            0.24 * scale,
-            trunkHeight / trunkSegments,
-            7
-          ),
-          trunkMat
-        );
-
-        segment.position.y = (i + 0.5) * (trunkHeight / trunkSegments);
-        segment.position.x = Math.sin(i * 0.7) * 0.08 * scale;
-        segment.rotation.z = randomRange(-0.12, 0.12);
-        tree.add(segment);
-
-        // PERFORMANCE CHANGE:
-        // No outline on small trunk segments.
-      }
-
-      const leafCount = Math.floor(randomRange(4, 6));
-      const leafHeight = trunkHeight + 0.15 * scale;
-
-      for (let j = 0; j < leafCount; j++) {
-        const leaf = new THREE.Mesh(
-          new THREE.ConeGeometry(
-            randomRange(0.35, 0.55) * scale,
-            randomRange(1.8, 2.8) * scale,
-            7
-          ),
-          leafMats[j % leafMats.length]
-        );
-
-        leaf.position.y = leafHeight;
-        leaf.rotation.z = Math.PI / 2 + randomRange(-0.25, 0.25);
-        leaf.rotation.y = j * Math.PI * 2 / leafCount;
-        tree.add(leaf);
-
-        // PERFORMANCE CHANGE:
-        // No outline on leaves.
-      }
-
-      const coconutCount = Math.floor(randomRange(0, 3));
-
-      for (let c = 0; c < coconutCount; c++) {
-        const coconut = new THREE.Mesh(
-          new THREE.SphereGeometry(0.18 * scale, 7, 7),
-          basicMaterial(0x6b421f)
-        );
-
-        coconut.position.set(
-          Math.cos(c * 2.1) * 0.22 * scale,
-          leafHeight - 0.18 * scale,
-          Math.sin(c * 2.1) * 0.22 * scale
-        );
-
-        tree.add(coconut);
-
-        // PERFORMANCE CHANGE:
-        // No outline on coconuts.
-      }
-
-      return tree;
-    }
-
-    function updateBoat(delta, time) {
-      const forwardInput =
-        (keys["w"] || keys["arrowup"] ? 1 : 0) -
-        (keys["s"] || keys["arrowdown"] ? 1 : 0);
-
-      const turnInput =
-        (keys["a"] || keys["arrowleft"] ? 1 : 0) -
-        (keys["d"] || keys["arrowright"] ? 1 : 0);
-
-      boatState.accelerating = forwardInput !== 0;
-
-      const boost = keys["shift"] ? 1.55 : 1;
-
-      const forward = new THREE.Vector3(
-        Math.sin(boatState.angle),
-        0,
-        Math.cos(boatState.angle)
-      );
-
-      const acceleration = 13 * boost;
-      const turnPower = 2.2;
-
-      boatState.velocity.addScaledVector(
-        forward,
-        forwardInput * acceleration * delta
-      );
-
-      const speedFactor = Math.min(boatState.velocity.length() / 12, 1);
-
-      boatState.angularVelocity +=
-        turnInput * turnPower * delta * (0.25 + speedFactor);
-
-      boatState.velocity.multiplyScalar(Math.pow(0.965, delta * 60));
-      boatState.angularVelocity *= Math.pow(0.9, delta * 60);
-
-      const maxSpeed = keys["shift"] ? 21 : 14;
-
-      if (boatState.velocity.length() > maxSpeed) {
-        boatState.velocity.setLength(maxSpeed);
-      }
-
-      boatState.angle += boatState.angularVelocity * delta;
-      boatState.position.addScaledVector(boatState.velocity, delta);
-
-      const boundary = waterSize / 2 - 10;
-
-      boatState.position.x = THREE.MathUtils.clamp(
-        boatState.position.x,
-        -boundary,
-        boundary
-      );
-
-      boatState.position.z = THREE.MathUtils.clamp(
-        boatState.position.z,
-        -boundary,
-        boundary
-      );
-
-      const waveY = getWaveHeight(
-        boatState.position.x,
-        boatState.position.z,
-        time
-      );
-
-      const waveAhead = getWaveHeight(
-        boatState.position.x + forward.x * 2,
-        boatState.position.z + forward.z * 2,
-        time
-      );
-
-      const side = new THREE.Vector3(forward.z, 0, -forward.x);
-
-      const waveSide = getWaveHeight(
-        boatState.position.x + side.x * 2,
-        boatState.position.z + side.z * 2,
-        time
-      );
-
-      boat.position.copy(boatState.position);
-      boat.position.y = waveY + 0.75;
-      boat.rotation.y = boatState.angle;
-
-      const pitch = THREE.MathUtils.clamp(
-        (waveAhead - waveY) * 0.28,
-        -0.25,
-        0.25
-      );
-
-      const roll = THREE.MathUtils.clamp(
-        (waveSide - waveY) * 0.35,
-        -0.3,
-        0.3
-      );
-
-      boatBody.rotation.x = pitch + Math.sin(time * 3.2) * 0.025;
-      boatBody.rotation.z = roll - boatState.angularVelocity * 0.18;
-      boatBody.rotation.y = Math.PI;
-
-      boatState.speed = boatState.velocity.length();
-
-      if (propeller && boatState.accelerating) {
-        const propSpeed = forwardInput > 0 ? 1 : -1;
-        propeller.rotation.z += delta * propSpeed * (18 + boatState.speed * 10);
-      }
-
-      // PERFORMANCE CHANGE:
-      // Particles spawn less often.
-      if (boatState.speed > 3.5 && Math.random() < 0.45) {
-        spawnWake(time);
-      }
-
-      if (boatState.speed > 9 && Math.random() < 0.08) {
-        spawnSplash();
-      }
-
-      if (boatState.accelerating && boatState.speed > 3 && Math.random() < 0.06) {
-        spawnEngineSmoke();
-      }
-    }
-
-    function updateWater(time) {
-      const positions = water.geometry.attributes.position;
-
-      for (let i = 0; i < positions.count; i++) {
-        const v = waterVertices[i];
-
-        const y =
-          Math.sin(v.x * 0.16 + time * 1.4 + v.offset) * 0.35 +
-          Math.sin(v.z * 0.19 + time * 1.15 + v.offset) * 0.28 +
-          Math.sin((v.x + v.z) * 0.07 + time * 1.8) * 0.18;
-
-        positions.setY(i, y);
-      }
-
-      positions.needsUpdate = true;
-
-      // PERFORMANCE CHANGE:
-      // Removed expensive per-frame normal recalculation.
-      // water.geometry.computeVertexNormals();
-    }
-
-    function getWaveHeight(x, z, time) {
-      return (
-        Math.sin(x * 0.16 + time * 1.4) * 0.35 +
-        Math.sin(z * 0.19 + time * 1.15) * 0.28 +
-        Math.sin((x + z) * 0.07 + time * 1.8) * 0.18
-      );
-    }
-
-    function spawnWake(time) {
-      const back = new THREE.Vector3(
-        -Math.sin(boatState.angle),
-        0,
-        -Math.cos(boatState.angle)
-      );
-
-      const side = new THREE.Vector3(
-        Math.cos(boatState.angle),
-        0,
-        -Math.sin(boatState.angle)
-      );
-
-      const particle = new THREE.Mesh(
-        new THREE.SphereGeometry(randomRange(0.12, 0.3), 7, 7),
-        new THREE.MeshBasicMaterial({
-          color: 0xffffff,
-          transparent: true,
-          opacity: 0.78
-        })
-      );
-
-      const spread = side.clone().multiplyScalar(randomRange(-1.1, 1.1));
-      const behind = back.clone().multiplyScalar(randomRange(3.3, 4.3));
-
-      particle.position.copy(boat.position)
-        .add(behind)
-        .add(spread);
-
-      particle.position.y = getWaveHeight(
-        particle.position.x,
-        particle.position.z,
-        time
-      ) + 0.22;
-
-      particle.userData.life = 1;
-      particle.userData.maxLife = randomRange(0.65, 1.05);
-      particle.userData.velocity = back.clone()
-        .multiplyScalar(randomRange(1, 2.6))
-        .add(side.clone().multiplyScalar(randomRange(-1, 1)));
-
-      particle.userData.grow = randomRange(1.1, 2.0);
-
-      scene.add(particle);
-      wakeParticles.push(particle);
-    }
-
-    function spawnSplash() {
-      const back = new THREE.Vector3(
-        -Math.sin(boatState.angle),
-        0,
-        -Math.cos(boatState.angle)
-      );
-
-      const side = new THREE.Vector3(
-        Math.cos(boatState.angle),
-        0,
-        -Math.sin(boatState.angle)
-      );
-
-      const particle = new THREE.Mesh(
-        new THREE.SphereGeometry(randomRange(0.08, 0.16), 7, 7),
-        new THREE.MeshBasicMaterial({
-          color: 0xcfffff,
-          transparent: true,
-          opacity: 0.85
-        })
-      );
-
-      particle.position.copy(boat.position)
-        .add(back.clone().multiplyScalar(randomRange(1.2, 2.8)))
-        .add(side.clone().multiplyScalar(randomRange(-1.7, 1.7)));
-
-      particle.position.y += randomRange(0.1, 0.5);
-
-      particle.userData.life = 1;
-      particle.userData.maxLife = randomRange(0.35, 0.6);
-      particle.userData.velocity = new THREE.Vector3(
-        randomRange(-1.2, 1.2),
-        randomRange(1.2, 2.2),
-        randomRange(-1.2, 1.2)
-      );
-
-      scene.add(particle);
-      splashParticles.push(particle);
-    }
-
-    function spawnEngineSmoke() {
-      const back = new THREE.Vector3(
-        -Math.sin(boatState.angle),
-        0,
-        -Math.cos(boatState.angle)
-      );
-
-      const side = new THREE.Vector3(
-        Math.cos(boatState.angle),
-        0,
-        -Math.sin(boatState.angle)
-      );
-
-      const smoke = new THREE.Mesh(
-        new THREE.SphereGeometry(randomRange(0.16, 0.3), 7, 7),
-        new THREE.MeshBasicMaterial({
-          color: 0x53616c,
-          transparent: true,
-          opacity: 0.3
-        })
-      );
-
-      smoke.position.copy(boat.position)
-        .add(back.clone().multiplyScalar(-2.6))
-        .add(side.clone().multiplyScalar(randomRange(-0.45, 0.45)));
-
-      smoke.position.y += 3.35;
-
-      smoke.userData.life = 1;
-      smoke.userData.maxLife = randomRange(0.75, 1.15);
-      smoke.userData.velocity = new THREE.Vector3(
-        randomRange(-0.2, 0.2),
-        randomRange(0.55, 1.0),
-        randomRange(-0.2, 0.2)
-      );
-
-      smoke.userData.grow = randomRange(1.0, 1.6);
-      scene.add(smoke);
-      wakeParticles.push(smoke);
-    }
-
-    function updateParticles(delta) {
-      for (let i = wakeParticles.length - 1; i >= 0; i--) {
-        const p = wakeParticles[i];
-
-        p.userData.life -= delta / p.userData.maxLife;
-        p.position.addScaledVector(p.userData.velocity, delta);
-
-        p.scale.multiplyScalar(1 + delta * p.userData.grow);
-        p.material.opacity = Math.max(0, p.userData.life * 0.75);
-
-        if (p.userData.life <= 0) {
-          scene.remove(p);
-          p.geometry.dispose();
-          p.material.dispose();
-          wakeParticles.splice(i, 1);
+}
+
+function updateParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.94;
+        p.vy *= 0.94;
+        p.life--;
+
+        if (p.life <= 0) {
+            particles.splice(i, 1);
         }
-      }
+    }
+}
 
-      for (let i = splashParticles.length - 1; i >= 0; i--) {
-        const p = splashParticles[i];
+function updateSpawning() {
+    world.spawnTimer--;
 
-        p.userData.life -= delta / p.userData.maxLife;
-        p.userData.velocity.y -= 4.8 * delta;
-        p.position.addScaledVector(p.userData.velocity, delta);
-        p.material.opacity = Math.max(0, p.userData.life);
+    if (world.spawnTimer <= 0 && zombies.length < 14 + world.totalCaught * 0.05) {
+        spawnZombie();
+        world.spawnTimer = rand(50, 110);
+    }
+}
 
-        if (p.userData.life <= 0 || p.position.y < 0) {
-          scene.remove(p);
-          p.geometry.dispose();
-          p.material.dispose();
-          splashParticles.splice(i, 1);
-        }
-      }
+function roundedRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, r);
+}
+
+function drawWorld() {
+    const grd = ctx.createLinearGradient(0, 0, 0, H);
+    grd.addColorStop(0, "#98e982");
+    grd.addColorStop(1, "#58b86c");
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
+
+    drawHills();
+    drawRoad();
+    drawDecor();
+}
+
+function drawHills() {
+    ctx.fillStyle = "#6dcf72";
+    for (let i = 0; i < 6; i++) {
+        const x = i * 260 - 80;
+        const y = 110 + Math.sin(i) * 35;
+
+        ctx.beginPath();
+        ctx.ellipse(x, y, 180, 70, 0, 0, Math.PI * 2);
+        ctx.fill();
     }
 
-    function updateFloatingProps(time) {
-      floatingProps.forEach(obj => {
-        if (obj.type === "Line") {
-          obj.position.y =
-            getWaveHeight(obj.position.x, obj.position.z, time) + 0.5;
-          obj.rotation.z = Math.sin(time + obj.userData.floatOffset) * 0.05;
-        }
-      });
+    ctx.fillStyle = "#4aa85a";
+    ctx.fillRect(0, H - 145, W, 20);
+}
+
+function drawRoad() {
+    ctx.fillStyle = "#3f4b4f";
+    ctx.fillRect(0, H - 125, W, 125);
+
+    ctx.fillStyle = "#2e383b";
+    ctx.fillRect(0, H - 125, W, 12);
+
+    ctx.strokeStyle = "#ffd166";
+    ctx.lineWidth = 5;
+    ctx.setLineDash([34, 28]);
+
+    ctx.beginPath();
+    ctx.moveTo(0, H - 63);
+    ctx.lineTo(W, H - 63);
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+}
+
+function drawDecor() {
+    for (const f of flowers) {
+        drawFlower(f);
     }
 
-    function updateCamera(delta) {
-      if (!cameraState.rightMouseDown) {
-        cameraState.targetYaw = boatState.angle;
-        cameraState.targetPitch = 0.42;
-      }
-
-      cameraState.yaw = THREE.MathUtils.lerp(
-        cameraState.yaw,
-        cameraState.targetYaw,
-        1 - Math.pow(0.03, delta)
-      );
-
-      cameraState.pitch = THREE.MathUtils.lerp(
-        cameraState.pitch,
-        cameraState.targetPitch,
-        1 - Math.pow(0.03, delta)
-      );
-
-      const horizontalDistance = Math.cos(cameraState.pitch) * cameraState.distance;
-      const height = Math.sin(cameraState.pitch) * cameraState.distance;
-
-      const offset = new THREE.Vector3(
-        Math.sin(cameraState.yaw + Math.PI) * horizontalDistance,
-        height + 3,
-        Math.cos(cameraState.yaw + Math.PI) * horizontalDistance
-      );
-
-      const desiredPosition = boat.position.clone().add(offset);
-
-      camera.position.lerp(desiredPosition, 1 - Math.pow(0.02, delta));
-
-      const lookTarget = boat.position.clone().add(new THREE.Vector3(0, 2.4, 0));
-      camera.lookAt(lookTarget);
+    for (const r of rocks) {
+        drawRock(r);
     }
 
-    function animate() {
-      requestAnimationFrame(animate);
+    for (const t of trees) {
+        drawTree(t);
+    }
+}
 
-      const delta = Math.min(clock.getDelta(), 0.033);
-      const time = clock.elapsedTime;
+function drawFlower(f) {
+    ctx.save();
+    ctx.translate(f.x, f.y);
+    ctx.scale(f.s, f.s);
 
-      updateWater(time);
-      updateBoat(delta, time);
-      updateParticles(delta);
-      updateFloatingProps(time);
-      updateCamera(delta);
+    ctx.strokeStyle = "#356b3d";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 7);
+    ctx.lineTo(0, -3);
+    ctx.stroke();
 
-      renderer.render(scene, camera);
+    ctx.fillStyle = f.c;
+    for (let i = 0; i < 5; i++) {
+        const a = i / 5 * Math.PI * 2;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * 4, Math.sin(a) * 4 - 4, 3, 0, Math.PI * 2);
+        ctx.fill();
     }
 
-    function onResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+    ctx.fillStyle = "#fff7a8";
+    ctx.beginPath();
+    ctx.arc(0, -4, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+}
+
+function drawRock(r) {
+    ctx.save();
+    ctx.translate(r.x, r.y);
+    ctx.rotate(r.rot);
+    ctx.scale(r.s, r.s);
+
+    ctx.fillStyle = "#607075";
+    ctx.strokeStyle = "#263238";
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+    ctx.moveTo(-14, 8);
+    ctx.lineTo(-9, -8);
+    ctx.lineTo(6, -13);
+    ctx.lineTo(17, -2);
+    ctx.lineTo(13, 11);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(255,255,255,0.25)";
+    ctx.beginPath();
+    ctx.ellipse(-3, -4, 7, 3, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+}
+
+function drawTree(t) {
+    const sway = Math.sin(Date.now() * 0.002 + t.sway) * 2;
+
+    ctx.save();
+    ctx.translate(t.x, t.y);
+    ctx.scale(t.s, t.s);
+
+    ctx.fillStyle = "#7b4f2e";
+    ctx.strokeStyle = "#2f241b";
+    ctx.lineWidth = 4;
+
+    roundedRect(-8, 8, 16, 34, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.translate(sway, 0);
+
+    ctx.fillStyle = "#2ecc71";
+    ctx.strokeStyle = "#1f6f43";
+
+    ctx.beginPath();
+    ctx.arc(-18, 0, 22, 0, Math.PI * 2);
+    ctx.arc(0, -15, 28, 0, Math.PI * 2);
+    ctx.arc(22, 0, 23, 0, Math.PI * 2);
+    ctx.arc(4, 13, 25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(255,255,255,0.22)";
+    ctx.beginPath();
+    ctx.arc(-8, -18, 9, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+}
+
+function drawFactory() {
+    ctx.save();
+    ctx.translate(factory.x, factory.y);
+
+    ctx.fillStyle = "#29313a";
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 6;
+
+    roundedRect(-factory.w / 2, -factory.h / 2, factory.w, factory.h, 22);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#ff595e";
+    ctx.beginPath();
+    ctx.moveTo(-factory.w / 2 - 12, -factory.h / 2 + 25);
+    ctx.lineTo(0, -factory.h / 2 - 55);
+    ctx.lineTo(factory.w / 2 + 12, -factory.h / 2 + 25);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffd166";
+    roundedRect(-45, 5, 90, 90, 16);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#88ff66";
+    roundedRect(-23, 30, 46, 65, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#1b2b24";
+    ctx.font = "900 24px Trebuchet MS";
+    ctx.textAlign = "center";
+    ctx.fillText("JUICE", 0, -35);
+
+    drawChimney();
+
+    ctx.restore();
+}
+
+function drawChimney() {
+    ctx.save();
+    ctx.translate(55, -115);
+
+    ctx.fillStyle = "#5b6570";
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 5;
+
+    roundedRect(-15, 0, 30, 75, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    const smokeCount = world.caught > 0 ? 5 : 2;
+
+    for (let i = 0; i < smokeCount; i++) {
+        const y = -12 - i * 19;
+        const x = Math.sin(Date.now() * 0.002 + i) * 10;
+        const size = 10 + i * 3;
+
+        ctx.fillStyle = `rgba(220, 240, 230, ${0.45 - i * 0.05})`;
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fill();
     }
 
-    function randomRange(min, max) {
-      return min + Math.random() * (max - min);
+    ctx.restore();
+}
+
+function drawPlayer() {
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.rotate(player.angle);
+
+    const bob = Math.sin(player.bob) * 3;
+
+    ctx.fillStyle = "rgba(0,0,0,0.22)";
+    ctx.beginPath();
+    ctx.ellipse(0, 27, 28, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.translate(0, bob);
+
+    ctx.fillStyle = "#ffb703";
+    ctx.strokeStyle = "#1b2b24";
+    ctx.lineWidth = 5;
+
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 24, 20, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#fb8500";
+    ctx.beginPath();
+    ctx.moveTo(4, -20);
+    ctx.lineTo(24, -8);
+    ctx.lineTo(13, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(8, -7, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#101820";
+    ctx.beginPath();
+    ctx.arc(10, -6, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#26382f";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(12, 10);
+    ctx.lineTo(32, 18);
+    ctx.stroke();
+
+    ctx.fillStyle = "#d9f99d";
+    ctx.strokeStyle = "#26382f";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(38, 20, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+function drawZombie(z) {
+    ctx.save();
+    ctx.translate(z.x, z.y);
+
+    const squash = Math.sin(z.squish) * 0.08;
+    ctx.scale(1 + squash, 1 - squash);
+
+    ctx.fillStyle = "rgba(0,0,0,0.22)";
+    ctx.beginPath();
+    ctx.ellipse(0, z.r + 8, z.r * 0.9, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = z.color;
+    ctx.strokeStyle = "#1f3d2b";
+    ctx.lineWidth = 4;
+
+    ctx.beginPath();
+    ctx.arc(0, 0, z.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#6abf3a";
+    ctx.beginPath();
+    ctx.arc(-10, -8, 9, 0, Math.PI * 2);
+    ctx.arc(10, -8, 9, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#fff";
+    ctx.strokeStyle = "#1f3d2b";
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.arc(-7, -4, 6, 0, Math.PI * 2);
+    ctx.arc(8, -5, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#101820";
+    ctx.beginPath();
+    ctx.arc(-6, -3, 2, 0, Math.PI * 2);
+    ctx.arc(9, -4, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#26382f";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 9, 8, 0.1, Math.PI - 0.1);
+    ctx.stroke();
+
+    ctx.strokeStyle = "#1f3d2b";
+    ctx.lineWidth = 5;
+
+    ctx.beginPath();
+    ctx.moveTo(-z.r + 2, 5);
+    ctx.lineTo(-z.r - 15, 16);
+    ctx.moveTo(z.r - 2, 5);
+    ctx.lineTo(z.r + 15, 16);
+    ctx.stroke();
+
+    if (z.scared > 0) {
+        ctx.fillStyle = "#fff";
+        ctx.font = "900 18px Trebuchet MS";
+        ctx.textAlign = "center";
+        ctx.fillText("!", 0, -z.r - 12);
     }
-  </script>
+
+    ctx.restore();
+}
+
+function drawNet(n) {
+    ctx.save();
+    ctx.translate(n.x, n.y);
+    ctx.rotate(n.spin);
+
+    ctx.strokeStyle = "#eaf4f4";
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+    ctx.arc(0, 0, n.r, 0, Math.PI * 2);
+    ctx.stroke();
+
+    for (let i = 0; i < 4; i++) {
+        ctx.rotate(Math.PI / 4);
+        ctx.beginPath();
+        ctx.moveTo(-n.r, 0);
+        ctx.lineTo(n.r, 0);
+        ctx.stroke();
+    }
+
+    ctx.restore();
+}
+
+function drawCar(c) {
+    ctx.save();
+
+    const bounce = Math.sin(c.bounce) * 2;
+    ctx.translate(c.x, c.y + bounce);
+
+    ctx.fillStyle = "rgba(0,0,0,0.28)";
+    ctx.beginPath();
+    ctx.ellipse(0, 30, c.w * 0.48, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = c.color;
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 5;
+
+    roundedRect(-c.w / 2, -c.h / 2, c.w, c.h, 16);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = shadeColor(c.color, 25);
+    roundedRect(-c.w / 5, -c.h / 2 - 18, c.w * 0.45, 28, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#bde0fe";
+    roundedRect(-c.w / 8, -c.h / 2 - 13, c.w * 0.22, 18, 6);
+    ctx.fill();
+
+    ctx.fillStyle = "#101820";
+    ctx.beginPath();
+    ctx.arc(-c.w / 3, c.h / 2, 10, 0, Math.PI * 2);
+    ctx.arc(c.w / 3, c.h / 2, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#eaf4f4";
+    ctx.beginPath();
+    ctx.arc(-c.w / 3, c.h / 2, 4, 0, Math.PI * 2);
+    ctx.arc(c.w / 3, c.h / 2, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (c.state === "waiting") {
+        ctx.fillStyle = "#fff";
+        ctx.strokeStyle = "#101820";
+        ctx.lineWidth = 3;
+
+        ctx.beginPath();
+        ctx.roundRect(-32, -72, 64, 34, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#26382f";
+        ctx.font = "900 15px Trebuchet MS";
+        ctx.textAlign = "center";
+        ctx.fillText(c.bought ? "YUM!" : "JUICE?", 0, -50);
+    }
+
+    ctx.restore();
+}
+
+function shadeColor(hex, percent) {
+    let num = parseInt(hex.replace("#", ""), 16);
+    let r = (num >> 16) + percent;
+    let g = ((num >> 8) & 0x00FF) + percent;
+    let b = (num & 0x0000FF) + percent;
+
+    r = clamp(r, 0, 255);
+    g = clamp(g, 0, 255);
+    b = clamp(b, 0, 255);
+
+    return "#" + (b | (g << 8) | (r << 16)).toString(16).padStart(6, "0");
+}
+
+function drawParticles() {
+    for (const p of particles) {
+        const alpha = p.life / p.maxLife;
+
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * alpha, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = 1;
+    }
+}
+
+function drawCarryZombies() {
+    for (const z of player.carry) {
+        drawZombie(z);
+    }
+}
+
+function drawUI() {
+    const speedCost = 35 + world.upgrades.speed * world.upgrades.speed * 40;
+    const netCost = 35 + world.upgrades.net * world.upgrades.net * 40;
+    const tankCost = 35 + world.upgrades.tank * world.upgrades.tank * 40;
+    const factoryCost = 35 + world.upgrades.factory * world.upgrades.factory * 40;
+
+    ui.innerHTML = `
+        💵 Money: $${world.money}<br>
+        🧃 Juice: ${world.juice}<br>
+        🧟 Zombies in Factory: ${world.caught}<br>
+        🎒 Carrying: ${player.carry.length}/${player.maxCarry}<br>
+        🚗 Sold: ${world.totalSold}<br>
+        <br>
+        Speed Lv.${world.upgrades.speed} - $${speedCost}<br>
+        Net Lv.${world.upgrades.net} - $${netCost}<br>
+        Tank Lv.${world.upgrades.tank} - $${tankCost}<br>
+        Factory Lv.${world.upgrades.factory} - $${factoryCost}
+    `;
+}
+
+function drawFactoryZone() {
+    ctx.save();
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.14)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.55)";
+    ctx.lineWidth = 4;
+    ctx.setLineDash([12, 8]);
+
+    roundedRect(factory.x - factory.w / 2 - 28, factory.y - factory.h / 2 - 28, factory.w + 56, factory.h + 56, 30);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+    ctx.restore();
+}
+
+function drawDriveThruWindow() {
+    ctx.save();
+    ctx.translate(factory.x + 120, H - 88);
+
+    ctx.fillStyle = "#ffd166";
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 5;
+
+    roundedRect(-55, -45, 110, 70, 15);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#26382f";
+    ctx.font = "900 16px Trebuchet MS";
+    ctx.textAlign = "center";
+    ctx.fillText("DRIVE", 0, -18);
+    ctx.fillText("THRU", 0, 3);
+
+    ctx.fillStyle = "#77ff66";
+    ctx.beginPath();
+    ctx.arc(35, 20, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+function drawAimLine() {
+    ctx.save();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.45)";
+    ctx.lineWidth = 4;
+    ctx.setLineDash([10, 10]);
+
+    ctx.beginPath();
+    ctx.moveTo(player.x, player.y);
+    ctx.lineTo(mouse.x, mouse.y);
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+
+    ctx.restore();
+}
+
+function update() {
+    updatePlayer();
+    updateZombies();
+    updateNets();
+    updateFactory();
+    updateCars();
+    updateParticles();
+    updateSpawning();
+}
+
+function draw() {
+    drawWorld();
+    drawFactoryZone();
+    drawFactory();
+    drawDriveThruWindow();
+
+    for (const c of cars) drawCar(c);
+
+    for (const z of zombies) drawZombie(z);
+
+    drawCarryZombies();
+
+    for (const n of nets) drawNet(n);
+
+    drawAimLine();
+    drawPlayer();
+    drawParticles();
+    drawUI();
+}
+
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
 </body>
 </html>
