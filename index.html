@@ -67,21 +67,6 @@
         transform: translateY(5px);
         box-shadow: 0 0 0 #b88128;
     }
-
-    #help {
-        position: fixed;
-        left: 50%;
-        bottom: 16px;
-        transform: translateX(-50%);
-        background: rgba(20, 30, 25, 0.75);
-        color: white;
-        border: 3px solid white;
-        border-radius: 18px;
-        padding: 10px 18px;
-        font-weight: 900;
-        text-align: center;
-        z-index: 5;
-    }
 </style>
 </head>
 <body>
@@ -94,10 +79,6 @@
     <button onclick="buyUpgrade('net')">Upgrade Net</button>
     <button onclick="buyUpgrade('tank')">Upgrade Tank</button>
     <button onclick="buyUpgrade('factory')">Upgrade Factory</button>
-</div>
-
-<div id="help">
-    WASD / Arrows: Move &nbsp; | &nbsp; Mouse: Aim &nbsp; | &nbsp; Click: Shoot Net in Forest &nbsp; | &nbsp; Walk right from base to enter forest
 </div>
 
 <script>
@@ -168,7 +149,6 @@ const floatingTexts = [];
 const cars = [];
 
 const baseTrees = [];
-const baseFlowers = [];
 
 const forestTrees = [];
 const forestRocks = [];
@@ -255,7 +235,6 @@ function shadeColor(hex, percent) {
 
 function generateDecor() {
     baseTrees.length = 0;
-    baseFlowers.length = 0;
 
     forestTrees.length = 0;
     forestRocks.length = 0;
@@ -263,26 +242,17 @@ function generateDecor() {
     forestFog.length = 0;
     fireflies.length = 0;
 
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 24; i++) {
         baseTrees.push({
-            x: rand(260, W - 70),
-            y: rand(70, H - 170),
-            s: rand(0.75, 1.35),
+            x: rand(220, W - 70),
+            y: rand(35, 150),
+            s: rand(0.75, 1.25),
             sway: rand(0, 10),
             type: Math.floor(rand(0, 3))
         });
     }
 
-    for (let i = 0; i < 70; i++) {
-        baseFlowers.push({
-            x: rand(230, W - 40),
-            y: rand(60, H - 150),
-            s: rand(0.7, 1.2),
-            c: Math.random() < 0.5 ? "#ff7eb6" : "#ffe66d"
-        });
-    }
-
-    for (let i = 0; i < 33; i++) {
+    for (let i = 0; i < 23; i++) {
         forestTrees.push({
             x: rand(30, W - 30),
             y: rand(40, H - 120),
@@ -292,7 +262,7 @@ function generateDecor() {
         });
     }
 
-    for (let i = 0; i < 35; i++) {
+    for (let i = 0; i < 25; i++) {
         forestRocks.push({
             x: rand(40, W - 40),
             y: rand(60, H - 150),
@@ -301,7 +271,7 @@ function generateDecor() {
         });
     }
 
-    for (let i = 0; i < 28; i++) {
+    for (let i = 0; i < 20; i++) {
         forestBushes.push({
             x: rand(30, W - 30),
             y: rand(70, H - 130),
@@ -310,7 +280,7 @@ function generateDecor() {
         });
     }
 
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < 14; i++) {
         forestFog.push({
             x: rand(0, W),
             y: rand(80, H - 130),
@@ -319,7 +289,7 @@ function generateDecor() {
         });
     }
 
-    for (let i = 0; i < 35; i++) {
+    for (let i = 0; i < 26; i++) {
         fireflies.push({
             x: rand(0, W),
             y: rand(60, H - 130),
@@ -379,14 +349,13 @@ function spawnCar() {
     const colors = ["#ef476f", "#118ab2", "#ffd166", "#06d6a0", "#9b5de5"];
 
     cars.push({
-        x: W + 120,
+        x: W + 140,
         y: H - 75,
         w: rand(92, 122),
         h: 45,
         speed: rand(1.2, 1.8),
         color: colors[Math.floor(rand(0, colors.length))],
-        state: "arriving",
-        wait: 0,
+        state: "queue",
         bought: false,
         bounce: rand(0, 10)
     });
@@ -438,7 +407,6 @@ function updateTransition() {
 
         if (game.fade >= 1) {
             game.fade = 1;
-
             game.screen = game.transition.to;
 
             if (game.screen === "forest") {
@@ -573,15 +541,24 @@ function updatePlayer() {
 function updateCarriedZombies() {
     for (let i = player.carry.length - 1; i >= 0; i--) {
         const z = player.carry[i];
-
         const offset = i + 1;
-        const targetX = player.x - player.facing * (28 + offset * 24);
-        const targetY = player.y + 18 + Math.sin(player.bob + i) * 7;
+
+        let targetX;
+        let targetY;
+
+        if (game.screen === "base") {
+            targetX = player.x + 35 + offset * 26;
+            targetY = player.y + 16 + Math.sin(player.bob + i) * 7;
+            z.facing = -1;
+        } else {
+            targetX = player.x - player.facing * (28 + offset * 24);
+            targetY = player.y + 18 + Math.sin(player.bob + i) * 7;
+            z.facing = -player.facing;
+        }
 
         z.x += (targetX - z.x) * 0.18;
         z.y += (targetY - z.y) * 0.18;
         z.squish += 0.15;
-        z.facing = -player.facing;
     }
 }
 
@@ -682,6 +659,7 @@ function updateNets() {
 
     for (let i = nets.length - 1; i >= 0; i--) {
         const n = nets[i];
+        let removed = false;
 
         n.x += n.vx;
         n.y += n.vy;
@@ -706,19 +684,20 @@ function updateNets() {
 
                     addParticle(z.x, z.y, "#eaff80", 38, 3.8);
                     nets.splice(i, 1);
+                    removed = true;
                     break;
                 } else {
                     addParticle(z.x, z.y, "#ff4d6d", 24, 3);
                     addFloatingText("FULL", z.x, z.y - 48, "#ff4d6d");
                     nets.splice(i, 1);
+                    removed = true;
                     break;
                 }
             }
         }
 
-        if (n && (n.life <= 0 || n.x < 0 || n.x > W || n.y < 0 || n.y > H)) {
-            const index = nets.indexOf(n);
-            if (index !== -1) nets.splice(index, 1);
+        if (!removed && (n.life <= 0 || n.x < 0 || n.x > W || n.y < 0 || n.y > H)) {
+            nets.splice(i, 1);
         }
     }
 }
@@ -744,59 +723,60 @@ function updateCars() {
 
     world.carTimer--;
 
-    if (world.carTimer <= 0) {
+    const activeCars = cars
+        .filter(c => c.state !== "leaving")
+        .sort((a, b) => a.x - b.x);
+
+    const rightMostActiveCar = activeCars.length
+        ? Math.max(...activeCars.map(c => c.x))
+        : -9999;
+
+    if (world.carTimer <= 0 && rightMostActiveCar < W - 160) {
         spawnCar();
-        world.carTimer = rand(210, 330);
+        world.carTimer = rand(90, 150);
     }
 
     const stopX = 225;
+    const spacing = 145;
+
+    const queueCars = cars
+        .filter(c => c.state !== "leaving")
+        .sort((a, b) => a.x - b.x);
+
+    for (let i = 0; i < queueCars.length; i++) {
+        const c = queueCars[i];
+        const targetX = stopX + i * spacing;
+
+        c.bounce += 0.15;
+
+        if (c.x > targetX) {
+            c.x -= c.speed;
+            if (c.x < targetX) c.x = targetX;
+        } else {
+            c.x = targetX;
+        }
+
+        if (i === 0 && c.x === stopX && world.juice > 0) {
+            c.bought = true;
+            c.state = "leaving";
+            world.juice--;
+
+            const pay = 15 + Math.floor(rand(0, 10)) + world.upgrades.factory * 2;
+
+            world.money += pay;
+            world.totalSold++;
+
+            addParticle(c.x, c.y - 30, "#ffe66d", 32, 3.5);
+            addParticle(factory.x + 72, factory.y + 65, "#77ff66", 20, 2.5);
+        }
+    }
 
     for (let i = cars.length - 1; i >= 0; i--) {
         const c = cars[i];
 
-        c.bounce += 0.15;
-
-        if (c.state === "arriving") {
-            c.x -= c.speed;
-
-            let queueIndex = 0;
-
-            for (const other of cars) {
-                if (other !== c && other.state !== "leaving" && other.x < c.x) {
-                    queueIndex++;
-                }
-            }
-
-            const targetStop = stopX + queueIndex * 145;
-
-            if (c.x <= targetStop) {
-                c.x = targetStop;
-                c.state = "waiting";
-                c.wait = 115;
-            }
-        } else if (c.state === "waiting") {
-            c.wait--;
-
-            if (!c.bought && world.juice > 0) {
-                c.bought = true;
-                world.juice--;
-
-                const pay = 15 + Math.floor(rand(0, 10)) + world.upgrades.factory * 2;
-
-                world.money += pay;
-                world.totalSold++;
-
-                addParticle(c.x, c.y - 30, "#ffe66d", 32, 3.5);
-                addParticle(factory.x + 72, factory.y + 65, "#77ff66", 20, 2.5);
-
-                c.wait = 45;
-            }
-
-            if (c.wait <= 0) {
-                c.state = "leaving";
-            }
-        } else if (c.state === "leaving") {
-            c.x -= c.speed * 2.4;
+        if (c.state === "leaving") {
+            c.bounce += 0.15;
+            c.x -= c.speed * 2.6;
 
             if (c.x < -200) {
                 cars.splice(i, 1);
@@ -923,7 +903,6 @@ function drawRoad() {
 }
 
 function drawBaseDecor() {
-    for (const f of baseFlowers) drawFlower(f);
     for (const t of baseTrees) drawTree(t, false);
 }
 
@@ -992,8 +971,8 @@ function drawMoon() {
 function drawForestBackTrees() {
     ctx.fillStyle = "#0f1e1a";
 
-    for (let i = 0; i < 7; i++) {
-        const x = i * 210 - 30;
+    for (let i = 0; i < 5; i++) {
+        const x = i * 250 - 30;
         const h = 190 + Math.sin(i * 5) * 50;
 
         ctx.beginPath();
@@ -1099,37 +1078,6 @@ function drawVignette() {
 
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, W, H);
-}
-
-function drawFlower(f) {
-    ctx.save();
-    ctx.translate(f.x, f.y);
-    ctx.scale(f.s, f.s);
-
-    ctx.strokeStyle = "#356b3d";
-    ctx.lineWidth = 2;
-
-    ctx.beginPath();
-    ctx.moveTo(0, 7);
-    ctx.lineTo(0, -3);
-    ctx.stroke();
-
-    ctx.fillStyle = f.c;
-
-    for (let i = 0; i < 5; i++) {
-        const a = i / 5 * Math.PI * 2;
-
-        ctx.beginPath();
-        ctx.arc(Math.cos(a) * 4, Math.sin(a) * 4 - 4, 3, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    ctx.fillStyle = "#fff7a8";
-    ctx.beginPath();
-    ctx.arc(0, -4, 3, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
 }
 
 function drawRock(r, forest = false) {
@@ -1353,16 +1301,16 @@ function drawDriveThruWindow() {
     ctx.restore();
 }
 
+function isPlayerBlinking() {
+    const t = (Date.now() / 1000) % 3.6;
+    return t < 0.12;
+}
+
 function drawPlayer() {
     const bob = Math.sin(player.bob) * 3;
     const facing = player.facing;
 
     ctx.save();
-
-    ctx.fillStyle = "rgba(0,0,0,0.24)";
-    ctx.beginPath();
-    ctx.ellipse(player.x, player.y + 31, 30, 10, 0, 0, Math.PI * 2);
-    ctx.fill();
 
     if (game.screen === "forest") {
         drawPlayerArmAndNetGun(bob);
@@ -1424,6 +1372,7 @@ function drawPlayerHead(facing, bob) {
     const pupilX = clamp(Math.cos(lookAngle) * 2.5, -2.5, 2.5);
     const pupilY = clamp(Math.sin(lookAngle) * 2.1, -2.1, 2.1);
     const headTilt = clamp(Math.sin(lookAngle) * 0.16, -0.18, 0.18);
+    const blinking = isPlayerBlinking();
 
     ctx.save();
     ctx.translate(0, -22);
@@ -1439,29 +1388,39 @@ function drawPlayerHead(facing, bob) {
     ctx.stroke();
 
     ctx.fillStyle = "#26382f";
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 4;
+
     ctx.beginPath();
-    ctx.arc(-4, -13, 18, Math.PI, Math.PI * 2);
-    ctx.lineTo(16, 0);
-    ctx.lineTo(-18, 0);
+    ctx.moveTo(-18, -6);
+    ctx.quadraticCurveTo(-14, -23, -2, -21);
+    ctx.quadraticCurveTo(8, -25, 18, -6);
+    ctx.lineTo(11, -12);
+    ctx.lineTo(4, -6);
+    ctx.lineTo(-4, -12);
+    ctx.lineTo(-11, -6);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = "#fff";
-    ctx.strokeStyle = "#101820";
-    ctx.lineWidth = 2.5;
+    if (blinking) {
+        ctx.strokeStyle = "#101820";
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
 
-    ctx.beginPath();
-    ctx.arc(-6, -2, 5.5, 0, Math.PI * 2);
-    ctx.arc(8, -2, 5.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-11, -2);
+        ctx.lineTo(-1, -2);
+        ctx.stroke();
 
-    ctx.fillStyle = "#101820";
-    ctx.beginPath();
-    ctx.arc(-6 + pupilX, -2 + pupilY, 2.2, 0, Math.PI * 2);
-    ctx.arc(8 + pupilX, -2 + pupilY, 2.2, 0, Math.PI * 2);
-    ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(3, -2);
+        ctx.lineTo(13, -2);
+        ctx.stroke();
+    } else {
+        drawEye(-6, -2, 5.5, pupilX, pupilY);
+        drawEye(8, -2, 5.5, pupilX, pupilY);
+    }
 
     ctx.strokeStyle = "#101820";
     ctx.lineWidth = 3;
@@ -1470,6 +1429,22 @@ function drawPlayerHead(facing, bob) {
     ctx.stroke();
 
     ctx.restore();
+}
+
+function drawEye(x, y, r, pupilX, pupilY) {
+    ctx.fillStyle = "#fff";
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 2.5;
+
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#101820";
+    ctx.beginPath();
+    ctx.arc(x + pupilX, y + pupilY, 2.2, 0, Math.PI * 2);
+    ctx.fill();
 }
 
 function drawPlayerRelaxedArms(bob) {
@@ -1496,6 +1471,10 @@ function drawPlayerRelaxedArms(bob) {
 
     ctx.beginPath();
     ctx.arc(-30, 20, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
     ctx.arc(30, 20, 5, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
@@ -1563,11 +1542,6 @@ function drawZombie(z) {
 
     ctx.scale(facing * (1 + squash), 1 - squash);
 
-    ctx.fillStyle = "rgba(0,0,0,0.27)";
-    ctx.beginPath();
-    ctx.ellipse(0, 42, 27, 9, 0, 0, Math.PI * 2);
-    ctx.fill();
-
     const limp = Math.sin(z.limp);
 
     ctx.strokeStyle = "#1f3d2b";
@@ -1620,11 +1594,17 @@ function drawZombie(z) {
     if (z.variant === 0) {
         ctx.beginPath();
         ctx.arc(-11, -34, 9, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
         ctx.arc(11, -33, 7, 0, Math.PI * 2);
         ctx.fill();
     } else if (z.variant === 1) {
         ctx.beginPath();
         ctx.arc(-13, -25, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
         ctx.arc(14, -31, 8, 0, Math.PI * 2);
         ctx.fill();
     } else {
@@ -1634,6 +1614,9 @@ function drawZombie(z) {
     }
 
     ctx.fillStyle = z.hair;
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 3;
+
     ctx.beginPath();
     ctx.moveTo(-15, -43);
     ctx.lineTo(-5, -56);
@@ -1644,21 +1627,8 @@ function drawZombie(z) {
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = "#fff";
-    ctx.strokeStyle = "#1f3d2b";
-    ctx.lineWidth = 2.5;
-
-    ctx.beginPath();
-    ctx.arc(-8, -26, 6, 0, Math.PI * 2);
-    ctx.arc(8, -27, 6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = "#101820";
-    ctx.beginPath();
-    ctx.arc(-6, -25, 2, 0, Math.PI * 2);
-    ctx.arc(10, -26, 2, 0, Math.PI * 2);
-    ctx.fill();
+    drawZombieEye(-8, -26);
+    drawZombieEye(8, -27);
 
     ctx.fillStyle = "#2d1b1b";
     ctx.beginPath();
@@ -1680,6 +1650,22 @@ function drawZombie(z) {
     }
 
     ctx.restore();
+}
+
+function drawZombieEye(x, y) {
+    ctx.fillStyle = "#fff";
+    ctx.strokeStyle = "#1f3d2b";
+    ctx.lineWidth = 2.5;
+
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#101820";
+    ctx.beginPath();
+    ctx.arc(x + 2, y + 1, 2, 0, Math.PI * 2);
+    ctx.fill();
 }
 
 function drawNet(n) {
@@ -1738,16 +1724,22 @@ function drawCar(c) {
     ctx.fillStyle = "#101820";
     ctx.beginPath();
     ctx.arc(-c.w / 3, c.h / 2, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
     ctx.arc(c.w / 3, c.h / 2, 10, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = "#eaf4f4";
     ctx.beginPath();
     ctx.arc(-c.w / 3, c.h / 2, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
     ctx.arc(c.w / 3, c.h / 2, 4, 0, Math.PI * 2);
     ctx.fill();
 
-    if (c.state === "waiting") {
+    if (c.state !== "leaving") {
         ctx.fillStyle = "#fff";
         ctx.strokeStyle = "#101820";
         ctx.lineWidth = 3;
@@ -1760,7 +1752,7 @@ function drawCar(c) {
         ctx.fillStyle = "#26382f";
         ctx.font = "900 15px Trebuchet MS";
         ctx.textAlign = "center";
-        ctx.fillText(c.bought ? "YUM!" : "JUICE?", 0, -50);
+        ctx.fillText(world.juice > 0 ? "YUM!" : "JUICE?", 0, -50);
     }
 
     ctx.restore();
