@@ -73,8 +73,7 @@
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.shadowMap.enabled = false;
       document.body.appendChild(renderer.domElement);
 
       setupLights();
@@ -112,7 +111,7 @@
         if (!cameraState.rightMouseDown) return;
 
         cameraState.targetYaw -= e.movementX * 0.004;
-        cameraState.targetPitch -= e.movementY * 0.003;
+        cameraState.targetPitch += e.movementY * 0.003;
 
         cameraState.targetPitch = THREE.MathUtils.clamp(
           cameraState.targetPitch,
@@ -131,18 +130,11 @@
       const hemi = new THREE.HemisphereLight(0xffffff, 0x4bb7ff, 1.6);
       scene.add(hemi);
 
-      const sun = new THREE.DirectionalLight(0xffffff, 3);
+      const sun = new THREE.DirectionalLight(0xffffff, 2.6);
       sun.position.set(40, 80, 30);
-      sun.castShadow = true;
-      sun.shadow.mapSize.width = 2048;
-      sun.shadow.mapSize.height = 2048;
-      sun.shadow.camera.left = -80;
-      sun.shadow.camera.right = 80;
-      sun.shadow.camera.top = 80;
-      sun.shadow.camera.bottom = -80;
       scene.add(sun);
 
-      const rim = new THREE.DirectionalLight(0x7be7ff, 1.4);
+      const rim = new THREE.DirectionalLight(0x7be7ff, 1.2);
       rim.position.set(-40, 30, -60);
       scene.add(rim);
     }
@@ -167,11 +159,9 @@
       outline.scale.copy(mesh.scale).multiplyScalar(scale);
       outline.position.copy(mesh.position);
       outline.rotation.copy(mesh.rotation);
-      outline.castShadow = false;
-      outline.receiveShadow = false;
+      outline.renderOrder = -1;
 
       mesh.parent.add(outline);
-      outline.renderOrder = -1;
       return outline;
     }
 
@@ -199,19 +189,18 @@
       }
 
       const material = new THREE.MeshToonMaterial({
-        color: 0x26c9e8,
+        color: 0x1699bf,
         transparent: true,
-        opacity: 0.94
+        opacity: 0.96
       });
 
       water = new THREE.Mesh(geometry, material);
-      water.receiveShadow = true;
       scene.add(water);
 
       const lineMaterial = new THREE.LineBasicMaterial({
-        color: 0x78efff,
+        color: 0x67d9ee,
         transparent: true,
-        opacity: 0.35
+        opacity: 0.28
       });
 
       for (let i = 0; i < 55; i++) {
@@ -265,8 +254,6 @@
       );
       hull.position.y = 0.55;
       hull.scale.x = 1.05;
-      hull.castShadow = true;
-      hull.receiveShadow = true;
       boatBody.add(hull);
       outlineObject(hull);
 
@@ -278,7 +265,6 @@
       hullFront.rotation.x = Math.PI / 2;
       hullFront.position.set(0, 0.55, -4.45);
       hullFront.scale.set(1.05, 1.25, 0.85);
-      hullFront.castShadow = true;
       boatBody.add(hullFront);
       outlineObject(hullFront);
 
@@ -287,7 +273,6 @@
         darkHullMat
       );
       lowerHull.position.y = 0.05;
-      lowerHull.castShadow = true;
       boatBody.add(lowerHull);
       outlineObject(lowerHull, 1.035);
 
@@ -296,7 +281,6 @@
         deckMat
       );
       deck.position.y = 1.23;
-      deck.castShadow = true;
       boatBody.add(deck);
       outlineObject(deck, 1.035);
 
@@ -305,7 +289,6 @@
         cabinMat
       );
       cabin.position.set(0, 2.25, 0.25);
-      cabin.castShadow = true;
       boatBody.add(cabin);
       outlineObject(cabin);
 
@@ -314,7 +297,6 @@
         roofMat
       );
       roof.position.set(0, 3.28, 0.25);
-      roof.castShadow = true;
       boatBody.add(roof);
       outlineObject(roof);
 
@@ -323,7 +305,6 @@
         blackMat
       );
       chimney.position.set(0.65, 3.95, 0.35);
-      chimney.castShadow = true;
       boatBody.add(chimney);
       outlineObject(chimney);
 
@@ -332,7 +313,6 @@
         darkHullMat
       );
       chimneyTop.position.set(0.65, 4.58, 0.35);
-      chimneyTop.castShadow = true;
       boatBody.add(chimneyTop);
       outlineObject(chimneyTop);
 
@@ -359,7 +339,6 @@
 
         tire.position.set(p[0], p[1], p[2]);
         tire.rotation.y = Math.PI / 2;
-        tire.castShadow = true;
         boatBody.add(tire);
       });
 
@@ -372,7 +351,6 @@
             railMat
           );
           post.position.set(side * 1.75, 1.75, i * 1.1);
-          post.castShadow = true;
           boatBody.add(post);
         }
 
@@ -381,7 +359,6 @@
           railMat
         );
         rail.position.set(side * 1.75, 2.08, 0);
-        rail.castShadow = true;
         boatBody.add(rail);
       }
 
@@ -391,8 +368,9 @@
       );
       frontBumper.position.set(0, 1.28, -4.1);
       frontBumper.rotation.x = Math.PI / 2;
-      frontBumper.castShadow = true;
       boatBody.add(frontBumper);
+
+      boatBody.rotation.y = Math.PI;
 
       function createWindow(x, y, z, sx, sy, sz) {
         const win = new THREE.Mesh(
@@ -400,7 +378,6 @@
           windowMat
         );
         win.position.set(x, y, z);
-        win.castShadow = true;
         boatBody.add(win);
         outlineObject(win, 1.08);
       }
@@ -415,7 +392,6 @@
           darkMetalMat
         );
         engineBlock.position.set(0, 1.68, 3.3);
-        engineBlock.castShadow = true;
         engineGroup.add(engineBlock);
         outlineObject(engineBlock, 1.045);
 
@@ -425,7 +401,6 @@
         );
         roundedTank.position.set(0, 2.18, 3.3);
         roundedTank.rotation.z = Math.PI / 2;
-        roundedTank.castShadow = true;
         engineGroup.add(roundedTank);
         outlineObject(roundedTank, 1.045);
 
@@ -434,7 +409,6 @@
           metalMat
         );
         engineTopCap.position.set(0, 2.62, 3.3);
-        engineTopCap.castShadow = true;
         engineGroup.add(engineTopCap);
         outlineObject(engineTopCap, 1.045);
 
@@ -444,7 +418,6 @@
             blackMat
           );
           vent.position.set(i * 0.38, 1.72, 3.9);
-          vent.castShadow = true;
           engineGroup.add(vent);
         }
 
@@ -454,7 +427,6 @@
         );
         exhaustPipe.position.set(0.72, 2.58, 3.25);
         exhaustPipe.rotation.x = 0.2;
-        exhaustPipe.castShadow = true;
         engineGroup.add(exhaustPipe);
         outlineObject(exhaustPipe, 1.045);
 
@@ -464,7 +436,6 @@
         );
         exhaustLip.position.set(0.72, 3.23, 3.39);
         exhaustLip.rotation.x = 0.2;
-        exhaustLip.castShadow = true;
         engineGroup.add(exhaustLip);
         outlineObject(exhaustLip, 1.045);
 
@@ -474,7 +445,6 @@
         );
         shaft.position.set(0, 0.28, 4.0);
         shaft.rotation.x = Math.PI / 2;
-        shaft.castShadow = true;
         engineGroup.add(shaft);
 
         const propellerHub = new THREE.Mesh(
@@ -483,7 +453,6 @@
         );
         propellerHub.position.set(0, 0.28, 4.55);
         propellerHub.rotation.x = Math.PI / 2;
-        propellerHub.castShadow = true;
         engineGroup.add(propellerHub);
 
         propeller = new THREE.Group();
@@ -498,7 +467,6 @@
 
           blade.position.y = 0.43;
           blade.rotation.z = i * Math.PI / 2;
-          blade.castShadow = true;
           propeller.add(blade);
           outlineObject(blade, 1.035);
         }
@@ -509,7 +477,6 @@
         );
         propGuard.position.set(0, 0.28, 4.66);
         propGuard.rotation.x = Math.PI / 2;
-        propGuard.castShadow = true;
         engineGroup.add(propGuard);
 
         const rudder = new THREE.Mesh(
@@ -517,7 +484,6 @@
           darkHullMat
         );
         rudder.position.set(0, -0.05, 4.55);
-        rudder.castShadow = true;
         engineGroup.add(rudder);
         outlineObject(rudder);
       }
@@ -580,8 +546,6 @@
         );
 
         sand.scale.z = islandDepth / islandWidth;
-        sand.castShadow = true;
-        sand.receiveShadow = true;
         island.add(sand);
         outlineObject(sand, 1.025);
 
@@ -597,8 +561,6 @@
 
         grass.position.y = 0.32 * islandScale;
         grass.scale.z = (islandDepth / islandWidth) * randomRange(0.75, 0.95);
-        grass.castShadow = true;
-        grass.receiveShadow = true;
         island.add(grass);
         outlineObject(grass, 1.025);
 
@@ -635,7 +597,6 @@
           );
 
           rock.scale.y = randomRange(0.45, 0.9);
-          rock.castShadow = true;
           island.add(rock);
           outlineObject(rock, 1.035);
         }
@@ -681,7 +642,6 @@
         segment.position.y = (i + 0.5) * (trunkHeight / trunkSegments);
         segment.position.x = Math.sin(i * 0.7) * 0.08 * scale;
         segment.rotation.z = randomRange(-0.12, 0.12);
-        segment.castShadow = true;
         tree.add(segment);
         outlineObject(segment, 1.04);
       }
@@ -702,7 +662,6 @@
         leaf.position.y = leafHeight;
         leaf.rotation.z = Math.PI / 2 + randomRange(-0.25, 0.25);
         leaf.rotation.y = j * Math.PI * 2 / leafCount;
-        leaf.castShadow = true;
         tree.add(leaf);
         outlineObject(leaf, 1.035);
       }
@@ -721,7 +680,6 @@
           Math.sin(c * 2.1) * 0.22 * scale
         );
 
-        coconut.castShadow = true;
         tree.add(coconut);
         outlineObject(coconut, 1.04);
       }
@@ -825,6 +783,7 @@
 
       boatBody.rotation.x = pitch + Math.sin(time * 3.2) * 0.025;
       boatBody.rotation.z = roll - boatState.angularVelocity * 0.18;
+      boatBody.rotation.y = Math.PI;
 
       boatState.speed = boatState.velocity.length();
 
