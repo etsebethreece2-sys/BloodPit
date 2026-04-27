@@ -22,7 +22,6 @@
         width: 100vw;
         height: 100vh;
         background: #7fcf7a;
-        image-rendering: auto;
     }
 
     #ui {
@@ -35,6 +34,20 @@
         font-size: 18px;
         line-height: 1.55;
         pointer-events: none;
+        z-index: 5;
+    }
+
+    #levels {
+        position: fixed;
+        left: 235px;
+        top: 16px;
+        color: #fff;
+        text-shadow: 2px 2px 0 #1b2b24;
+        font-weight: 900;
+        font-size: 18px;
+        line-height: 1.55;
+        pointer-events: none;
+        z-index: 5;
     }
 
     #shop {
@@ -73,6 +86,7 @@
 <canvas id="game"></canvas>
 
 <div id="ui"></div>
+<div id="levels"></div>
 
 <div id="shop">
     <button onclick="buyUpgrade('net')">Upgrade Net</button>
@@ -84,10 +98,12 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const ui = document.getElementById("ui");
+const levelsUI = document.getElementById("levels");
 const shop = document.getElementById("shop");
 
 let W = window.innerWidth;
 let H = window.innerHeight;
+
 canvas.width = W;
 canvas.height = H;
 
@@ -109,7 +125,6 @@ const world = {
     juice: 0,
     caught: 0,
     totalCaught: 0,
-    spawnTimer: 0,
     carTimer: 0,
     upgrades: {
         net: 1,
@@ -121,7 +136,7 @@ const world = {
 const factory = {
     x: 135,
     y: H / 2,
-    w: 180,
+    w: 190,
     h: 220,
     processTimer: 0
 };
@@ -149,9 +164,12 @@ const baseTrees = [];
 const forestTrees = [];
 const forestRocks = [];
 const forestBushes = [];
-const forestFog = [];
 const fireflies = [];
 const grassTufts = [];
+
+const CAR_STOP_X = 225;
+const CAR_SPACING = 145;
+const MAX_FOREST_ZOMBIES = 9;
 
 function resize() {
     W = canvas.width = window.innerWidth;
@@ -163,6 +181,7 @@ function resize() {
     if (player.y > H - 130) player.y = H - 160;
 
     generateDecor();
+    rebuildCarLine();
 }
 
 window.addEventListener("resize", resize);
@@ -199,24 +218,29 @@ function rand(min, max) {
     return Math.random() * (max - min) + min;
 }
 
-function dist(a, b) {
-    return Math.hypot(a.x - b.x, a.y - b.y);
-}
-
 function clamp(v, min, max) {
     return Math.max(min, Math.min(max, v));
+}
+
+function dist(a, b) {
+    return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
 function angleTo(a, b) {
     return Math.atan2(b.y - a.y, b.x - a.x);
 }
 
+function roundedRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, r);
+}
+
 function shadeColor(hex, percent) {
     let num = parseInt(hex.replace("#", ""), 16);
 
     let r = (num >> 16) + percent;
-    let g = ((num >> 8) & 0x00FF) + percent;
-    let b = (num & 0x0000FF) + percent;
+    let g = ((num >> 8) & 0x00ff) + percent;
+    let b = (num & 0x0000ff) + percent;
 
     r = clamp(r, 0, 255);
     g = clamp(g, 0, 255);
@@ -225,17 +249,11 @@ function shadeColor(hex, percent) {
     return "#" + (b | (g << 8) | (r << 16)).toString(16).padStart(6, "0");
 }
 
-function roundedRect(x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.roundRect(x, y, w, h, r);
-}
-
 function generateDecor() {
     baseTrees.length = 0;
     forestTrees.length = 0;
     forestRocks.length = 0;
     forestBushes.length = 0;
-    forestFog.length = 0;
     fireflies.length = 0;
     grassTufts.length = 0;
 
@@ -259,7 +277,7 @@ function generateDecor() {
         });
     }
 
-    for (let i = 0; i < 23; i++) {
+    for (let i = 0; i < 16; i++) {
         forestTrees.push({
             x: rand(30, W - 30),
             y: rand(40, H - 120),
@@ -269,7 +287,7 @@ function generateDecor() {
         });
     }
 
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 18; i++) {
         forestRocks.push({
             x: rand(40, W - 40),
             y: rand(60, H - 150),
@@ -287,15 +305,6 @@ function generateDecor() {
         });
     }
 
-    for (let i = 0; i < 14; i++) {
-        forestFog.push({
-            x: rand(0, W),
-            y: rand(80, H - 130),
-            s: rand(0.8, 2.1),
-            speed: rand(0.08, 0.25)
-        });
-    }
-
     for (let i = 0; i < 26; i++) {
         fireflies.push({
             x: rand(0, W),
@@ -307,10 +316,70 @@ function generateDecor() {
     }
 }
 
-generateDecor();
+function createCar(x = CAR_STOP_X) {
+    const colors = ["#ef476f", "#118ab2", "#ffd166", "#06d6a0", "#9b5de5"];
+
+    return {
+        x,
+        y: H - 75,
+        targetX: x,
+        w: rand(92, 122),
+        h: 45,
+        speed: rand(2.2, 3.1),
+        color: colors[Math.floor(rand(0, colors.length))],
+        state: "queue"
+    };
+}
+
+function desiredQueueLength() {
+    return clamp(Math.floor((W - CAR_STOP_X) / CAR_SPACING), 3, 6);
+}
+
+function rebuildCarLine() {
+    if (game.screen !== "base") return;
+
+    const keep = cars.filter(c => c.state !== "leaving");
+    cars.length = 0;
+
+    const count = desiredQueueLength();
+
+    for (let i = 0; i < count; i++) {
+        const oldCar = keep[i];
+        const targetX = CAR_STOP_X + i * CAR_SPACING;
+
+        if (oldCar) {
+            oldCar.x = targetX;
+            oldCar.targetX = targetX;
+            oldCar.y = H - 75;
+            oldCar.state = "queue";
+            cars.push(oldCar);
+        } else {
+            cars.push(createCar(targetX));
+        }
+    }
+}
+
+function fillCarLine() {
+    const queued = cars
+        .filter(c => c.state !== "leaving")
+        .sort((a, b) => a.x - b.x);
+
+    const count = desiredQueueLength();
+
+    while (queued.length < count) {
+        const index = queued.length;
+        const targetX = CAR_STOP_X + index * CAR_SPACING;
+        const c = createCar(targetX);
+        c.x = targetX;
+        c.targetX = targetX;
+
+        cars.push(c);
+        queued.push(c);
+    }
+}
 
 function spawnZombie() {
-    let side = Math.floor(rand(0, 4));
+    const side = Math.floor(rand(0, 4));
     let x;
     let y;
 
@@ -348,22 +417,13 @@ function spawnZombie() {
     });
 }
 
-for (let i = 0; i < 11; i++) spawnZombie();
+function resetForestZombies() {
+    zombies.length = 0;
+    nets.length = 0;
 
-function spawnCar() {
-    const colors = ["#ef476f", "#118ab2", "#ffd166", "#06d6a0", "#9b5de5"];
-
-    cars.push({
-        x: W + 140,
-        y: H - 75,
-        w: rand(92, 122),
-        h: 45,
-        speed: rand(1.2, 1.8),
-        color: colors[Math.floor(rand(0, colors.length))],
-        state: "queue",
-        bought: false,
-        bounce: rand(0, 10)
-    });
+    for (let i = 0; i < MAX_FOREST_ZOMBIES; i++) {
+        spawnZombie();
+    }
 }
 
 function addParticle(x, y, color, count = 8, power = 2) {
@@ -415,13 +475,17 @@ function updateTransition() {
             game.screen = game.transition.to;
 
             if (game.screen === "forest") {
+                resetForestZombies();
                 player.x = 70;
                 player.y = H / 2;
                 addParticle(player.x, player.y, "#b7ff65", 24, 3);
             } else {
+                zombies.length = 0;
+                nets.length = 0;
                 player.x = W - 75;
                 player.y = H / 2;
                 addParticle(player.x, player.y, "#ffe66d", 24, 3);
+                rebuildCarLine();
             }
 
             game.transition.phase = "in";
@@ -516,10 +580,12 @@ function updatePlayer() {
 
     if (game.screen === "base") {
         if (player.x > W - 32) startTransition("forest");
+
         player.x = clamp(player.x, 35, W - 30);
         player.y = clamp(player.y, 45, H - 135);
     } else {
         if (player.x < 32) startTransition("base");
+
         player.x = clamp(player.x, 30, W - 35);
         player.y = clamp(player.y, 45, H - 140);
     }
@@ -602,6 +668,7 @@ function updateZombies() {
         z.wander--;
 
         const d = dist(z, player);
+
         if (d < 170) {
             z.scared = 60;
             z.angle = angleTo(player, z);
@@ -627,6 +694,7 @@ function updateZombies() {
 
         if (z.scared > 0) {
             z.scared--;
+
             if (Math.random() < 0.05) {
                 addParticle(z.x, z.y, "#c4f06a", 2, 0.9);
             }
@@ -705,23 +773,7 @@ function updateFactory() {
 function updateCars() {
     if (game.screen !== "base") return;
 
-    world.carTimer--;
-
-    const activeCars = cars
-        .filter(c => c.state !== "leaving")
-        .sort((a, b) => a.x - b.x);
-
-    const rightMostActiveCar = activeCars.length
-        ? Math.max(...activeCars.map(c => c.x))
-        : -9999;
-
-    if (world.carTimer <= 0 && rightMostActiveCar < W - 160) {
-        spawnCar();
-        world.carTimer = rand(90, 150);
-    }
-
-    const stopX = 225;
-    const spacing = 145;
+    fillCarLine();
 
     const queueCars = cars
         .filter(c => c.state !== "leaving")
@@ -729,19 +781,17 @@ function updateCars() {
 
     for (let i = 0; i < queueCars.length; i++) {
         const c = queueCars[i];
-        const targetX = stopX + i * spacing;
+        c.targetX = CAR_STOP_X + i * CAR_SPACING;
 
-        c.bounce += 0.15;
-
-        if (c.x > targetX) {
-            c.x -= c.speed;
-            if (c.x < targetX) c.x = targetX;
+        if (Math.abs(c.x - c.targetX) > 1) {
+            c.x += (c.targetX - c.x) * 0.08;
         } else {
-            c.x = targetX;
+            c.x = c.targetX;
         }
 
-        if (i === 0 && c.x === stopX && world.juice > 0) {
-            c.bought = true;
+        c.y = H - 75;
+
+        if (i === 0 && c.x === CAR_STOP_X && world.juice > 0) {
             c.state = "leaving";
             world.juice--;
 
@@ -755,11 +805,11 @@ function updateCars() {
 
     for (let i = cars.length - 1; i >= 0; i--) {
         const c = cars[i];
+
         if (c.state === "leaving") {
-            c.bounce += 0.15;
             c.x -= c.speed * 2.6;
 
-            if (c.x < -200) {
+            if (c.x < -220) {
                 cars.splice(i, 1);
             }
         }
@@ -769,6 +819,7 @@ function updateCars() {
 function updateParticles() {
     for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
+
         p.x += p.vx;
         p.y += p.vy;
         p.vx *= 0.94;
@@ -784,22 +835,13 @@ function updateParticles() {
 function updateFloatingTexts() {
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
         const t = floatingTexts[i];
+
         t.y += t.vy;
         t.life--;
 
         if (t.life <= 0) {
             floatingTexts.splice(i, 1);
         }
-    }
-}
-
-function updateSpawning() {
-    if (game.screen !== "forest") return;
-
-    world.spawnTimer--;
-    if (world.spawnTimer <= 0 && zombies.length < 15 + world.totalCaught * 0.05) {
-        spawnZombie();
-        world.spawnTimer = rand(45, 105);
     }
 }
 
@@ -858,7 +900,6 @@ function drawBaseHills() {
 }
 
 function drawBaseGrassTexture() {
-    // subtle stripes
     for (let y = 70; y < H - 135; y += 18) {
         ctx.strokeStyle = y % 36 === 0 ? "rgba(70,120,50,0.16)" : "rgba(180,255,160,0.06)";
         ctx.lineWidth = 2;
@@ -868,7 +909,6 @@ function drawBaseGrassTexture() {
         ctx.stroke();
     }
 
-    // tufts
     for (const g of grassTufts) {
         ctx.save();
         ctx.translate(g.x, g.y);
@@ -923,12 +963,14 @@ function drawRoad() {
 }
 
 function drawBaseDecor() {
-    for (const t of baseTrees) drawTree(t, false);
+    for (const t of baseTrees) {
+        drawTree(t, false);
+    }
 }
 
 function drawPortalSign() {
     ctx.save();
-    ctx.translate(W - 115, H / 2 - 80);
+    ctx.translate(W - 115, H / 2 - 145);
 
     ctx.fillStyle = "#7b4f2e";
     ctx.strokeStyle = "#2f241b";
@@ -969,7 +1011,6 @@ function drawForestWorld() {
     for (const r of forestRocks) drawRock(r, true);
     for (const t of forestTrees) drawTree(t, true);
 
-    drawForestFog();
     drawFireflies();
     drawForestExitSign();
     drawVignette();
@@ -989,6 +1030,7 @@ function drawMoon() {
 
 function drawForestBackTrees() {
     ctx.fillStyle = "#0f1e1a";
+
     for (let i = 0; i < 5; i++) {
         const x = i * 250 - 30;
         const h = 190 + Math.sin(i * 5) * 50;
@@ -1021,35 +1063,24 @@ function drawForestBush(b) {
     ctx.restore();
 }
 
-function drawForestFog() {
-    ctx.save();
-    for (const f of forestFog) {
-        f.x += f.speed;
-        if (f.x > W + 160) f.x = -160;
-
-        ctx.fillStyle = "rgba(210, 230, 215, 0.09)";
-        ctx.beginPath();
-        ctx.ellipse(f.x, f.y, 120 * f.s, 25 * f.s, 0, 0, Math.PI * 2);
-        ctx.fill();
-    }
-    ctx.restore();
-}
-
 function drawFireflies() {
     ctx.save();
+
     for (const f of fireflies) {
         const alpha = 0.35 + Math.sin(f.glow) * 0.25;
         ctx.fillStyle = `rgba(220, 255, 120, ${alpha})`;
+
         ctx.beginPath();
         ctx.arc(f.x, f.y, 2.5, 0, Math.PI * 2);
         ctx.fill();
     }
+
     ctx.restore();
 }
 
 function drawForestExitSign() {
     ctx.save();
-    ctx.translate(82, H / 2 - 80);
+    ctx.translate(82, H / 2 - 130);
 
     ctx.fillStyle = "#5e3d27";
     ctx.strokeStyle = "#151a16";
@@ -1061,7 +1092,6 @@ function drawForestExitSign() {
 
     ctx.fillStyle = "#24332a";
     ctx.strokeStyle = "#d8f3dc";
-
     roundedRect(-58, -20, 116, 50, 12);
     ctx.fill();
     ctx.stroke();
@@ -1127,7 +1157,6 @@ function drawTree(t, forest = false) {
     ctx.translate(t.x, t.y);
     ctx.scale(t.s, t.s);
 
-    // trunk
     ctx.fillStyle = forest ? "#5a3b24" : "#6d4526";
     ctx.strokeStyle = "#101820";
     ctx.lineWidth = 4;
@@ -1136,7 +1165,6 @@ function drawTree(t, forest = false) {
     ctx.fill();
     ctx.stroke();
 
-    // canopy
     ctx.save();
     ctx.translate(sway, 0);
 
@@ -1144,7 +1172,6 @@ function drawTree(t, forest = false) {
     const midLeaf = forest ? "#23663f" : "#2f7c47";
     const lightLeaf = forest ? "#2c7a4d" : "#3c9357";
 
-    // back layer
     ctx.fillStyle = darkLeaf;
     ctx.strokeStyle = "#101820";
     ctx.lineWidth = 4;
@@ -1157,8 +1184,8 @@ function drawTree(t, forest = false) {
     ctx.fill();
     ctx.stroke();
 
-    // middle chunks
     ctx.fillStyle = midLeaf;
+
     for (const p of [
         [-22, 3, 10],
         [-8, -15, 12],
@@ -1171,8 +1198,8 @@ function drawTree(t, forest = false) {
         ctx.fill();
     }
 
-    // highlight chunks
     ctx.fillStyle = lightLeaf;
+
     for (const p of [
         [-10, -16, 6],
         [7, -12, 5],
@@ -1219,53 +1246,73 @@ function drawFactory() {
     ctx.save();
     ctx.translate(factory.x, factory.y);
 
-    ctx.fillStyle = "#29313a";
     ctx.strokeStyle = "#101820";
     ctx.lineWidth = 6;
 
-    roundedRect(-factory.w / 2, -factory.h / 2, factory.w, factory.h, 22);
+    ctx.fillStyle = "#7b4f2e";
+    roundedRect(-factory.w / 2, -factory.h / 2 + 18, factory.w, factory.h - 18, 18);
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = "#ff595e";
+    for (let y = -factory.h / 2 + 35; y < factory.h / 2 - 5; y += 28) {
+        ctx.fillStyle = y % 56 === 0 ? "#8b5a32" : "#6f4527";
+        roundedRect(-factory.w / 2 + 10, y, factory.w - 20, 18, 8);
+        ctx.fill();
+        ctx.stroke();
+    }
 
+    ctx.fillStyle = "#4a2d1c";
     ctx.beginPath();
-    ctx.moveTo(-factory.w / 2 - 12, -factory.h / 2 + 25);
+    ctx.moveTo(-factory.w / 2 - 20, -factory.h / 2 + 35);
     ctx.lineTo(0, -factory.h / 2 - 55);
-    ctx.lineTo(factory.w / 2 + 12, -factory.h / 2 + 25);
+    ctx.lineTo(factory.w / 2 + 20, -factory.h / 2 + 35);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = "#ffd166";
-    roundedRect(-45, 5, 90, 90, 16);
+    ctx.fillStyle = "#9c6644";
+    ctx.beginPath();
+    ctx.moveTo(-factory.w / 2 - 7, -factory.h / 2 + 27);
+    ctx.lineTo(0, -factory.h / 2 - 35);
+    ctx.lineTo(factory.w / 2 + 7, -factory.h / 2 + 27);
+    ctx.closePath();
     ctx.fill();
-    ctx.stroke();
 
-    ctx.fillStyle = "#88ff66";
-    roundedRect(-23, 30, 46, 65, 12);
+    ctx.fillStyle = "#ffd166";
+    roundedRect(-53, -42, 106, 42, 12);
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = "#1b2b24";
-    ctx.font = "900 24px Trebuchet MS";
+    ctx.font = "900 22px Trebuchet MS";
     ctx.textAlign = "center";
-    ctx.fillText("JUICE", 0, -35);
+    ctx.fillText("JUICE", 0, -15);
 
-    drawChimney();
+    ctx.fillStyle = "#88ff66";
+    ctx.strokeStyle = "#101820";
+    ctx.lineWidth = 5;
+    roundedRect(-26, 18, 52, 72, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(255,255,255,0.28)";
+    roundedRect(-15, 28, 10, 50, 6);
+    ctx.fill();
+
+    drawWoodChimney();
 
     ctx.restore();
 }
 
-function drawChimney() {
+function drawWoodChimney() {
     ctx.save();
-    ctx.translate(55, -115);
+    ctx.translate(58, -108);
 
-    ctx.fillStyle = "#5b6570";
+    ctx.fillStyle = "#5b3824";
     ctx.strokeStyle = "#101820";
     ctx.lineWidth = 5;
 
-    roundedRect(-15, 0, 30, 75, 8);
+    roundedRect(-14, 0, 28, 65, 8);
     ctx.fill();
     ctx.stroke();
 
@@ -1289,7 +1336,7 @@ function drawDriveThruWindow() {
     if (game.screen !== "base") return;
 
     ctx.save();
-    ctx.translate(factory.x + 120, H - 88);
+    ctx.translate(factory.x + 122, H - 88);
 
     ctx.fillStyle = "#ffd166";
     ctx.strokeStyle = "#101820";
@@ -1694,6 +1741,7 @@ function drawNet(n) {
 
     for (let i = 0; i < 4; i++) {
         ctx.rotate(Math.PI / 4);
+
         ctx.beginPath();
         ctx.moveTo(-n.r, 0);
         ctx.lineTo(n.r, 0);
@@ -1705,9 +1753,7 @@ function drawNet(n) {
 
 function drawCar(c) {
     ctx.save();
-
-    const bounce = Math.sin(c.bounce) * 2;
-    ctx.translate(c.x, c.y + bounce);
+    ctx.translate(c.x, c.y);
 
     ctx.fillStyle = c.color;
     ctx.strokeStyle = "#101820";
@@ -1726,22 +1772,27 @@ function drawCar(c) {
     roundedRect(-c.w / 8, -c.h / 2 - 13, c.w * 0.22, 18, 6);
     ctx.fill();
 
+    const tireR = 20;
+    const hubR = 8;
+
     ctx.fillStyle = "#101820";
+
     ctx.beginPath();
-    ctx.arc(-c.w / 3, c.h / 2, 10, 0, Math.PI * 2);
+    ctx.arc(-c.w / 3, c.h / 2 + 2, tireR, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.beginPath();
-    ctx.arc(c.w / 3, c.h / 2, 10, 0, Math.PI * 2);
+    ctx.arc(c.w / 3, c.h / 2 + 2, tireR, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = "#eaf4f4";
+
     ctx.beginPath();
-    ctx.arc(-c.w / 3, c.h / 2, 4, 0, Math.PI * 2);
+    ctx.arc(-c.w / 3, c.h / 2 + 2, hubR, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.beginPath();
-    ctx.arc(c.w / 3, c.h / 2, 4, 0, Math.PI * 2);
+    ctx.arc(c.w / 3, c.h / 2 + 2, hubR, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
@@ -1750,6 +1801,7 @@ function drawCar(c) {
 function drawParticles() {
     for (const p of particles) {
         const alpha = p.life / p.maxLife;
+
         ctx.globalAlpha = alpha;
         ctx.fillStyle = p.color;
 
@@ -1779,13 +1831,16 @@ function drawFloatingTexts() {
 }
 
 function drawCarryZombies() {
-    for (const z of player.carry) drawZombie(z);
+    for (const z of player.carry) {
+        drawZombie(z);
+    }
 }
 
 function drawAimLine() {
     if (game.screen !== "forest") return;
 
     ctx.save();
+
     ctx.strokeStyle = "rgba(255,255,255,0.35)";
     ctx.lineWidth = 4;
     ctx.setLineDash([10, 10]);
@@ -1818,18 +1873,25 @@ function drawUI() {
     const area = game.screen === "base" ? "Juice Base" : "Zombie Forest";
 
     if (game.screen === "forest") {
+        shop.style.display = "none";
+        levelsUI.innerHTML = "";
+
         ui.innerHTML = `
             📍 Area: ${area}<br>
             🎒 Carrying: ${player.carry.length}/${player.maxCarry}
         `;
     } else {
+        shop.style.display = "flex";
+
         ui.innerHTML = `
             📍 Area: ${area}<br>
             💵 Money: $${world.money}<br>
             🧃 Juice: ${world.juice}<br>
             🧟 Zombies in Factory: ${world.caught}<br>
-            🎒 Carrying: ${player.carry.length}/${player.maxCarry}<br>
-            <br>
+            🎒 Carrying: ${player.carry.length}/${player.maxCarry}
+        `;
+
+        levelsUI.innerHTML = `
             Net Lv.${world.upgrades.net} - $${netCost}<br>
             Tank Lv.${world.upgrades.tank} - $${tankCost}<br>
             Factory Lv.${world.upgrades.factory} - $${factoryCost}
@@ -1846,7 +1908,6 @@ function update() {
     updateCars();
     updateParticles();
     updateFloatingTexts();
-    updateSpawning();
     updateFireflies();
 }
 
@@ -1881,6 +1942,10 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
+generateDecor();
+resetForestZombies();
+zombies.length = 0;
+rebuildCarLine();
 loop();
 </script>
 </body>
