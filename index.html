@@ -904,6 +904,529 @@
         inset 0 2px 0 rgba(255,255,255,0.16);
     }
 
+
+    /* Image-inspired victory / next-opponent card */
+    #victoryCard {
+      position: relative;
+      width: min(1180px, 94vw);
+      max-height: 92vh;
+      overflow: auto;
+      padding: clamp(18px, 2.8vw, 34px);
+      color: #f5e5bf;
+      text-align: center;
+      pointer-events: auto;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(239, 196, 112, 0.16), transparent 34%),
+        radial-gradient(circle at 16% 50%, rgba(119, 19, 8, 0.18), transparent 28%),
+        repeating-linear-gradient(45deg, rgba(255, 229, 166, 0.035) 0 3px, transparent 3px 11px),
+        linear-gradient(135deg, rgba(14, 9, 6, 0.98), rgba(36, 22, 12, 0.98) 48%, rgba(8, 5, 4, 0.98));
+      border: 7px ridge rgba(195, 145, 67, 0.9);
+      border-radius: 8px 26px 8px 26px;
+      box-shadow:
+        0 0 0 4px rgba(21, 9, 3, 0.96),
+        0 0 0 10px rgba(132, 84, 29, 0.42),
+        0 24px 70px rgba(0, 0, 0, 0.84),
+        inset 0 5px 0 rgba(255, 231, 173, 0.12),
+        inset 0 -22px 38px rgba(0, 0, 0, 0.4);
+    }
+
+    #victoryCard::before,
+    #victoryCard::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      border: 1px solid rgba(255, 222, 145, 0.18);
+    }
+
+    #victoryCard::before {
+      inset: 14px;
+    }
+
+    #victoryCard::after {
+      inset: 24px;
+      border-color: rgba(255, 222, 145, 0.09);
+    }
+
+    #victoryHeader {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    #victoryLaurels {
+      position: absolute;
+      left: 50%;
+      top: 6px;
+      transform: translateX(-50%);
+      color: rgba(255, 216, 111, 0.26);
+      font-size: clamp(62px, 10vw, 116px);
+      line-height: 1;
+      pointer-events: none;
+      text-shadow: 0 4px 18px rgba(0,0,0,0.75);
+    }
+
+    #victoryTitle {
+      position: relative;
+      z-index: 1;
+      font-size: clamp(58px, 10vw, 116px);
+      line-height: 0.86;
+      font-weight: 900;
+      letter-spacing: clamp(4px, 1vw, 12px);
+      text-transform: uppercase;
+      color: #e9c878;
+      text-shadow:
+        0 3px 0 #4a250b,
+        0 8px 20px rgba(0,0,0,0.9),
+        0 0 18px rgba(255, 216, 111, 0.18);
+    }
+
+    #victorySubtitle {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 10px;
+      color: #d7d0c5;
+      font-size: clamp(17px, 2.8vw, 34px);
+      font-weight: 900;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      text-shadow: 0 3px 8px #000;
+    }
+
+    #victorySubtitle::before,
+    #victorySubtitle::after {
+      content: "";
+      width: min(120px, 16vw);
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(226, 185, 94, 0.76), transparent);
+      box-shadow: 0 0 8px rgba(226, 185, 94, 0.16);
+    }
+
+    #victoryMainFrame {
+      position: relative;
+      z-index: 1;
+      margin: 8px auto 18px;
+      padding: 48px clamp(14px, 2.2vw, 26px) 22px;
+      border: 4px ridge rgba(195, 145, 67, 0.85);
+      background:
+        radial-gradient(circle at 24% 50%, rgba(171, 87, 28, 0.18), transparent 32%),
+        linear-gradient(135deg, rgba(8, 7, 6, 0.86), rgba(27, 20, 13, 0.9));
+      box-shadow:
+        inset 0 0 42px rgba(0, 0, 0, 0.72),
+        0 12px 26px rgba(0, 0, 0, 0.42);
+    }
+
+    #victoryRibbon {
+      position: absolute;
+      left: 50%;
+      top: -24px;
+      transform: translateX(-50%);
+      min-width: min(420px, 72vw);
+      padding: 12px 34px;
+      border: 4px ridge rgba(195, 145, 67, 0.92);
+      background:
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0 3px, transparent 3px 9px),
+        linear-gradient(#66190d, #2a0804);
+      color: #f0d48b;
+      font-size: clamp(18px, 3vw, 34px);
+      font-weight: 900;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-shadow: 0 3px 8px #000;
+      box-shadow:
+        0 0 0 3px rgba(18, 8, 3, 0.94),
+        0 9px 20px rgba(0,0,0,0.52),
+        inset 0 4px 0 rgba(255,255,255,0.08);
+    }
+
+    #victoryOpponentPanel {
+      display: grid;
+      grid-template-columns: minmax(220px, 0.9fr) minmax(320px, 1.5fr);
+      gap: clamp(18px, 3vw, 38px);
+      align-items: center;
+      text-align: left;
+    }
+
+    #victoryPortraitWrap {
+      position: relative;
+      min-height: 290px;
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      overflow: hidden;
+      border-right: 1px solid rgba(238, 190, 99, 0.12);
+    }
+
+    #victoryPortraitGlow {
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      bottom: 18px;
+      background: radial-gradient(circle, rgba(221, 155, 68, 0.22), rgba(82, 36, 13, 0.06) 62%, transparent 70%);
+      filter: blur(2px);
+    }
+
+    #victoryHelmet {
+      position: absolute;
+      bottom: 106px;
+      width: 142px;
+      height: 146px;
+      transform: rotate(-3deg);
+      filter: drop-shadow(0 12px 16px rgba(0,0,0,0.65));
+    }
+
+    .helmetPlume {
+      position: absolute;
+      left: 44px;
+      top: -55px;
+      width: 48px;
+      height: 86px;
+      border-radius: 50% 50% 16px 16px;
+      background:
+        repeating-linear-gradient(90deg, rgba(80, 13, 5, 0.96) 0 6px, rgba(160, 60, 22, 0.9) 6px 11px),
+        linear-gradient(#9e2b13, #461005);
+      transform: rotate(-5deg);
+      box-shadow: inset 0 -18px 16px rgba(0,0,0,0.3);
+    }
+
+    .helmetDome {
+      position: absolute;
+      left: 12px;
+      top: 0;
+      width: 118px;
+      height: 84px;
+      border-radius: 60px 60px 18px 18px;
+      background:
+        radial-gradient(circle at 38% 20%, rgba(255,255,255,0.28), transparent 20%),
+        linear-gradient(135deg, #8d7e63, #3a342d 52%, #15110e);
+      border: 4px ridge rgba(216, 174, 90, 0.7);
+    }
+
+    .helmetMask {
+      position: absolute;
+      left: 28px;
+      top: 48px;
+      width: 88px;
+      height: 98px;
+      border-radius: 16px 16px 38px 38px;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0 4px, transparent 4px 12px),
+        linear-gradient(135deg, #7f735f, #29231d 58%, #100c09);
+      border: 4px ridge rgba(204, 164, 82, 0.72);
+      clip-path: polygon(7% 0, 93% 0, 82% 78%, 50% 100%, 18% 78%);
+    }
+
+    .helmetEye {
+      position: absolute;
+      top: 75px;
+      width: 22px;
+      height: 10px;
+      border-radius: 50%;
+      background: #060302;
+      box-shadow: 0 0 9px rgba(255, 123, 43, 0.22);
+      z-index: 2;
+    }
+
+    .helmetEye.left { left: 42px; }
+    .helmetEye.right { right: 42px; }
+
+    #victoryShoulders {
+      position: absolute;
+      bottom: -8px;
+      width: 268px;
+      height: 170px;
+      border-radius: 120px 120px 18px 18px;
+      background:
+        radial-gradient(circle at 33% 24%, rgba(255, 216, 160, 0.22), transparent 16%),
+        radial-gradient(circle at 70% 38%, rgba(92, 16, 8, 0.45), transparent 12%),
+        linear-gradient(135deg, #9b673f, #5b2e17 45%, #241008 100%);
+      border-top: 4px ridge rgba(194, 141, 75, 0.68);
+      box-shadow:
+        inset 0 0 30px rgba(0,0,0,0.45),
+        0 -4px 0 rgba(31, 15, 8, 0.7);
+    }
+
+    #victoryStats {
+      min-width: 0;
+      padding-right: clamp(4px, 1.4vw, 24px);
+    }
+
+    #victoryOpponentName {
+      margin-bottom: 4px;
+      color: #f4ede1;
+      font-size: clamp(32px, 5.6vw, 64px);
+      line-height: 0.98;
+      font-weight: 900;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-shadow:
+        0 3px 0 rgba(62, 34, 14, 0.92),
+        0 8px 18px rgba(0,0,0,0.78);
+    }
+
+    #victoryDefeatedName {
+      min-height: 20px;
+      margin-bottom: 22px;
+      color: rgba(246, 218, 165, 0.72);
+      font-size: clamp(11px, 1.2vw, 14px);
+      font-weight: 900;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 4px #000;
+    }
+
+    .victoryStatRow {
+      display: grid;
+      grid-template-columns: 74px minmax(170px, 1fr) 86px;
+      gap: 14px;
+      align-items: center;
+      margin: 18px 0;
+    }
+
+    .victoryStatIcon {
+      width: 58px;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      color: #cf321d;
+      font-size: 32px;
+      background:
+        radial-gradient(circle at 35% 25%, rgba(255,255,255,0.16), transparent 24%),
+        linear-gradient(135deg, rgba(43, 22, 10, 0.98), rgba(10, 6, 4, 0.98));
+      border: 3px ridge rgba(188, 137, 66, 0.84);
+      box-shadow: inset 0 0 13px rgba(0,0,0,0.62), 0 5px 13px rgba(0,0,0,0.42);
+      text-shadow: 0 2px 5px #000;
+    }
+
+    .victoryStatIcon.crossed {
+      color: #d6d1c6;
+      font-size: 31px;
+    }
+
+    .victoryStatLabel {
+      margin-bottom: 7px;
+      color: #d7c3a0;
+      font-size: clamp(13px, 1.5vw, 20px);
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 4px #000;
+    }
+
+    .victoryBarOuter {
+      height: 25px;
+      border: 4px ridge rgba(176, 129, 66, 0.76);
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 5px, transparent 5px 12px),
+        linear-gradient(#100b08, #2a1a10);
+      box-shadow:
+        inset 0 4px 10px rgba(0,0,0,0.85),
+        0 0 0 2px rgba(11, 6, 3, 0.84);
+      overflow: hidden;
+    }
+
+    .victoryBarInner {
+      height: 100%;
+      width: 50%;
+      transition: width 0.25s ease;
+      box-shadow:
+        inset 0 5px 8px rgba(255,255,255,0.16),
+        inset 0 -6px 10px rgba(0,0,0,0.28);
+    }
+
+    .victoryBarInner.health {
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.11) 0 5px, transparent 5px 12px),
+        linear-gradient(90deg, #5a0808, #b01a18, #e0462c);
+    }
+
+    .victoryBarInner.damage {
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.12) 0 5px, transparent 5px 12px),
+        linear-gradient(90deg, #75330d, #c7771f, #f0b35a);
+    }
+
+    .victoryStatValue {
+      color: #e9e0d1;
+      font-size: clamp(34px, 5vw, 58px);
+      font-weight: 900;
+      text-align: right;
+      text-shadow:
+        0 3px 0 rgba(48, 25, 11, 0.86),
+        0 7px 14px rgba(0,0,0,0.72);
+    }
+
+    #victoryRewardRow {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(240px, 0.82fr) minmax(320px, 1.18fr);
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .victoryRewardBox {
+      min-height: 118px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 14px;
+      border: 4px ridge rgba(195, 145, 67, 0.82);
+      background:
+        radial-gradient(circle at 30% 18%, rgba(255, 219, 139, 0.12), transparent 42%),
+        linear-gradient(135deg, rgba(20, 14, 9, 0.92), rgba(8, 5, 4, 0.96));
+      box-shadow:
+        inset 0 0 26px rgba(0,0,0,0.58),
+        0 8px 18px rgba(0,0,0,0.36);
+    }
+
+    .victoryRewardBox.wide {
+      justify-content: flex-start;
+      padding-left: clamp(18px, 3vw, 38px);
+    }
+
+    .victoryRewardLabel {
+      color: #d7c3a0;
+      font-size: clamp(13px, 1.5vw, 19px);
+      font-weight: 900;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 4px #000;
+    }
+
+    .victoryRewardValue {
+      color: #f0e2d0;
+      font-size: clamp(42px, 6vw, 68px);
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-shadow:
+        0 3px 0 rgba(48, 25, 11, 0.86),
+        0 8px 16px rgba(0,0,0,0.72);
+    }
+
+    .coinStack {
+      position: relative;
+      width: 124px;
+      height: 78px;
+      flex: 0 0 auto;
+    }
+
+    .coinStack span {
+      position: absolute;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 34% 28%, #ffe5a0, #c48b2e 54%, #60370c 100%);
+      border: 3px ridge rgba(255, 216, 111, 0.82);
+      box-shadow: inset 0 0 12px rgba(99, 55, 13, 0.48), 0 8px 12px rgba(0,0,0,0.42);
+    }
+
+    .coinStack span:nth-child(1) { left: 6px; bottom: 0; }
+    .coinStack span:nth-child(2) { left: 38px; bottom: 14px; }
+    .coinStack span:nth-child(3) { right: 5px; bottom: 1px; }
+
+    .victoryMedallion {
+      width: 82px;
+      aspect-ratio: 1 / 1;
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      color: #f0c76f;
+      font-size: 42px;
+      border: 4px ridge rgba(205, 158, 77, 0.88);
+      background:
+        radial-gradient(circle at 35% 25%, rgba(255,255,255,0.16), transparent 24%),
+        linear-gradient(135deg, rgba(72, 41, 15, 0.96), rgba(13, 7, 4, 0.98));
+      box-shadow:
+        inset 0 0 18px rgba(255, 199, 90, 0.1),
+        0 8px 15px rgba(0,0,0,0.4);
+      text-shadow: 0 3px 8px #000;
+    }
+
+    .victoryProgressBlock {
+      flex: 1;
+      min-width: 0;
+      text-align: left;
+    }
+
+    .victoryProgressText {
+      margin: 6px 0 10px;
+      color: #f1d59c;
+      font-size: clamp(16px, 2vw, 25px);
+      font-weight: 900;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      text-shadow: 0 3px 8px #000;
+    }
+
+    .victoryProgressOuter {
+      height: 20px;
+      max-width: 360px;
+      border: 3px ridge rgba(176, 129, 66, 0.76);
+      background: linear-gradient(#0f0905, #21130c);
+      box-shadow: inset 0 4px 10px rgba(0,0,0,0.8), 0 0 0 2px rgba(11,6,3,0.8);
+      overflow: hidden;
+    }
+
+    .victoryProgressFill {
+      height: 100%;
+      width: 0%;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.12) 0 5px, transparent 5px 12px),
+        linear-gradient(90deg, #a6530e, #e58d26, #ffd064);
+      transition: width 0.25s ease;
+      box-shadow: inset 0 5px 8px rgba(255,255,255,0.16), inset 0 -6px 10px rgba(0,0,0,0.25);
+    }
+
+    #victoryButtonRow {
+      position: relative;
+      z-index: 1;
+    }
+
+    #nextOpponentBtn {
+      min-width: min(420px, 72vw);
+      font-size: clamp(22px, 3.4vw, 39px);
+      letter-spacing: 3px;
+      background:
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.055) 0 3px, transparent 3px 9px),
+        linear-gradient(#8e2d17, #3b0d06);
+    }
+
+    @media (max-width: 860px) {
+      #victoryOpponentPanel,
+      #victoryRewardRow {
+        grid-template-columns: 1fr;
+      }
+
+      #victoryPortraitWrap {
+        min-height: 230px;
+        border-right: 0;
+        border-bottom: 1px solid rgba(238, 190, 99, 0.12);
+      }
+
+      .victoryStatRow {
+        grid-template-columns: 58px minmax(140px, 1fr) 72px;
+        gap: 10px;
+      }
+
+      .victoryStatIcon {
+        width: 48px;
+        font-size: 27px;
+      }
+    }
+
     @media (max-width: 1020px) {
       #bracketLayout {
         grid-template-columns: 1fr;
@@ -980,49 +1503,85 @@
 
 
     <div id="messagePanel" aria-hidden="true">
-      <div id="bracketCard">
-        <div id="bracketHeader">
-          <div class="bracketTopOrnament">Tournament Bracket</div>
-          <div id="message"></div>
-          <div id="subMessage"></div>
+      <div id="victoryCard">
+        <div id="victoryHeader">
+          <div id="victoryLaurels" aria-hidden="true">❦</div>
+          <div id="victoryTitle">Victory</div>
+          <div id="victorySubtitle">Opponent Defeated</div>
         </div>
 
-        <div id="bracketMetaRow">
-          <div class="bracketMeta"><span>Bracket</span><strong id="bracketTournamentText">I</strong></div>
-          <div class="bracketMeta"><span>Stage</span><strong id="bracketStageText">Quarterfinal</strong></div>
-          <div class="bracketMeta"><span>Reward</span><strong id="bracketRewardText">+0 BloodCoins</strong></div>
-          <div class="bracketMeta"><span>Next Opponent</span><strong id="bracketNextOpponentText">Awaiting challenger</strong></div>
-        </div>
-
-        <div id="bracketLayout">
-          <div class="bracketColumn">
-            <div class="bracketColumnTitle">Quarterfinals</div>
-            <div id="quarterfinalMatches"></div>
+        <div id="victoryMainFrame">
+          <div id="victoryRibbon">
+            <span id="victoryRibbonText">Next Opponent</span>
           </div>
 
-          <div class="bracketColumn">
-            <div class="bracketColumnTitle">Semifinals</div>
-            <div id="semifinalMatches"></div>
-          </div>
-
-          <div class="bracketColumn">
-            <div class="bracketColumnTitle">Final</div>
-            <div id="finalMatches"></div>
-          </div>
-
-          <div class="bracketColumn" id="championColumn">
-            <div class="bracketColumnTitle">Champion</div>
-            <div id="championBox">
-              <div id="championSeal">
-                <div id="championSealInner">⚔</div>
+          <div id="victoryOpponentPanel">
+            <div id="victoryPortraitWrap" aria-hidden="true">
+              <div id="victoryPortraitGlow"></div>
+              <div id="victoryHelmet">
+                <div class="helmetPlume"></div>
+                <div class="helmetDome"></div>
+                <div class="helmetMask"></div>
+                <div class="helmetEye left"></div>
+                <div class="helmetEye right"></div>
               </div>
-              <div id="championNameText">Undecided</div>
+              <div id="victoryShoulders"></div>
+            </div>
+
+            <div id="victoryStats">
+              <div id="victoryOpponentName">Awaiting Challenger</div>
+              <div id="victoryDefeatedName">Opponent defeated</div>
+
+              <div class="victoryStatRow">
+                <div class="victoryStatIcon">♥</div>
+                <div class="victoryStatInfo">
+                  <div class="victoryStatLabel">Health</div>
+                  <div class="victoryBarOuter">
+                    <div id="victoryHealthBar" class="victoryBarInner health"></div>
+                  </div>
+                </div>
+                <div id="victoryHealthValue" class="victoryStatValue">100</div>
+              </div>
+
+              <div class="victoryStatRow">
+                <div class="victoryStatIcon crossed">⚔</div>
+                <div class="victoryStatInfo">
+                  <div class="victoryStatLabel">Damage</div>
+                  <div class="victoryBarOuter">
+                    <div id="victoryDamageBar" class="victoryBarInner damage"></div>
+                  </div>
+                </div>
+                <div id="victoryDamageValue" class="victoryStatValue">17</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="victoryRewardRow">
+          <div class="victoryRewardBox">
+            <div class="coinStack" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </div>
+            <div>
+              <div class="victoryRewardLabel">Gold Earned</div>
+              <div id="victoryGoldEarned" class="victoryRewardValue">0</div>
+            </div>
+          </div>
+
+          <div class="victoryRewardBox wide">
+            <div class="victoryMedallion" aria-hidden="true">⚔</div>
+            <div class="victoryProgressBlock">
+              <div class="victoryRewardLabel">Tournament Progress</div>
+              <div id="victoryProgressText" class="victoryProgressText">Quarterfinal Cleared</div>
+              <div class="victoryProgressOuter">
+                <div id="victoryProgressFill" class="victoryProgressFill"></div>
+              </div>
             </div>
           </div>
         </div>
 
         <div id="victoryButtonRow">
-          <button id="nextOpponentBtn" class="victoryBtn">Next Opponent</button>
+          <button id="nextOpponentBtn" class="victoryBtn">Continue</button>
           <button id="restartBtn" class="victoryBtn secondary">Restart Tournament</button>
         </div>
       </div>
@@ -1123,7 +1682,7 @@
     const ENEMY_HIT_RADIUS = 1.898;
     const ENEMY_ATTACK_WALK_SPEED_MULTIPLIER = 0.62;
     const PLAYER_ATTACK_DURATION = 0.7488;
-    const PLAYER_ATTACK_TYPES = ["overhead", "sideRight", "sideLeft", "stab"];
+    const PLAYER_ATTACK_TYPES = ["sideRight", "sideLeft"];
     const FINISHER_SLOWMO_DURATION = 0.82;
     const FINISHER_SLOWMO_SCALE = 0.24;
 
@@ -1161,6 +1720,18 @@
     const finalMatches = document.getElementById("finalMatches");
     const championNameText = document.getElementById("championNameText");
     const damageFlash = document.getElementById("damageFlash");
+    const victoryTitle = document.getElementById("victoryTitle");
+    const victorySubtitle = document.getElementById("victorySubtitle");
+    const victoryRibbonText = document.getElementById("victoryRibbonText");
+    const victoryOpponentName = document.getElementById("victoryOpponentName");
+    const victoryDefeatedName = document.getElementById("victoryDefeatedName");
+    const victoryHealthBar = document.getElementById("victoryHealthBar");
+    const victoryDamageBar = document.getElementById("victoryDamageBar");
+    const victoryHealthValue = document.getElementById("victoryHealthValue");
+    const victoryDamageValue = document.getElementById("victoryDamageValue");
+    const victoryGoldEarned = document.getElementById("victoryGoldEarned");
+    const victoryProgressText = document.getElementById("victoryProgressText");
+    const victoryProgressFill = document.getElementById("victoryProgressFill");
 
     init();
     animate();
@@ -1357,17 +1928,56 @@
       championNameText.textContent = revealWins >= 3 ? state.champion : "Undecided";
     }
 
+    function getProjectedOpponentStats(round = tournamentRound) {
+      const projectedHP = ENEMY_BASE_HP + (round - 1) * ENEMY_HP_PER_ROUND;
+      const projectedDamageMultiplier = 1 + (round - 1) * ENEMY_DAMAGE_GROWTH;
+      const projectedDamageMin = ENEMY_CLUB_DAMAGE_MIN * projectedDamageMultiplier;
+      const projectedDamageMax = (ENEMY_CLUB_DAMAGE_MIN + ENEMY_CLUB_DAMAGE_BONUS) * projectedDamageMultiplier;
+
+      return {
+        hp: projectedHP,
+        damageMin: projectedDamageMin,
+        damageMax: projectedDamageMax
+      };
+    }
+
     function updateBracketMenu(hasVictory = false) {
+      const defeatedStageIndex = getBracketStageIndex();
+      const nextRound = hasVictory ? tournamentRound + 1 : tournamentRound;
+      const previewStats = getProjectedOpponentStats(nextRound);
+      const revealWins = hasVictory ? defeatedStageIndex + 1 : defeatedStageIndex;
       const state = ensureBracketState();
-      const revealWins = hasVictory ? getBracketStageIndex() + 1 : getBracketStageIndex();
-      renderQuarterfinalColumn(state, revealWins);
-      renderSemifinalColumn(state, revealWins);
-      renderFinalColumn(state, revealWins);
-      renderChampionColumn(state, revealWins);
-      bracketTournamentText.textContent = romanNumeral(state.cycle);
-      bracketStageText.textContent = getBracketStageName();
-      bracketRewardText.textContent = "+" + lastVictoryReward + " BloodCoins";
-      bracketNextOpponentText.textContent = hasVictory ? getNextOpponentPreview(tournamentRound, revealWins) : "Restart the tournament";
+
+      let previewName = currentEnemyName || "Awaiting Challenger";
+
+      if (hasVictory) {
+        previewName = defeatedStageIndex < 2
+          ? (state.playerOpponents[defeatedStageIndex + 1] || "Awaiting Challenger")
+          : "New Bracket Challenger";
+      }
+
+      victoryTitle.textContent = hasVictory ? "Victory" : "Defeat";
+      victorySubtitle.textContent = hasVictory ? "Opponent Defeated" : "Gladiator Defeated";
+      victoryRibbonText.textContent = hasVictory ? "Next Opponent" : "Arena Outcome";
+      victoryOpponentName.textContent = previewName;
+      victoryDefeatedName.textContent = hasVictory
+        ? currentEnemyName + " defeated"
+        : "The arena demands another attempt";
+      victoryGoldEarned.textContent = hasVictory ? lastVictoryReward : 0;
+
+      victoryHealthValue.textContent = Math.round(previewStats.hp);
+      victoryDamageValue.textContent = Math.round(previewStats.damageMax);
+
+      const healthPct = THREE.MathUtils.clamp(42 + (nextRound - 1) * 6, 42, 100);
+      const damagePct = THREE.MathUtils.clamp(35 + (nextRound - 1) * 5.5, 35, 100);
+      victoryHealthBar.style.width = healthPct + "%";
+      victoryDamageBar.style.width = damagePct + "%";
+
+      const progressPct = THREE.MathUtils.clamp((revealWins / 3) * 100, 0, 100);
+      victoryProgressFill.style.width = progressPct + "%";
+      victoryProgressText.textContent = hasVictory
+        ? getBracketStageName(tournamentRound) + " Cleared • Bracket " + romanNumeral(getBracketCycle())
+        : "Tournament Halted";
     }
 
     function getTournamentRankName(round = tournamentRound) {
@@ -2259,8 +2869,9 @@
 
       // Match the movement/camera convention used by this game: local right is negative X.
       // Sword/club stays on rightArmPivot; shield stays on leftArmPivot.
-      leftArmPivot.position.set(0.84, 2.48, 0);
-      rightArmPivot.position.set(-0.84, 2.48, 0);
+      // Arms are nudged forward on local Z so weapons/shield sit in front of the chest.
+      leftArmPivot.position.set(0.84, 2.48, 0.16);
+      rightArmPivot.position.set(-0.84, 2.48, 0.16);
 
       group.add(leftArmPivot, rightArmPivot);
 
@@ -2702,13 +3313,13 @@
       if (playerAttackTimer > 0 && !playerHitDone) {
         const dist = player.group.position.distanceTo(enemy.group.position);
         const attackProgress = 1 - playerAttackTimer / PLAYER_ATTACK_DURATION;
-        const reach = playerAttackType === "stab" ? 3.55 : 3.15;
+        const reach = 3.15;
 
         if (dist < reach && isPlayerAttackInDamageWindow(attackProgress, playerAttackType)) {
           const toEnemy = enemy.group.position.clone().sub(player.group.position).normalize();
           const facing = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
           const dot = facing.dot(toEnemy);
-          const requiredFacing = playerAttackType === "sideLeft" || playerAttackType === "sideRight" ? 0.24 : 0.35;
+          const requiredFacing = 0.24;
 
           if (dot > requiredFacing) {
             damageEnemy(getPlayerClubDamage());
@@ -3055,42 +3666,11 @@
     }
 
     function isPlayerAttackInDamageWindow(progress, type) {
-      if (type === "stab") return progress > 0.36 && progress < 0.68;
-      if (type === "overhead") return progress > 0.42 && progress < 0.76;
       return progress > 0.34 && progress < 0.72;
     }
 
     function animatePlayerAttack(g, t, type) {
       g.swordPivot.position.set(0.04, -0.78, 0.02);
-
-      if (type === "overhead") {
-        if (t < 0.34) {
-          const p = easeOut(t / 0.34);
-          g.rightArmPivot.rotation.x = -0.35 - p * 1.8;
-          g.rightArmPivot.rotation.z = -0.06 - p * 0.22;
-          g.rightArmPivot.rotation.y = -0.1;
-          g.swordPivot.rotation.x = -0.5 - p * 0.9;
-          g.swordPivot.rotation.y = -0.05;
-          g.swordPivot.rotation.z = -0.2 - p * 0.35;
-        } else if (t < 0.74) {
-          const p = easeInOut((t - 0.34) / 0.4);
-          g.rightArmPivot.rotation.x = -2.15 + p * 2.75;
-          g.rightArmPivot.rotation.z = -0.28 + p * 0.28;
-          g.rightArmPivot.rotation.y = -0.1 + p * 0.12;
-          g.swordPivot.rotation.x = -1.4 + p * 1.85;
-          g.swordPivot.rotation.y = -0.05;
-          g.swordPivot.rotation.z = -0.55 + p * 0.35;
-        } else {
-          const p = easeOut((t - 0.74) / 0.26);
-          g.rightArmPivot.rotation.x = 0.6 - p * 0.82;
-          g.rightArmPivot.rotation.z = 0.0 - p * 0.08;
-          g.rightArmPivot.rotation.y = 0.02 - p * 0.12;
-          g.swordPivot.rotation.x = 0.45 - p * 1.07;
-          g.swordPivot.rotation.y = -0.05;
-          g.swordPivot.rotation.z = -0.2 - p * 0.18;
-        }
-        return;
-      }
 
       if (type === "sideLeft") {
         if (t < 0.28) {
@@ -3117,38 +3697,6 @@
           g.swordPivot.rotation.x = 0.18 - p * 0.8;
           g.swordPivot.rotation.y = -0.08 - p * 0.02;
           g.swordPivot.rotation.z = -1.27 + p * 0.89;
-        }
-        return;
-      }
-
-      if (type === "stab") {
-        if (t < 0.32) {
-          const p = easeOut(t / 0.32);
-          g.rightArmPivot.rotation.x = -0.3 - p * 0.42;
-          g.rightArmPivot.rotation.z = 0.12 - p * 0.22;
-          g.rightArmPivot.rotation.y = -0.22 - p * 0.28;
-          g.swordPivot.rotation.x = -0.74 + p * 0.35;
-          g.swordPivot.rotation.y = -0.18;
-          g.swordPivot.rotation.z = -0.45 + p * 0.16;
-          g.swordPivot.position.z = 0.02 - p * 0.34;
-        } else if (t < 0.66) {
-          const p = easeInOut((t - 0.32) / 0.34);
-          g.rightArmPivot.rotation.x = -0.72 + p * 0.38;
-          g.rightArmPivot.rotation.z = -0.1 + p * 0.12;
-          g.rightArmPivot.rotation.y = -0.5 + p * 0.18;
-          g.swordPivot.rotation.x = -0.39 + p * 0.12;
-          g.swordPivot.rotation.y = -0.18 + p * 0.08;
-          g.swordPivot.rotation.z = -0.29;
-          g.swordPivot.position.z = -0.32 + p * 1.1;
-        } else {
-          const p = easeOut((t - 0.66) / 0.34);
-          g.rightArmPivot.rotation.x = -0.34 - p * 0.02;
-          g.rightArmPivot.rotation.z = 0.02 + p * 0.12;
-          g.rightArmPivot.rotation.y = -0.32 + p * 0.22;
-          g.swordPivot.rotation.x = -0.27 - p * 0.35;
-          g.swordPivot.rotation.y = -0.1;
-          g.swordPivot.rotation.z = -0.29 - p * 0.09;
-          g.swordPivot.position.z = 0.78 - p * 0.76;
         }
         return;
       }
@@ -3385,12 +3933,8 @@
         enemyVictoryDelayTimer = VICTORY_SCREEN_DELAY;
         startEnemyRagdoll(player);
 
-        pendingVictoryText = getBracketStageName(tournamentRound) + " Cleared";
-        if (stageIndex < 2) {
-          pendingVictoryDetail = currentEnemyName + " was clubbed down. " + queuedOpponentName + " awaits in the " + BRACKET_STAGE_NAMES[stageIndex + 1].toLowerCase() + ". +" + earned + " BloodCoins.";
-        } else {
-          pendingVictoryDetail = currentEnemyName + " was clubbed down. You conquered the bracket. +" + earned + " BloodCoins.";
-        }
+        pendingVictoryText = "Victory";
+        pendingVictoryDetail = "";
 
         createFloatingText("+" + earned + " BloodCoins", enemy.group.position.clone().add(new THREE.Vector3(0, 3.1, 0)), 0xffd86f);
 
@@ -3724,14 +4268,9 @@
       isBlocking = false;
 
       const hasVictory = roundWon;
-      msg.textContent = text;
-      subMessage.textContent = detail || "";
       restartBtn.textContent = "Restart Tournament";
       nextOpponentBtn.style.display = hasVictory ? "inline-block" : "none";
-
-      if (hasVictory) {
-        nextOpponentBtn.textContent = getBracketStageIndex() === 2 ? "Start New Bracket" : "Next Opponent";
-      }
+      nextOpponentBtn.textContent = "Continue";
 
       updateBracketMenu(hasVictory);
       messagePanel.setAttribute("aria-hidden", "false");
