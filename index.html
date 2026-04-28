@@ -410,6 +410,219 @@
       color: #ffd86f;
       text-align: right;
     }
+
+    /* Full-screen tournament result display */
+    #messagePanel {
+      position: fixed;
+      inset: 0;
+      left: 0;
+      top: 0;
+      width: auto;
+      min-width: 0;
+      padding: clamp(18px, 4vw, 54px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      opacity: 0;
+      transform: scale(0.985);
+      transition: opacity 0.32s ease, transform 0.32s ease;
+      border: 0;
+      border-radius: 0;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(255, 211, 121, 0.18), transparent 30%),
+        radial-gradient(circle at 50% 110%, rgba(120, 10, 5, 0.33), transparent 50%),
+        linear-gradient(135deg, rgba(18, 8, 4, 0.96), rgba(47, 19, 8, 0.98) 45%, rgba(10, 5, 3, 0.98));
+      box-shadow:
+        inset 0 0 0 8px rgba(126, 78, 27, 0.46),
+        inset 0 0 0 18px rgba(24, 10, 3, 0.72),
+        inset 0 0 90px rgba(0, 0, 0, 0.9);
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    #messagePanel::before,
+    #messagePanel::after {
+      content: "";
+      position: absolute;
+      inset: 22px;
+      border: 3px ridge rgba(216, 161, 74, 0.72);
+      pointer-events: none;
+    }
+
+    #messagePanel::after {
+      inset: 42px;
+      border-width: 1px;
+      border-color: rgba(255, 224, 145, 0.28);
+    }
+
+    #messagePanel.show {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+
+    #victoryCard {
+      position: relative;
+      width: min(1000px, 88vw);
+      max-height: 86vh;
+      overflow: auto;
+      padding: clamp(24px, 4vw, 52px);
+      border: 8px ridge #c39143;
+      border-radius: 8px 30px 8px 30px;
+      background:
+        repeating-linear-gradient(45deg, rgba(255, 226, 160, 0.045) 0 4px, transparent 4px 12px),
+        radial-gradient(circle at top, rgba(255, 217, 133, 0.22), transparent 48%),
+        linear-gradient(135deg, rgba(88, 47, 18, 0.97), rgba(22, 10, 5, 0.98));
+      box-shadow:
+        0 0 0 5px rgba(31, 12, 3, 0.96),
+        0 0 0 11px rgba(132, 84, 29, 0.42),
+        0 28px 70px rgba(0, 0, 0, 0.82),
+        inset 0 6px 0 rgba(255, 231, 173, 0.13),
+        inset 0 -22px 42px rgba(0, 0, 0, 0.34);
+    }
+
+    .cardOrnament {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 8px 22px;
+      border-top: 1px solid rgba(255, 216, 111, 0.45);
+      border-bottom: 1px solid rgba(255, 216, 111, 0.45);
+      color: #ffd86f;
+      font-size: clamp(13px, 2vw, 18px);
+      font-weight: 900;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 6px #000;
+    }
+
+    #message {
+      font-size: clamp(48px, 9vw, 118px);
+      line-height: 0.92;
+      margin-bottom: 14px;
+    }
+
+    #subMessage {
+      max-width: 760px;
+      margin: 0 auto 26px;
+      font-size: clamp(15px, 2.2vw, 20px);
+      line-height: 1.35;
+    }
+
+    #tournamentCardGrid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 0 auto 28px;
+      max-width: 850px;
+    }
+
+    .cardStat {
+      min-height: 82px;
+      padding: 13px 14px;
+      border: 3px ridge rgba(195, 145, 67, 0.82);
+      background:
+        radial-gradient(circle at top, rgba(255, 222, 146, 0.13), transparent 62%),
+        linear-gradient(135deg, rgba(34, 14, 5, 0.78), rgba(8, 4, 2, 0.72));
+      box-shadow:
+        inset 0 0 16px rgba(255, 190, 58, 0.08),
+        0 8px 18px rgba(0,0,0,0.3);
+    }
+
+    .cardStat span {
+      display: block;
+      margin-bottom: 8px;
+      color: #dfb25e;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .cardStat strong {
+      display: block;
+      color: #ffe7ad;
+      font-size: clamp(13px, 2vw, 18px);
+      line-height: 1.18;
+      text-shadow: 0 2px 5px #000;
+    }
+
+    #victoryButtonRow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .victoryBtn,
+    #restartBtn,
+    #nextOpponentBtn {
+      pointer-events: auto;
+      cursor: pointer;
+      min-width: 220px;
+      border: 4px ridge #d6a14a;
+      border-radius: 5px;
+      background:
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.055) 0 3px, transparent 3px 9px),
+        linear-gradient(#a86f2e, #55270b);
+      color: #ffe7ad;
+      font-family: "Cinzel", Georgia, serif;
+      font-size: clamp(16px, 2.4vw, 22px);
+      font-weight: 900;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      padding: 15px 24px;
+      box-shadow:
+        0 6px 0 #251006,
+        0 13px 22px rgba(0,0,0,0.5),
+        inset 0 3px 0 rgba(255,255,255,0.16),
+        inset 0 -8px 12px rgba(0,0,0,0.24);
+    }
+
+    .victoryBtn.secondary,
+    #restartBtn.secondary {
+      background:
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.035) 0 3px, transparent 3px 9px),
+        linear-gradient(#6f3b19, #2b1307);
+      color: #f5c978;
+    }
+
+    .victoryBtn:hover,
+    #restartBtn:hover,
+    #nextOpponentBtn:hover {
+      filter: brightness(1.18);
+      transform: translateY(-1px);
+    }
+
+    .victoryBtn:active,
+    #restartBtn:active,
+    #nextOpponentBtn:active {
+      transform: translateY(3px);
+      box-shadow:
+        0 2px 0 #251006,
+        0 6px 14px rgba(0,0,0,0.5),
+        inset 0 2px 0 rgba(255,255,255,0.16);
+    }
+
+    @media (max-width: 760px) {
+      #tournamentCardGrid {
+        grid-template-columns: 1fr;
+      }
+
+      #messagePanel {
+        padding: 16px;
+      }
+
+      #messagePanel::before {
+        inset: 10px;
+      }
+
+      #messagePanel::after {
+        inset: 24px;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -442,10 +655,26 @@
     </div>
 
 
-    <div id="messagePanel">
-      <div id="message"></div>
-      <div id="subMessage"></div>
-      <button id="restartBtn">Fight Again</button>
+    <div id="messagePanel" aria-hidden="true">
+      <div id="victoryCard">
+        <div class="cardOrnament">⚔ Tournament Card ⚔</div>
+        <div id="message"></div>
+        <div id="subMessage"></div>
+
+        <div id="tournamentCardGrid">
+          <div class="cardStat"><span>Result</span><strong id="cardResultText">Victory</strong></div>
+          <div class="cardStat"><span>Round</span><strong id="cardRoundText">1</strong></div>
+          <div class="cardStat"><span>Defeated</span><strong id="cardDefeatedText">Opponent</strong></div>
+          <div class="cardStat"><span>Reward</span><strong id="cardRewardText">+0 BloodCoins</strong></div>
+          <div class="cardStat"><span>Rank</span><strong id="cardRankText">Sand Rookie</strong></div>
+          <div class="cardStat"><span>Next Fight</span><strong id="cardNextOpponentText">Awaiting challenger</strong></div>
+        </div>
+
+        <div id="victoryButtonRow">
+          <button id="nextOpponentBtn" class="victoryBtn">Next Opponent</button>
+          <button id="restartBtn" class="victoryBtn secondary">Restart Tournament</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -490,6 +719,8 @@
     let isBlocking = false;
     let gameOver = false;
     let currentEnemyName = "";
+    let queuedOpponentName = "";
+    let lastVictoryReward = 0;
 
     let enemyDeathTimer = 0;
     let enemyDeathDuration = 1.55;
@@ -562,6 +793,13 @@
     const subMessage = document.getElementById("subMessage");
     const messagePanel = document.getElementById("messagePanel");
     const restartBtn = document.getElementById("restartBtn");
+    const nextOpponentBtn = document.getElementById("nextOpponentBtn");
+    const cardResultText = document.getElementById("cardResultText");
+    const cardRoundText = document.getElementById("cardRoundText");
+    const cardDefeatedText = document.getElementById("cardDefeatedText");
+    const cardRewardText = document.getElementById("cardRewardText");
+    const cardRankText = document.getElementById("cardRankText");
+    const cardNextOpponentText = document.getElementById("cardNextOpponentText");
     const damageFlash = document.getElementById("damageFlash");
 
     init();
@@ -597,6 +835,12 @@
     }
 
     function setNewOpponentName() {
+      if (queuedOpponentName) {
+        currentEnemyName = queuedOpponentName;
+        queuedOpponentName = "";
+        return;
+      }
+
       currentEnemyName = randomOpponentName();
     }
 
@@ -787,116 +1031,167 @@
       return texture;
     }
 
-    function createBloodSplatTexture() {
+    function createCurvedBloodTexture(kind = "torso") {
       const canvas = document.createElement("canvas");
-      canvas.width = 128;
-      canvas.height = 128;
+      canvas.width = 512;
+      canvas.height = 512;
       const ctx = canvas.getContext("2d");
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const centerX = 64 + (Math.random() - 0.5) * 16;
-      const centerY = 64 + (Math.random() - 0.5) * 16;
-      const mainGradient = ctx.createRadialGradient(centerX, centerY, 3, centerX, centerY, 48);
-      mainGradient.addColorStop(0, "rgba(135, 3, 3, 0.98)");
-      mainGradient.addColorStop(0.45, "rgba(92, 0, 0, 0.88)");
-      mainGradient.addColorStop(1, "rgba(35, 0, 0, 0)");
+      function splat(u, v, rx, ry, alpha = 0.85, drip = true) {
+        const x = u * canvas.width;
+        const y = v * canvas.height;
+        const gradient = ctx.createRadialGradient(x, y, 2, x, y, Math.max(rx, ry));
+        gradient.addColorStop(0, `rgba(145, 5, 5, ${alpha})`);
+        gradient.addColorStop(0.5, `rgba(82, 0, 0, ${alpha * 0.82})`);
+        gradient.addColorStop(1, "rgba(45, 0, 0, 0)");
 
-      ctx.fillStyle = mainGradient;
-      ctx.beginPath();
-      ctx.ellipse(centerX, centerY, 42 + Math.random() * 15, 30 + Math.random() * 18, Math.random() * Math.PI, 0, Math.PI * 2);
-      ctx.fill();
-
-      for (let i = 0; i < 18; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const distance = 14 + Math.random() * 43;
-        const x = centerX + Math.cos(angle) * distance;
-        const y = centerY + Math.sin(angle) * distance;
-        const r = 3 + Math.random() * 12;
-
-        ctx.fillStyle = Math.random() > 0.35
-          ? "rgba(92, 0, 0, 0.72)"
-          : "rgba(155, 8, 6, 0.68)";
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate((Math.random() - 0.5) * 0.7);
+        ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.ellipse(x, y, r * (0.65 + Math.random() * 0.9), r * (0.45 + Math.random() * 0.85), Math.random() * Math.PI, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        for (let i = 0; i < 9; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const d = Math.random() * Math.max(rx, ry) * 0.95;
+          const px = x + Math.cos(a) * d;
+          const py = y + Math.sin(a) * d;
+          const r = 4 + Math.random() * 17;
+
+          ctx.fillStyle = Math.random() > 0.45
+            ? `rgba(95, 0, 0, ${alpha * (0.35 + Math.random() * 0.35)})`
+            : `rgba(168, 11, 8, ${alpha * (0.24 + Math.random() * 0.28)})`;
+          ctx.beginPath();
+          ctx.ellipse(px, py, r * (0.65 + Math.random() * 0.65), r * (0.42 + Math.random() * 0.55), Math.random() * Math.PI, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        if (drip) {
+          for (let i = 0; i < 5; i++) {
+            const dx = x + (Math.random() - 0.5) * rx * 1.15;
+            const dy = y + ry * (0.25 + Math.random() * 0.62);
+            const length = 18 + Math.random() * 68;
+            const width = 3 + Math.random() * 6;
+
+            ctx.strokeStyle = `rgba(75, 0, 0, ${alpha * 0.56})`;
+            ctx.lineWidth = width;
+            ctx.lineCap = "round";
+            ctx.beginPath();
+            ctx.moveTo(dx, dy);
+            ctx.bezierCurveTo(
+              dx + (Math.random() - 0.5) * 14,
+              dy + length * 0.35,
+              dx + (Math.random() - 0.5) * 16,
+              dy + length * 0.72,
+              dx + (Math.random() - 0.5) * 10,
+              dy + length
+            );
+            ctx.stroke();
+          }
+        }
+      }
+
+      if (kind === "face") {
+        // Sphere UVs wrap around the head, so these are placed near the visible front/cheek area.
+        splat(0.5, 0.43, 72, 48, 0.9, false);
+        splat(0.43, 0.54, 42, 30, 0.74, true);
+        splat(0.61, 0.36, 32, 24, 0.62, false);
+      } else if (kind === "faceHeavy") {
+        splat(0.53, 0.48, 94, 66, 0.82, true);
+        splat(0.35, 0.42, 36, 24, 0.58, false);
+        splat(0.68, 0.57, 44, 34, 0.54, true);
+      } else if (kind === "torsoHeavy") {
+        splat(0.5, 0.42, 126, 100, 0.82, true);
+        splat(0.35, 0.58, 84, 62, 0.7, true);
+        splat(0.64, 0.68, 72, 54, 0.58, true);
+      } else {
+        splat(0.42, 0.36, 88, 70, 0.84, true);
+        splat(0.62, 0.52, 76, 58, 0.72, true);
+        splat(0.5, 0.72, 72, 48, 0.55, true);
+      }
+
+      // Small dark flecks make it read as soaked fabric/skin rather than floating decals.
+      for (let i = 0; i < 45; i++) {
+        ctx.fillStyle = `rgba(40, 0, 0, ${0.1 + Math.random() * 0.22})`;
+        ctx.beginPath();
+        ctx.ellipse(
+          Math.random() * canvas.width,
+          Math.random() * canvas.height,
+          1 + Math.random() * 4,
+          1 + Math.random() * 5,
+          Math.random() * Math.PI,
+          0,
+          Math.PI * 2
+        );
         ctx.fill();
       }
 
-      for (let i = 0; i < 10; i++) {
-        const x = centerX + (Math.random() - 0.5) * 68;
-        const y = centerY + 18 + Math.random() * 48;
-        const dripLength = 10 + Math.random() * 28;
-        const dripWidth = 2 + Math.random() * 5;
-
-        ctx.strokeStyle = "rgba(70, 0, 0, 0.62)";
-        ctx.lineWidth = dripWidth;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.quadraticCurveTo(x + (Math.random() - 0.5) * 8, y + dripLength * 0.5, x + (Math.random() - 0.5) * 10, y + dripLength);
-        ctx.stroke();
-      }
-
       const texture = new THREE.CanvasTexture(canvas);
-      texture.magFilter = THREE.NearestFilter;
-      texture.minFilter = THREE.NearestFilter;
+      texture.magFilter = THREE.LinearFilter;
+      texture.minFilter = THREE.LinearMipmapLinearFilter;
       texture.colorSpace = THREE.SRGBColorSpace;
+      texture.needsUpdate = true;
       return texture;
     }
 
-    function createBloodStainMaterial() {
+    function createCurvedBloodMaterial(kind) {
       return new THREE.MeshBasicMaterial({
-        map: createBloodSplatTexture(),
+        map: createCurvedBloodTexture(kind),
         transparent: true,
         opacity: 0,
         depthWrite: false,
-        side: THREE.DoubleSide
+        side: THREE.FrontSide
       });
     }
 
-    function addBloodStain(parent, bloodStains, position, scale, threshold, rotationZ = 0) {
-      const stain = new THREE.Mesh(
-        new THREE.CircleGeometry(0.5, 20),
-        createBloodStainMaterial()
+    function addCurvedBloodShell(targetMesh, bloodShells, kind, threshold, maxOpacity = 0.82) {
+      const shell = new THREE.Mesh(
+        targetMesh.geometry.clone(),
+        createCurvedBloodMaterial(kind)
       );
 
-      stain.position.copy(position);
-      stain.rotation.z = rotationZ;
-      stain.scale.set(scale.x, scale.y, 1);
-      stain.renderOrder = 10;
-      stain.visible = false;
-      stain.userData.baseScale = scale.clone();
-      stain.userData.threshold = threshold;
-      parent.add(stain);
-      bloodStains.push(stain);
-      return stain;
+      shell.position.set(0, 0, 0);
+      shell.rotation.set(0, 0, 0);
+      shell.scale.set(1.012, 1.012, 1.012);
+      shell.renderOrder = 12;
+      shell.visible = false;
+      shell.userData.threshold = threshold;
+      shell.userData.maxOpacity = maxOpacity;
+      targetMesh.add(shell);
+      bloodShells.push(shell);
+      return shell;
     }
 
     function updateGladiatorBlood(g, healthRatio = 1) {
-      if (!g || !g.bloodStains) return;
+      if (!g || !g.bloodShells) return;
 
       const damageAmount = 1 - THREE.MathUtils.clamp(healthRatio, 0, 1);
 
-      for (const stain of g.bloodStains) {
-        const threshold = stain.userData.threshold || 0;
-        const baseScale = stain.userData.baseScale || new THREE.Vector3(1, 1, 1);
-        const strength = THREE.MathUtils.clamp((damageAmount - threshold) / 0.22, 0, 1);
+      for (const shell of g.bloodShells) {
+        const threshold = shell.userData.threshold || 0;
+        const maxOpacity = shell.userData.maxOpacity || 0.82;
+        const strength = THREE.MathUtils.clamp((damageAmount - threshold) / 0.24, 0, 1);
 
         if (strength <= 0.01) {
-          stain.visible = false;
-          stain.material.opacity = 0;
+          shell.visible = false;
+          shell.material.opacity = 0;
           continue;
         }
 
-        const growth = 0.45 + strength * 1.05;
-        stain.visible = true;
-        stain.material.opacity = 0.2 + strength * 0.68;
-        stain.scale.set(baseScale.x * growth, baseScale.y * growth, 1);
+        shell.visible = true;
+        shell.material.opacity = 0.12 + strength * maxOpacity;
+        const pulse = 1.012 + strength * 0.006;
+        shell.scale.set(pulse, pulse, pulse);
       }
     }
 
     function updateOpponentBloodTexture() {
-      if (!enemy || !enemy.bloodStains) return;
+      if (!enemy || !enemy.bloodShells) return;
       updateGladiatorBlood(enemy, enemyMaxHP > 0 ? enemyHP / enemyMaxHP : 1);
     }
 
@@ -1422,16 +1717,11 @@
       rightLegPivot.add(rightSandal);
       addOutline(rightSandal, 1.05);
 
-      const bloodStains = [];
-      addBloodStain(body, bloodStains, new THREE.Vector3(-0.25, 0.2, 0.72), new THREE.Vector3(0.55, 0.42, 1), 0.08, -0.35);
-      addBloodStain(body, bloodStains, new THREE.Vector3(0.28, -0.15, 0.73), new THREE.Vector3(0.46, 0.36, 1), 0.22, 0.28);
-      addBloodStain(body, bloodStains, new THREE.Vector3(0.04, 0.48, 0.72), new THREE.Vector3(0.38, 0.34, 1), 0.34, 0.08);
-      addBloodStain(head, bloodStains, new THREE.Vector3(0.12, -0.04, 0.43), new THREE.Vector3(0.22, 0.18, 1), 0.42, 0.2);
-      addBloodStain(skirt, bloodStains, new THREE.Vector3(-0.3, -0.08, 0.78), new THREE.Vector3(0.36, 0.27, 1), 0.5, -0.15);
-      addBloodStain(leftArm, bloodStains, new THREE.Vector3(0.03, -0.16, 0.18), new THREE.Vector3(0.24, 0.44, 1), 0.6, 0.35);
-      addBloodStain(rightArm, bloodStains, new THREE.Vector3(-0.02, -0.2, 0.18), new THREE.Vector3(0.25, 0.42, 1), 0.68, -0.3);
-      addBloodStain(leftLeg, bloodStains, new THREE.Vector3(0.02, -0.25, 0.19), new THREE.Vector3(0.22, 0.38, 1), 0.76, 0.22);
-      addBloodStain(rightLeg, bloodStains, new THREE.Vector3(-0.02, -0.28, 0.19), new THREE.Vector3(0.22, 0.38, 1), 0.84, -0.22);
+      const bloodShells = [];
+      addCurvedBloodShell(body, bloodShells, "torso", 0.05, 0.7);
+      addCurvedBloodShell(body, bloodShells, "torsoHeavy", 0.25, 0.78);
+      addCurvedBloodShell(head, bloodShells, "face", 0.34, 0.72);
+      addCurvedBloodShell(head, bloodShells, "faceHeavy", 0.58, 0.66);
 
       return {
         group,
@@ -1465,7 +1755,7 @@
         headLookPitch: 0,
         baseHeadPitch: 0,
         baseHeadRoll: 0,
-        bloodStains,
+        bloodShells,
         isDead: false,
         ragdoll: null
       };
@@ -1545,7 +1835,11 @@
         keys[e.code] = true;
 
         if (e.code === "KeyR") {
-          restartGame();
+          restartGame(false);
+        }
+
+        if (e.code === "KeyN" && gameOver && roundWon) {
+          restartGame(true);
         }
       });
 
@@ -1554,7 +1848,7 @@
       });
 
       document.body.addEventListener("click", e => {
-        if (e.target === restartBtn) return;
+        if (e.target === restartBtn || e.target === nextOpponentBtn) return;
 
         if (!mouseLocked && !gameOver) {
           renderer.domElement.requestPointerLock();
@@ -1563,7 +1857,12 @@
 
       restartBtn.addEventListener("click", e => {
         e.stopPropagation();
-        restartGame();
+        restartGame(false);
+      });
+
+      nextOpponentBtn.addEventListener("click", e => {
+        e.stopPropagation();
+        restartGame(true);
       });
 
       document.addEventListener("pointerlockchange", () => {
@@ -2353,7 +2652,9 @@
         roundWon = true;
 
         const earned = 25 + (tournamentRound - 1) * 5;
+        lastVictoryReward = earned;
         bloodCoins += earned;
+        queuedOpponentName = randomOpponentName();
         updateUI();
 
         gameOver = true;
@@ -2364,8 +2665,7 @@
         startEnemyRagdoll(player);
 
         pendingVictoryText = "Round " + tournamentRound + " Cleared";
-        pendingVictoryDetail = currentEnemyName + " was clubbed down. Next opponent awaits. +" + earned + " BloodCoins.";
-        restartBtn.textContent = "Next Round";
+        pendingVictoryDetail = currentEnemyName + " was clubbed down. " + queuedOpponentName + " enters the sands next. +" + earned + " BloodCoins.";
 
         createFloatingText("+" + earned + " BloodCoins", enemy.group.position.clone().add(new THREE.Vector3(0, 3.1, 0)), 0xffd86f);
 
@@ -2697,9 +2997,31 @@
     function endGame(text, detail) {
       gameOver = true;
       isBlocking = false;
-      restartBtn.textContent = roundWon ? "Next Round" : "Restart Tournament";
+
+      const hasVictory = roundWon;
       msg.textContent = text;
       subMessage.textContent = detail || "";
+      restartBtn.textContent = "Restart Tournament";
+      nextOpponentBtn.style.display = hasVictory ? "inline-block" : "none";
+
+      if (hasVictory) {
+        nextOpponentBtn.textContent = "Fight " + (queuedOpponentName || "Next Opponent");
+        cardResultText.textContent = "Victory";
+        cardRoundText.textContent = String(tournamentRound);
+        cardDefeatedText.textContent = currentEnemyName;
+        cardRewardText.textContent = "+" + lastVictoryReward + " BloodCoins";
+        cardRankText.textContent = getTournamentRankName(tournamentRound + 1);
+        cardNextOpponentText.textContent = queuedOpponentName || "Unknown Challenger";
+      } else {
+        cardResultText.textContent = "Defeat";
+        cardRoundText.textContent = String(tournamentRound);
+        cardDefeatedText.textContent = "Gladiator";
+        cardRewardText.textContent = "+0 BloodCoins";
+        cardRankText.textContent = getTournamentRankName(tournamentRound);
+        cardNextOpponentText.textContent = "Restart the tournament";
+      }
+
+      messagePanel.setAttribute("aria-hidden", "false");
       messagePanel.classList.add("show");
 
       if (document.pointerLockElement) {
@@ -2707,20 +3029,25 @@
       }
     }
 
-    function restartGame() {
-      if (roundWon) {
+    function restartGame(advanceTournament = false) {
+      const shouldAdvance = advanceTournament && roundWon;
+
+      if (shouldAdvance) {
         tournamentRound += 1;
       } else {
         tournamentRound = 1;
+        queuedOpponentName = "";
       }
 
       roundWon = false;
+      lastVictoryReward = 0;
       configureOpponentForRound();
 
       playerHP = playerMaxHP;
       gameOver = false;
       isBlocking = false;
-      restartBtn.textContent = "Fight Again";
+      restartBtn.textContent = "Restart Tournament";
+      nextOpponentBtn.style.display = "none";
 
       player.group.position.set(0, 0, 8);
       enemy.group.position.set(0, 0, -8);
@@ -2794,6 +3121,7 @@
       enemy.shieldPivot.position.set(0, -0.84, 0.12);
 
       messagePanel.classList.remove("show");
+      messagePanel.setAttribute("aria-hidden", "true");
 
       for (const p of particles) {
         if (p.mesh && p.type !== "flame") scene.remove(p.mesh);
