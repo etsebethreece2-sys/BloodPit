@@ -1684,7 +1684,7 @@
     const bloodDecals = [];
 
     const ARENA_RADIUS = 28;
-    const PLAYER_SPEED = 7.2;
+    const PLAYER_SPEED = 6.48; // 10% slower player walk speed.
     const ENEMY_SPEED = 3.696; // 10% faster than the previous 3.36 base walk speed.
     const ENEMY_ATTACK_DURATION = 1.25;
     const ENEMY_ATTACK_START_DISTANCE = 3.3;
@@ -3078,6 +3078,8 @@
         rightArmPivot,
         leftLegPivot,
         rightLegPivot,
+        leftSandal,
+        rightSandal,
         swordPivot,
         shieldPivot,
         sword: clubHead,
@@ -3741,14 +3743,57 @@
       }
     }
 
+    function animateEnemyAttack(g, t) {
+      // Enemy uses the same local-right hand setup as the player.
+      // Keep the club on the front/right side during the whole swing instead of rotating it behind the body.
+      g.swordPivot.position.set(0.04, -0.78, 0.08);
+
+      if (t < 0.34) {
+        const p = easeOut(t / 0.34);
+        g.rightArmPivot.rotation.x = -0.42 - p * 1.05;
+        g.rightArmPivot.rotation.z = -0.22 - p * 0.82;
+        g.rightArmPivot.rotation.y = -0.12 - p * 0.18;
+        g.swordPivot.rotation.x = -0.54 - p * 0.54;
+        g.swordPivot.rotation.y = -0.1;
+        g.swordPivot.rotation.z = -0.42 - p * 1.22;
+      } else if (t < 0.76) {
+        const p = easeInOut((t - 0.34) / 0.42);
+        g.rightArmPivot.rotation.x = -1.47 + p * 2.08;
+        g.rightArmPivot.rotation.z = -1.04 + p * 1.72;
+        g.rightArmPivot.rotation.y = -0.3 + p * 0.38;
+        g.swordPivot.rotation.x = -1.08 + p * 1.18;
+        g.swordPivot.rotation.y = -0.1 + p * 0.16;
+        g.swordPivot.rotation.z = -1.64 + p * 2.72;
+      } else {
+        const p = easeOut((t - 0.76) / 0.24);
+        g.rightArmPivot.rotation.x = 0.61 - p * 0.79;
+        g.rightArmPivot.rotation.z = 0.68 - p * 0.54;
+        g.rightArmPivot.rotation.y = 0.08 - p * 0.08;
+        g.swordPivot.rotation.x = 0.1 - p * 0.72;
+        g.swordPivot.rotation.y = 0.06 - p * 0.16;
+        g.swordPivot.rotation.z = 1.08 - p * 1.46;
+      }
+
+      // Shield braces forward a little during the enemy attack so the off hand reads naturally.
+      g.leftArmPivot.rotation.x = -0.24;
+      g.leftArmPivot.rotation.z = -0.22 + g.currentSway * 0.1;
+      g.shieldPivot.position.z = 0.18;
+      g.shieldPivot.rotation.set(-0.04, -0.08, g.currentSway * 0.04);
+    }
+
     function animateGladiator(g, dt, isPlayer) {
       const moving = isPlayer
         ? keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD
         : !g.isDead && enemy.group.position.distanceTo(player.group.position) > (enemyAttackTimer > 0 ? ENEMY_ATTACK_STOP_DISTANCE + 0.08 : ENEMY_CHASE_STOP_DISTANCE + 0.12);
 
-      const walkSwing = moving ? Math.sin(g.walkTime) * 0.48 : 0;
-      const stepBob = moving ? Math.abs(Math.sin(g.walkTime * 1.05)) * 0.075 : 0;
-      const forwardLean = moving ? -g.moveLocalZ * 0.04 : 0;
+      const walkPhase = g.walkTime;
+      const walkSin = moving ? Math.sin(walkPhase) : 0;
+      const walkCos = moving ? Math.cos(walkPhase) : 0;
+      const walkSwing = walkSin * 0.54;
+      const leftLift = moving ? Math.max(0, walkSin) : 0;
+      const rightLift = moving ? Math.max(0, -walkSin) : 0;
+      const stepBob = moving ? (0.045 + Math.abs(Math.sin(walkPhase * 1.05)) * 0.055) : 0;
+      const forwardLean = moving ? -g.moveLocalZ * 0.055 : 0;
 
       /*
         Fixed: sway direction inverted and reduced.
@@ -3772,8 +3817,24 @@
         setHeadPose(g, headPitch, 0, headRoll);
       }
 
-      g.leftLegPivot.rotation.x = walkSwing;
-      g.rightLegPivot.rotation.x = -walkSwing;
+      const legStride = isPlayer ? 0.55 : 0.64;
+      const sideStep = moving ? Math.sin(walkPhase * 2) * 0.035 : 0;
+
+      g.leftLegPivot.position.y = 0.98 + leftLift * 0.055;
+      g.rightLegPivot.position.y = 0.98 + rightLift * 0.055;
+      g.leftLegPivot.rotation.x = walkSin * legStride;
+      g.rightLegPivot.rotation.x = -walkSin * legStride;
+      g.leftLegPivot.rotation.y = sideStep * 0.6;
+      g.rightLegPivot.rotation.y = -sideStep * 0.6;
+      g.leftLegPivot.rotation.z = -g.currentSway * 0.18 + sideStep;
+      g.rightLegPivot.rotation.z = -g.currentSway * 0.18 - sideStep;
+
+      if (g.leftSandal && g.rightSandal) {
+        g.leftSandal.rotation.x = -Math.max(0, -walkSin) * 0.24 + leftLift * 0.1;
+        g.rightSandal.rotation.x = -Math.max(0, walkSin) * 0.24 + rightLift * 0.1;
+        g.leftSandal.position.z = 0.08 + leftLift * 0.055;
+        g.rightSandal.position.z = 0.08 + rightLift * 0.055;
+      }
 
       g.leftArmPivot.rotation.x = -walkSwing * 0.28 - 0.08;
       g.rightArmPivot.rotation.x = walkSwing * 0.24 - 0.1;
@@ -3810,37 +3871,14 @@
 
         if (enemyAttackTimer > 0) {
           const t = 1 - enemyAttackTimer / ENEMY_ATTACK_DURATION;
-
-          if (t < 0.38) {
-            const p = easeOut(t / 0.38);
-            g.rightArmPivot.rotation.x = -0.3 - p * 1.25;
-            g.rightArmPivot.rotation.z = 0.18 + p * 1.18;
-            g.rightArmPivot.rotation.y = 0.08 + p * 0.22;
-            g.swordPivot.rotation.x = -0.48 - p * 0.72;
-            g.swordPivot.rotation.y = 0.08;
-            g.swordPivot.rotation.z = 0.35 + p * 1.55;
-          } else if (t < 0.78) {
-            const p = easeInOut((t - 0.38) / 0.4);
-            g.rightArmPivot.rotation.x = -1.55 + p * 2.25;
-            g.rightArmPivot.rotation.z = 1.36 - p * 2.2;
-            g.rightArmPivot.rotation.y = 0.3 - p * 0.48;
-            g.swordPivot.rotation.x = -1.2 + p * 1.35;
-            g.swordPivot.rotation.y = 0.08 - p * 0.2;
-            g.swordPivot.rotation.z = 1.9 - p * 3.25;
-          } else {
-            const p = easeOut((t - 0.78) / 0.22);
-            g.rightArmPivot.rotation.x = 0.7 - p * 0.9;
-            g.rightArmPivot.rotation.z = -0.84 + p * 1.08;
-            g.rightArmPivot.rotation.y = -0.18 + p * 0.18;
-            g.swordPivot.rotation.x = 0.15 - p * 0.77;
-            g.swordPivot.rotation.y = -0.12 + p * 0.22;
-            g.swordPivot.rotation.z = -1.35 + p * 1.73;
-          }
+          animateEnemyAttack(g, t);
         } else {
-          g.swordPivot.rotation.set(-0.62, 0.1, 0.38 - g.currentSway * 0.06);
+          g.swordPivot.position.set(0.04, -0.78, 0.02);
+          g.swordPivot.rotation.set(-0.62, -0.1, -0.38 + g.currentSway * 0.06);
           g.leftArmPivot.rotation.x = -0.18 - walkSwing * 0.18;
           g.leftArmPivot.rotation.y = shoulderSway * 0.18;
           g.leftArmPivot.rotation.z = -0.24 + g.currentSway * 0.12;
+          g.shieldPivot.position.z = 0.12;
           g.shieldPivot.rotation.set(-0.04, -0.08, g.currentSway * 0.06);
         }
       }
