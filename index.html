@@ -410,13 +410,13 @@
       top: 0;
       width: auto;
       min-width: 0;
-      padding: clamp(16px, 3vw, 36px);
+      padding: clamp(8px, 1.8vw, 20px);
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
       opacity: 0;
-      transform: scale(0.985);
+      transform: scale(0.94);
       transition: opacity 0.32s ease, transform 0.32s ease;
       border: 0;
       border-radius: 0;
@@ -449,7 +449,7 @@
 
     #messagePanel.show {
       opacity: 1;
-      transform: scale(1);
+      transform: scale(0.96);
       pointer-events: auto;
     }
 
@@ -908,10 +908,10 @@
     /* Image-inspired victory / next-opponent card */
     #victoryCard {
       position: relative;
-      width: min(1180px, 94vw);
-      max-height: 92vh;
+      width: min(980px, 88vw);
+      max-height: 84vh;
       overflow: auto;
-      padding: clamp(18px, 2.8vw, 34px);
+      padding: clamp(12px, 1.8vw, 22px);
       color: #f5e5bf;
       text-align: center;
       pointer-events: auto;
@@ -939,28 +939,28 @@
     }
 
     #victoryCard::before {
-      inset: 14px;
+      inset: 10px;
     }
 
     #victoryCard::after {
-      inset: 24px;
+      inset: 18px;
       border-color: rgba(255, 222, 145, 0.09);
     }
 
     #victoryHeader {
       position: relative;
       z-index: 1;
-      margin-bottom: 16px;
+      margin-bottom: 10px;
       text-align: center;
     }
 
     #victoryLaurels {
       position: absolute;
       left: 50%;
-      top: 6px;
+      top: 2px;
       transform: translateX(-50%);
       color: rgba(255, 216, 111, 0.26);
-      font-size: clamp(62px, 10vw, 116px);
+      font-size: clamp(46px, 7vw, 82px);
       line-height: 1;
       pointer-events: none;
       text-shadow: 0 4px 18px rgba(0,0,0,0.75);
@@ -969,7 +969,7 @@
     #victoryTitle {
       position: relative;
       z-index: 1;
-      font-size: clamp(58px, 10vw, 116px);
+      font-size: clamp(42px, 7vw, 76px);
       line-height: 0.86;
       font-weight: 900;
       letter-spacing: clamp(4px, 1vw, 12px);
@@ -993,8 +993,8 @@
     #victoryMainFrame {
       position: relative;
       z-index: 1;
-      margin: 8px auto 18px;
-      padding: 22px clamp(14px, 2.2vw, 26px) 22px;
+      margin: 4px auto 12px;
+      padding: 14px clamp(10px, 1.6vw, 18px) 14px;
       border: 4px ridge rgba(195, 145, 67, 0.85);
       background:
         radial-gradient(circle at 24% 50%, rgba(171, 87, 28, 0.18), transparent 32%),
@@ -1005,39 +1005,20 @@
     }
 
     #victoryRibbon {
-      position: absolute;
-      left: 50%;
-      top: -24px;
-      transform: translateX(-50%);
-      min-width: min(420px, 72vw);
-      padding: 12px 34px;
-      border: 4px ridge rgba(195, 145, 67, 0.92);
-      background:
-        repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0 3px, transparent 3px 9px),
-        linear-gradient(#66190d, #2a0804);
-      color: #f0d48b;
-      font-size: clamp(18px, 3vw, 34px);
-      font-weight: 900;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      text-shadow: 0 3px 8px #000;
-      box-shadow:
-        0 0 0 3px rgba(18, 8, 3, 0.94),
-        0 9px 20px rgba(0,0,0,0.52),
-        inset 0 4px 0 rgba(255,255,255,0.08);
+      display: none;
     }
 
     #victoryOpponentPanel {
       display: grid;
-      grid-template-columns: minmax(220px, 0.9fr) minmax(320px, 1.5fr);
-      gap: clamp(18px, 3vw, 38px);
+      grid-template-columns: minmax(170px, 0.78fr) minmax(280px, 1.42fr);
+      gap: clamp(12px, 2vw, 24px);
       align-items: center;
       text-align: left;
     }
 
     #victoryPortraitWrap {
       position: relative;
-      min-height: 278px;
+      min-height: 214px;
       display: flex;
       align-items: end;
       justify-content: center;
@@ -1047,8 +1028,8 @@
 
     #victoryPortraitGlow {
       position: absolute;
-      width: 260px;
-      height: 260px;
+      width: 210px;
+      height: 210px;
       border-radius: 50%;
       bottom: 18px;
       background: radial-gradient(circle, rgba(221, 155, 68, 0.22), rgba(82, 36, 13, 0.06) 62%, transparent 70%);
@@ -1057,19 +1038,19 @@
 
     #victoryHelmet {
       position: absolute;
-      bottom: 106px;
-      width: 142px;
-      height: 146px;
+      bottom: 82px;
+      width: 112px;
+      height: 116px;
       transform: rotate(-3deg);
       filter: drop-shadow(0 12px 16px rgba(0,0,0,0.65));
     }
 
     .helmetPlume {
       position: absolute;
-      left: 44px;
-      top: -55px;
-      width: 48px;
-      height: 86px;
+      left: 35px;
+      top: -44px;
+      width: 38px;
+      height: 68px;
       border-radius: 50% 50% 16px 16px;
       background:
         repeating-linear-gradient(90deg, rgba(80, 13, 5, 0.96) 0 6px, rgba(160, 60, 22, 0.9) 6px 11px),
@@ -1080,10 +1061,10 @@
 
     .helmetDome {
       position: absolute;
-      left: 12px;
+      left: 9px;
       top: 0;
-      width: 118px;
-      height: 84px;
+      width: 94px;
+      height: 67px;
       border-radius: 60px 60px 18px 18px;
       background:
         radial-gradient(circle at 38% 20%, rgba(255,255,255,0.28), transparent 20%),
@@ -1093,10 +1074,10 @@
 
     .helmetMask {
       position: absolute;
-      left: 28px;
-      top: 48px;
-      width: 88px;
-      height: 98px;
+      left: 22px;
+      top: 38px;
+      width: 70px;
+      height: 78px;
       border-radius: 16px 16px 38px 38px;
       background:
         repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0 4px, transparent 4px 12px),
@@ -1107,24 +1088,24 @@
 
     .helmetEye {
       position: absolute;
-      top: 75px;
-      width: 22px;
-      height: 10px;
+      top: 59px;
+      width: 18px;
+      height: 8px;
       border-radius: 50%;
       background: #060302;
       box-shadow: 0 0 9px rgba(255, 123, 43, 0.22);
       z-index: 2;
     }
 
-    .helmetEye.left { left: 42px; }
-    .helmetEye.right { right: 42px; }
+    .helmetEye.left { left: 33px; }
+    .helmetEye.right { right: 33px; }
 
     #victoryShoulders {
       position: absolute;
       bottom: -2px;
-      width: 222px;
-      height: 142px;
-      border-radius: 104px 104px 16px 16px;
+      width: 178px;
+      height: 110px;
+      border-radius: 86px 86px 14px 14px;
       background:
         radial-gradient(circle at 33% 24%, rgba(255, 216, 160, 0.22), transparent 16%),
         radial-gradient(circle at 70% 38%, rgba(92, 16, 8, 0.45), transparent 12%),
@@ -1137,13 +1118,13 @@
 
     #victoryStats {
       min-width: 0;
-      padding-right: clamp(4px, 1.4vw, 24px);
+      padding-right: clamp(2px, 1vw, 14px);
     }
 
     #victoryOpponentName {
       margin-bottom: 4px;
       color: #f4ede1;
-      font-size: clamp(32px, 5.6vw, 64px);
+      font-size: clamp(25px, 4.2vw, 46px);
       line-height: 0.98;
       font-weight: 900;
       letter-spacing: 3px;
@@ -1154,8 +1135,8 @@
     }
 
     #victoryDefeatedName {
-      min-height: 20px;
-      margin-bottom: 22px;
+      min-height: 8px;
+      margin-bottom: 10px;
       color: rgba(246, 218, 165, 0.72);
       font-size: clamp(11px, 1.2vw, 14px);
       font-weight: 900;
@@ -1166,21 +1147,21 @@
 
     .victoryStatRow {
       display: grid;
-      grid-template-columns: 74px minmax(170px, 1fr) 86px;
-      gap: 14px;
+      grid-template-columns: 56px minmax(150px, 1fr) 70px;
+      gap: 10px;
       align-items: center;
-      margin: 18px 0;
+      margin: 10px 0;
     }
 
     .victoryStatIcon {
-      width: 58px;
+      width: 44px;
       aspect-ratio: 1 / 1;
       display: flex;
       align-items: center;
       justify-content: center;
       border-radius: 50%;
       color: #cf321d;
-      font-size: 32px;
+      font-size: 25px;
       background:
         radial-gradient(circle at 35% 25%, rgba(255,255,255,0.16), transparent 24%),
         linear-gradient(135deg, rgba(43, 22, 10, 0.98), rgba(10, 6, 4, 0.98));
@@ -1191,13 +1172,13 @@
 
     .victoryStatIcon.crossed {
       color: #d6d1c6;
-      font-size: 31px;
+      font-size: 24px;
     }
 
     .victoryStatLabel {
-      margin-bottom: 7px;
+      margin-bottom: 5px;
       color: #d7c3a0;
-      font-size: clamp(13px, 1.5vw, 20px);
+      font-size: clamp(11px, 1.2vw, 16px);
       font-weight: 900;
       letter-spacing: 1.5px;
       text-transform: uppercase;
@@ -1205,7 +1186,7 @@
     }
 
     .victoryBarOuter {
-      height: 25px;
+      height: 18px;
       border: 4px ridge rgba(176, 129, 66, 0.76);
       background:
         repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 5px, transparent 5px 12px),
@@ -1239,7 +1220,7 @@
 
     .victoryStatValue {
       color: #e9e0d1;
-      font-size: clamp(34px, 5vw, 58px);
+      font-size: clamp(26px, 3.8vw, 42px);
       font-weight: 900;
       text-align: right;
       text-shadow:
@@ -1251,18 +1232,18 @@
       position: relative;
       z-index: 1;
       display: grid;
-      grid-template-columns: minmax(240px, 0.82fr) minmax(320px, 1.18fr);
-      gap: 16px;
-      margin-bottom: 18px;
+      grid-template-columns: minmax(210px, 0.82fr) minmax(280px, 1.18fr);
+      gap: 12px;
+      margin-bottom: 12px;
     }
 
     .victoryRewardBox {
-      min-height: 118px;
+      min-height: 86px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 20px;
-      padding: 14px;
+      gap: 12px;
+      padding: 10px;
       border: 4px ridge rgba(195, 145, 67, 0.82);
       background:
         radial-gradient(circle at 30% 18%, rgba(255, 219, 139, 0.12), transparent 42%),
@@ -1279,7 +1260,7 @@
 
     .victoryRewardLabel {
       color: #d7c3a0;
-      font-size: clamp(13px, 1.5vw, 19px);
+      font-size: clamp(11px, 1.15vw, 15px);
       font-weight: 900;
       letter-spacing: 1.4px;
       text-transform: uppercase;
@@ -1288,7 +1269,7 @@
 
     .victoryRewardValue {
       color: #f0e2d0;
-      font-size: clamp(42px, 6vw, 68px);
+      font-size: clamp(30px, 4.5vw, 48px);
       line-height: 1;
       font-weight: 900;
       letter-spacing: 2px;
@@ -1299,26 +1280,26 @@
 
     .coinStack {
       position: relative;
-      width: 124px;
-      height: 78px;
+      width: 96px;
+      height: 62px;
       flex: 0 0 auto;
     }
 
     .coinStack span {
       position: absolute;
-      width: 54px;
-      height: 54px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       background:
-        radial-gradient(circle at 34% 28%, rgba(255, 211, 238, 0.96), rgba(190, 55, 118, 0.94) 30%, rgba(117, 35, 136, 0.96) 64%, rgba(48, 8, 62, 1) 100%);
-      border: 3px ridge rgba(221, 111, 195, 0.72);
+        radial-gradient(circle at 34% 28%, rgba(255, 202, 216, 0.98), rgba(225, 42, 68, 0.96) 34%, rgba(167, 24, 82, 0.98) 62%, rgba(70, 10, 82, 1) 100%);
+      border: 3px ridge rgba(255, 99, 129, 0.78);
       box-shadow:
-        inset 0 0 14px rgba(38, 4, 40, 0.6),
+        inset 0 0 14px rgba(46, 4, 36, 0.62),
         0 8px 12px rgba(0,0,0,0.42),
-        0 0 14px rgba(150, 32, 126, 0.16);
+        0 0 16px rgba(210, 36, 76, 0.2);
       overflow: hidden;
     }
 
@@ -1335,20 +1316,20 @@
       content: "☠";
       position: relative;
       z-index: 1;
-      color: rgba(255, 233, 247, 0.92);
-      font-size: 19px;
+      color: rgba(255, 233, 247, 0.94);
+      font-size: 16px;
       line-height: 1;
       text-shadow:
         0 1px 0 rgba(69, 11, 43, 0.9),
         0 0 8px rgba(255, 120, 214, 0.22);
     }
 
-    .coinStack span:nth-child(1) { left: 6px; bottom: 0; }
-    .coinStack span:nth-child(2) { left: 38px; bottom: 14px; }
-    .coinStack span:nth-child(3) { right: 5px; bottom: 1px; }
+    .coinStack span:nth-child(1) { left: 5px; bottom: 0; }
+    .coinStack span:nth-child(2) { left: 30px; bottom: 11px; }
+    .coinStack span:nth-child(3) { right: 4px; bottom: 1px; }
 
     .victoryMedallion {
-      width: 82px;
+      width: 58px;
       aspect-ratio: 1 / 1;
       flex: 0 0 auto;
       display: flex;
@@ -1356,7 +1337,7 @@
       justify-content: center;
       border-radius: 50%;
       color: #f0c76f;
-      font-size: 42px;
+      font-size: 30px;
       border: 4px ridge rgba(205, 158, 77, 0.88);
       background:
         radial-gradient(circle at 35% 25%, rgba(255,255,255,0.16), transparent 24%),
@@ -1374,9 +1355,9 @@
     }
 
     .victoryProgressText {
-      margin: 6px 0 10px;
+      margin: 4px 0 7px;
       color: #f1d59c;
-      font-size: clamp(16px, 2vw, 25px);
+      font-size: clamp(13px, 1.55vw, 19px);
       font-weight: 900;
       letter-spacing: 1.4px;
       text-transform: uppercase;
@@ -1384,7 +1365,7 @@
     }
 
     .victoryProgressOuter {
-      height: 20px;
+      height: 15px;
       max-width: 360px;
       border: 3px ridge rgba(176, 129, 66, 0.76);
       background: linear-gradient(#0f0905, #21130c);
@@ -1408,8 +1389,8 @@
     }
 
     #nextOpponentBtn {
-      min-width: min(420px, 72vw);
-      font-size: clamp(22px, 3.4vw, 39px);
+      min-width: min(340px, 62vw);
+      font-size: clamp(18px, 2.4vw, 28px);
       letter-spacing: 3px;
       background:
         repeating-linear-gradient(45deg, rgba(255,255,255,0.055) 0 3px, transparent 3px 9px),
@@ -1647,6 +1628,8 @@
     let enemyDeathTimer = 0;
     let enemyDeathDuration = 1.55;
     let enemyVictoryDelayTimer = 0;
+
+    let audioCtx = null;
     const VICTORY_SCREEN_DELAY = 1.4;
     let pendingVictoryText = "";
     let pendingVictoryDetail = "";
@@ -1687,11 +1670,11 @@
     const PLAYER_SPEED = 6.48; // 10% slower player walk speed.
     const ENEMY_SPEED = 3.696; // 10% faster than the previous 3.36 base walk speed.
     const ENEMY_ATTACK_DURATION = 1.25;
-    const ENEMY_ATTACK_START_DISTANCE = 3.3;
+    const ENEMY_ATTACK_START_DISTANCE = 2.97; // 10% shorter opponent attack start range.
     const ENEMY_CHASE_STOP_DISTANCE = 1.45;
     const ENEMY_ATTACK_STOP_DISTANCE = 1.05;
     // Damaging range only. Attack animation range above stays unchanged.
-    const ENEMY_HIT_RADIUS = 1.898;
+    const ENEMY_HIT_RADIUS = 1.7082; // 10% shorter opponent damaging range.
     const ENEMY_ATTACK_WALK_SPEED_MULTIPLIER = 0.62;
     const PLAYER_ATTACK_DURATION = 0.7488;
     const PLAYER_ATTACK_TYPES = ["sideRight", "sideLeft"];
@@ -2652,8 +2635,38 @@
         addOutline(stone, 1.08);
       }
 
+      createStadiumSeating();
       createCrowdSilhouette();
       createTorches();
+    }
+
+
+    function createStadiumSeating() {
+      const seatMat = toonMaterial(0x493527);
+      const riserMat = toonMaterial(0x302217);
+
+      for (let tier = 0; tier < 5; tier++) {
+        const inner = ARENA_RADIUS + 1.35 + tier * 1.72;
+        const outer = inner + 1.42;
+        const y = 1.18 + tier * 0.42;
+
+        const seat = new THREE.Mesh(
+          new THREE.RingGeometry(inner, outer, 192, 1),
+          seatMat
+        );
+        seat.rotation.x = -Math.PI / 2;
+        seat.position.y = y;
+        seat.receiveShadow = true;
+        scene.add(seat);
+
+        const riser = new THREE.Mesh(
+          new THREE.CylinderGeometry(outer, outer, 0.34, 192, 1, true),
+          riserMat
+        );
+        riser.position.y = y - 0.18;
+        riser.receiveShadow = true;
+        scene.add(riser);
+      }
     }
 
 
@@ -2667,9 +2680,9 @@
         opacity: 0.82
       });
 
-      const bodyGeo = new THREE.BoxGeometry(0.42, 0.92, 0.08);
-      const headGeo = new THREE.SphereGeometry(0.18, 8, 8);
-      const armGeo = new THREE.BoxGeometry(0.7, 0.08, 0.07);
+      const bodyGeo = new THREE.BoxGeometry(0.672, 1.472, 0.128);
+      const headGeo = new THREE.SphereGeometry(0.288, 8, 8);
+      const armGeo = new THREE.BoxGeometry(1.12, 0.128, 0.112);
 
       const crowdTiers = 3;
       const silhouettesPerTier = 96;
@@ -2684,10 +2697,10 @@
         const slot = i % silhouettesPerTier;
         // Equal angular spacing per tier, with each row offset half a slot so the crowd feels denser.
         const angle = ((slot + tier * 0.5) / silhouettesPerTier) * Math.PI * 2;
-        const radius = ARENA_RADIUS + 2.35 + tier * 0.92;
+        const radius = ARENA_RADIUS + 2.9 + tier * 1.72;
         const x = Math.cos(angle) * radius;
         const z = Math.sin(angle) * radius;
-        const baseY = 2.18 + tier * 0.34 + Math.sin(slot * 1.37 + tier) * 0.16 + 0.21;
+        const baseY = 2.9 + tier * 0.48 + Math.sin(slot * 1.37 + tier) * 0.16;
         const scale = 0.72 + ((slot * 19 + tier * 11) % 37) / 37 * 0.55;
 
         dummy.position.set(x, baseY, z);
@@ -3095,6 +3108,7 @@
         walkTime: 0,
         idleTime: Math.random() * 100,
         dustTimer: 0,
+        footstepTimer: 0,
         hurtTimer: 0,
         blinkTimer: Math.random() * 2,
         blinkDuration: 0,
@@ -3183,6 +3197,7 @@
 
     function setupEvents() {
       document.addEventListener("keydown", e => {
+        ensureAudio();
         keys[e.code] = true;
 
         if (e.code === "KeyR") {
@@ -3199,6 +3214,7 @@
       });
 
       document.body.addEventListener("click", e => {
+        ensureAudio();
         if (e.target === restartBtn || e.target === nextOpponentBtn) return;
 
         if (!mouseLocked && !gameOver) {
@@ -3229,6 +3245,7 @@
       });
 
       document.addEventListener("mousedown", e => {
+        ensureAudio();
         if (gameOver) return;
 
         if (e.button === 0) {
@@ -3431,6 +3448,7 @@
 
       enemy.moveLocalX = 0;
       enemy.moveLocalZ = 0;
+      enemy.footstepTimer = 0;
       enemy.currentSway = 0;
       enemy.targetSway = 0;
     }
@@ -3752,64 +3770,66 @@
 
     function animateEnemyAttack(g, t) {
       /*
-        Enemy front-swing fix:
-        Keep the attacking arm pitched forward (negative X rotation) for the entire attack.
-        The previous recovery/strike let the arm rotate positive on X, which pulled the club
-        behind the opponent. The club pivot also stays slightly outside and forward so it does
-        not pass through the torso.
+        Front-only enemy club attack:
+        The club hand remains in front of the chest (+Z) and outside the right shoulder.
+        This avoids the old behind-the-back arc and keeps the club from clipping through
+        the opponent body during wind-up, strike, and recovery.
       */
-      const sideOutside = -0.08;     // stays on the opponent's right side, away from the chest
-      const frontClearance = 0.34;   // keeps the club in front of the body during the swing
-      g.swordPivot.position.set(sideOutside, -0.78, frontClearance);
+      const sideOutside = -0.22;
+      const frontClearance = 0.54;
 
-      if (t < 0.32) {
-        const p = easeOut(t / 0.32);
+      if (t < 0.34) {
+        const p = easeOut(t / 0.34);
 
-        // Raise the weapon in front-right, never behind the shoulder.
-        g.rightArmPivot.rotation.x = THREE.MathUtils.lerp(-0.42, -1.28, p);
-        g.rightArmPivot.rotation.y = THREE.MathUtils.lerp(-0.08, -0.18, p);
-        g.rightArmPivot.rotation.z = THREE.MathUtils.lerp(-0.20, -0.88, p);
-
-        g.swordPivot.rotation.x = THREE.MathUtils.lerp(-0.62, -0.88, p);
-        g.swordPivot.rotation.y = THREE.MathUtils.lerp(-0.10, -0.02, p);
-        g.swordPivot.rotation.z = THREE.MathUtils.lerp(-0.38, -1.02, p);
-      } else if (t < 0.78) {
-        const p = easeInOut((t - 0.32) / 0.46);
-        const snap = Math.sin(p * Math.PI);
-
-        // Horizontal sweep across the opponent's front. X rotation remains negative so the
-        // club projects forward instead of arcing through/behind the body.
-        g.rightArmPivot.rotation.x = -1.24 + p * 0.58 - snap * 0.12;
-        g.rightArmPivot.rotation.y = -0.18 + p * 0.46;
-        g.rightArmPivot.rotation.z = -0.88 + p * 1.82;
+        // Front-right wind-up, with the arm raised forward instead of behind the torso.
+        g.rightArmPivot.rotation.x = THREE.MathUtils.lerp(-0.34, -1.48, p);
+        g.rightArmPivot.rotation.y = THREE.MathUtils.lerp(-0.04, -0.22, p);
+        g.rightArmPivot.rotation.z = THREE.MathUtils.lerp(0.12, 0.24, p);
 
         g.swordPivot.position.set(
-          THREE.MathUtils.lerp(sideOutside, -0.14, p),
+          THREE.MathUtils.lerp(0.02, sideOutside, p),
           -0.78,
-          frontClearance + snap * 0.08
+          THREE.MathUtils.lerp(0.20, frontClearance, p)
         );
-        g.swordPivot.rotation.x = -0.88 + p * 0.32;
-        g.swordPivot.rotation.y = -0.02 + p * 0.2;
-        g.swordPivot.rotation.z = -1.02 + p * 2.04;
+        g.swordPivot.rotation.x = THREE.MathUtils.lerp(-0.62, -1.12, p);
+        g.swordPivot.rotation.y = THREE.MathUtils.lerp(-0.10, 0.08, p);
+        g.swordPivot.rotation.z = THREE.MathUtils.lerp(-0.38, -0.10, p);
+      } else if (t < 0.78) {
+        const p = easeInOut((t - 0.34) / 0.44);
+        const snap = Math.sin(p * Math.PI);
+
+        // Down-and-across chop in front of the opponent. Positive local Z clearance is
+        // maintained throughout the hit frames so the club never passes behind the body.
+        g.rightArmPivot.rotation.x = THREE.MathUtils.lerp(-1.48, -0.44, p) - snap * 0.08;
+        g.rightArmPivot.rotation.y = THREE.MathUtils.lerp(-0.22, 0.20, p);
+        g.rightArmPivot.rotation.z = THREE.MathUtils.lerp(0.24, -0.14, p);
+
+        g.swordPivot.position.set(
+          THREE.MathUtils.lerp(sideOutside, -0.30, p),
+          -0.78,
+          frontClearance + snap * 0.10
+        );
+        g.swordPivot.rotation.x = THREE.MathUtils.lerp(-1.12, -0.34, p);
+        g.swordPivot.rotation.y = THREE.MathUtils.lerp(0.08, 0.20, p);
+        g.swordPivot.rotation.z = THREE.MathUtils.lerp(-0.10, 0.42, p);
       } else {
         const p = easeOut((t - 0.78) / 0.22);
 
-        // Recover back toward idle while still staying in front of the torso.
-        g.rightArmPivot.rotation.x = THREE.MathUtils.lerp(-0.66, -0.28, p);
-        g.rightArmPivot.rotation.y = THREE.MathUtils.lerp(0.28, -0.04, p);
-        g.rightArmPivot.rotation.z = THREE.MathUtils.lerp(0.94, 0.18, p);
+        // Recover to idle while still staying in front of the torso.
+        g.rightArmPivot.rotation.x = THREE.MathUtils.lerp(-0.44, -0.28, p);
+        g.rightArmPivot.rotation.y = THREE.MathUtils.lerp(0.20, -0.04, p);
+        g.rightArmPivot.rotation.z = THREE.MathUtils.lerp(-0.14, 0.18, p);
 
         g.swordPivot.position.set(
-          THREE.MathUtils.lerp(-0.14, 0.04, p),
+          THREE.MathUtils.lerp(-0.30, 0.04, p),
           -0.78,
-          THREE.MathUtils.lerp(frontClearance, 0.12, p)
+          THREE.MathUtils.lerp(frontClearance, 0.14, p)
         );
-        g.swordPivot.rotation.x = THREE.MathUtils.lerp(-0.56, -0.62, p);
-        g.swordPivot.rotation.y = THREE.MathUtils.lerp(0.18, -0.10, p);
-        g.swordPivot.rotation.z = THREE.MathUtils.lerp(1.02, -0.38, p);
+        g.swordPivot.rotation.x = THREE.MathUtils.lerp(-0.34, -0.62, p);
+        g.swordPivot.rotation.y = THREE.MathUtils.lerp(0.20, -0.10, p);
+        g.swordPivot.rotation.z = THREE.MathUtils.lerp(0.42, -0.38, p);
       }
 
-      // Shield braces forward a little during the enemy attack so the off hand reads naturally.
       g.leftArmPivot.rotation.x = -0.24;
       g.leftArmPivot.rotation.z = -0.22 + g.currentSway * 0.1;
       g.shieldPivot.position.z = 0.18;
@@ -3838,6 +3858,16 @@
       g.currentSway = THREE.MathUtils.lerp(g.currentSway, g.targetSway, dt * 9);
 
       const shoulderSway = g.currentSway * 0.6;
+
+      if (moving && !gameOver && !g.isDead) {
+        g.footstepTimer -= dt;
+        if (g.footstepTimer <= 0) {
+          playFootstepSound(isPlayer ? 0.18 : 0.11);
+          g.footstepTimer = isPlayer ? 0.34 : 0.42;
+        }
+      } else {
+        g.footstepTimer = 0;
+      }
 
       g.group.position.y = stepBob;
 
@@ -4358,6 +4388,9 @@
       nextOpponentBtn.textContent = "Continue";
 
       updateBracketMenu(hasVictory);
+      if (hasVictory) {
+        playVictorySound();
+      }
       messagePanel.setAttribute("aria-hidden", "false");
       messagePanel.classList.add("show");
 
@@ -4420,6 +4453,7 @@
 
       player.moveLocalX = 0;
       player.moveLocalZ = 0;
+      player.footstepTimer = 0;
       player.currentSway = 0;
       player.targetSway = 0;
       player.headLookYaw = 0;
@@ -4479,6 +4513,79 @@
       bloodDecals.length = 0;
 
       updateUI();
+    }
+
+    function ensureAudio() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+
+      if (!audioCtx) {
+        audioCtx = new AudioContextClass();
+      }
+
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+
+      return audioCtx;
+    }
+
+    function playFootstepSound(volume = 0.14) {
+      if (!audioCtx || audioCtx.state === "closed") return;
+
+      const now = audioCtx.currentTime;
+      const thump = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+
+      thump.type = "triangle";
+      thump.frequency.setValueAtTime(82 + Math.random() * 16, now);
+      thump.frequency.exponentialRampToValueAtTime(42 + Math.random() * 6, now + 0.085);
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(360, now);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(volume, now + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.105);
+
+      thump.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      thump.start(now);
+      thump.stop(now + 0.12);
+    }
+
+    function playVictorySound() {
+      const ctx = ensureAudio();
+      if (!ctx || ctx.state === "closed") return;
+
+      const now = ctx.currentTime;
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.0001, now);
+      master.gain.exponentialRampToValueAtTime(0.24, now + 0.04);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 1.35);
+      master.connect(ctx.destination);
+
+      const notes = [261.63, 329.63, 392.0, 523.25, 659.25];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const start = now + i * 0.14;
+
+        osc.type = i === notes.length - 1 ? "square" : "triangle";
+        osc.frequency.setValueAtTime(freq, start);
+
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.42, start + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.38);
+
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(start);
+        osc.stop(start + 0.42);
+      });
     }
 
     function keepInsideArena(pos) {
