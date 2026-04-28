@@ -493,8 +493,6 @@
 
     let enemyDeathTimer = 0;
     let enemyDeathDuration = 1.55;
-    let enemyVictoryDelayTimer = 0;
-    const VICTORY_SCREEN_DELAY = 2;
     let pendingVictoryText = "";
     let pendingVictoryDetail = "";
 
@@ -1332,8 +1330,7 @@
         headLookPitch: 0,
         baseHeadPitch: 0,
         baseHeadRoll: 0,
-        isDead: false,
-        ragdoll: null
+        isDead: false
       };
     }
 
@@ -1490,7 +1487,7 @@
       updatePlayer(dt);
       updateEnemy(dt);
       updateAnimations(dt);
-      updateEnemyDeath(dt, rawDt);
+      updateEnemyDeath(dt);
 
       checkEnemySwordDamage();
 
@@ -1618,115 +1615,27 @@
       keepInsideArena(enemy.group.position);
     }
 
-    function startEnemyRagdoll(attacker = player) {
-      const pushDir = enemy.group.position.clone().sub(attacker.group.position);
-      pushDir.y = 0;
+    function updateEnemyDeath(dt) {
+      if (enemyDeathTimer <= 0) return;
 
-      if (pushDir.lengthSq() < 0.001) {
-        pushDir.set(Math.sin(enemy.group.rotation.y), 0, Math.cos(enemy.group.rotation.y));
-      }
-
-      pushDir.normalize();
-
-      const side = Math.random() > 0.5 ? 1 : -1;
-
-      enemy.ragdoll = {
-        elapsed: 0,
-        startPosition: enemy.group.position.clone(),
-        startRotation: enemy.group.rotation.clone(),
-        pushDir,
-        side,
-        finalPitch: -1.42 - Math.random() * 0.22,
-        finalRoll: side * (0.22 + Math.random() * 0.34),
-        finalYaw: enemy.group.rotation.y + side * (0.22 + Math.random() * 0.42),
-        slideDistance: 0.62 + Math.random() * 0.48,
-        seed: Math.random() * Math.PI * 2,
-        impactDone: false
-      };
-
-      enemy.moveLocalX = 0;
-      enemy.moveLocalZ = 0;
-      enemy.currentSway = 0;
-      enemy.targetSway = 0;
-    }
-
-    function applyEnemyRagdollPose(t) {
-      if (!enemy.ragdoll) return;
-
-      const r = enemy.ragdoll;
+      enemyDeathTimer = Math.max(0, enemyDeathTimer - dt);
+      const t = 1 - enemyDeathTimer / enemyDeathDuration;
       const p = easeInOut(t);
-      const quick = easeOut(t);
-      const loose = Math.max(0, 1 - t);
-      const bounce = Math.sin(t * Math.PI * 4 + r.seed) * loose * 0.16;
 
-      enemy.group.position.copy(r.startPosition);
-      enemy.group.position.addScaledVector(r.pushDir, r.slideDistance * quick);
-      enemy.group.position.y = Math.max(0, Math.sin(t * Math.PI) * 0.16 - t * 0.035);
+      enemy.group.position.y = Math.sin(Math.min(1, t) * Math.PI) * 0.08;
+      enemy.group.rotation.x = -p * 1.38;
+      enemy.group.rotation.z = Math.sin(p * Math.PI) * 0.18;
+      enemy.rightArmPivot.rotation.x = -0.4 + p * 1.35;
+      enemy.rightArmPivot.rotation.z = 0.2 - p * 0.65;
+      enemy.leftArmPivot.rotation.x = -0.2 + p * 0.85;
+      enemy.leftArmPivot.rotation.z = 0.25 + p * 0.45;
+      enemy.swordPivot.rotation.z = 0.35 - p * 1.2;
+      enemy.shieldPivot.rotation.z = p * 0.75;
 
-      enemy.group.rotation.x = r.startRotation.x + r.finalPitch * p + bounce;
-      enemy.group.rotation.y = lerpAngle(r.startRotation.y, r.finalYaw, p);
-      enemy.group.rotation.z = r.startRotation.z + r.finalRoll * p + Math.sin(t * Math.PI * 3) * loose * 0.1;
-
-      enemy.body.rotation.x = Math.sin(t * Math.PI * 3 + r.seed) * loose * 0.08;
-      enemy.body.rotation.z = r.side * p * 0.18;
-
-      enemy.rightArmPivot.rotation.x = THREE.MathUtils.lerp(-1.35, 1.32, p) + Math.sin(t * 18 + r.seed) * loose * 0.28;
-      enemy.rightArmPivot.rotation.y = THREE.MathUtils.lerp(0.2, -0.35, p);
-      enemy.rightArmPivot.rotation.z = THREE.MathUtils.lerp(0.88, -1.05, p) + Math.cos(t * 15 + r.seed) * loose * 0.24;
-
-      enemy.leftArmPivot.rotation.x = THREE.MathUtils.lerp(-0.72, 1.12, p) + Math.cos(t * 16 + r.seed) * loose * 0.25;
-      enemy.leftArmPivot.rotation.y = THREE.MathUtils.lerp(-0.12, 0.32, p);
-      enemy.leftArmPivot.rotation.z = THREE.MathUtils.lerp(-0.55, 0.95, p) + Math.sin(t * 14 + r.seed) * loose * 0.2;
-
-      enemy.rightLegPivot.rotation.x = THREE.MathUtils.lerp(0.18, -0.82, p) + Math.sin(t * 13 + r.seed) * loose * 0.15;
-      enemy.rightLegPivot.rotation.z = r.side * p * 0.38;
-      enemy.leftLegPivot.rotation.x = THREE.MathUtils.lerp(-0.18, 0.54, p) + Math.cos(t * 11 + r.seed) * loose * 0.15;
-      enemy.leftLegPivot.rotation.z = -r.side * p * 0.32;
-
-      enemy.swordPivot.position.set(0.04 + r.side * p * 0.08, -0.78 - p * 0.16, 0.02 + p * 0.1);
-      enemy.swordPivot.rotation.x = -0.62 + p * 1.28;
-      enemy.swordPivot.rotation.y = -0.1 + r.side * p * 0.42;
-      enemy.swordPivot.rotation.z = -0.38 - r.side * p * 1.15;
-
-      enemy.shieldPivot.position.z = 0.12 + p * 0.12;
-      enemy.shieldPivot.rotation.x = -0.06 + p * 0.48;
-      enemy.shieldPivot.rotation.y = 0.06 - r.side * p * 0.38;
-      enemy.shieldPivot.rotation.z = r.side * p * 1.05;
-
-      setHeadPose(enemy, p * 0.52, -r.side * p * 0.34, r.side * p * 0.28);
-
-      if (!r.impactDone && t > 0.72) {
-        r.impactDone = true;
-        createDustPuff(enemy.group.position.clone(), r.pushDir.clone().multiplyScalar(-1));
-        shakeCamera(0.08);
-      }
-    }
-
-    function finishEnemyRagdollPose() {
-      applyEnemyRagdollPose(1);
-      enemy.group.position.y = 0;
-      enemy.body.rotation.set(0, 0, enemy.ragdoll ? enemy.ragdoll.side * 0.18 : 0);
-    }
-
-    function updateEnemyDeath(dt, rawDt = dt) {
-      if (enemyDeathTimer > 0) {
-        enemyDeathTimer = Math.max(0, enemyDeathTimer - dt);
-        const t = 1 - enemyDeathTimer / enemyDeathDuration;
-        applyEnemyRagdollPose(t);
-
-        if (enemyDeathTimer <= 0) {
-          finishEnemyRagdollPose();
-        }
-
-        return;
-      }
-
-      if (enemyVictoryDelayTimer > 0) {
-        enemyVictoryDelayTimer = Math.max(0, enemyVictoryDelayTimer - rawDt);
-
-        if (enemyVictoryDelayTimer <= 0) {
-          endGame(pendingVictoryText, pendingVictoryDetail);
-        }
+      if (enemyDeathTimer <= 0) {
+        enemy.group.position.y = 0;
+        enemy.group.rotation.x = -1.38;
+        endGame(pendingVictoryText, pendingVictoryDetail);
       }
     }
 
@@ -2224,8 +2133,6 @@
         isBlocking = false;
         enemyAttackTimer = 0;
         enemyDeathTimer = enemyDeathDuration;
-        enemyVictoryDelayTimer = VICTORY_SCREEN_DELAY;
-        startEnemyRagdoll(player);
 
         pendingVictoryText = "Round " + tournamentRound + " Cleared";
         pendingVictoryDetail = currentEnemyName + " was clubbed down. Next opponent awaits. +" + earned + " BloodCoins.";
@@ -2601,8 +2508,6 @@
       enemyHitDone = false;
 
       enemyDeathTimer = 0;
-      enemyVictoryDelayTimer = 0;
-      enemy.ragdoll = null;
       pendingVictoryText = "";
       pendingVictoryDetail = "";
 
@@ -2642,18 +2547,12 @@
       enemy.rightArmPivot.rotation.set(0, 0, 0);
       player.leftArmPivot.rotation.set(0, 0, 0);
       enemy.leftArmPivot.rotation.set(0, 0, 0);
-      player.leftLegPivot.rotation.set(0, 0, 0);
-      enemy.leftLegPivot.rotation.set(0, 0, 0);
-      player.rightLegPivot.rotation.set(0, 0, 0);
-      enemy.rightLegPivot.rotation.set(0, 0, 0);
       player.swordPivot.position.set(0.04, -0.78, 0.02);
       enemy.swordPivot.position.set(0.04, -0.78, 0.02);
       player.swordPivot.rotation.set(0, 0, 0);
       enemy.swordPivot.rotation.set(0, 0, 0);
       player.shieldPivot.rotation.set(0, 0, 0);
       enemy.shieldPivot.rotation.set(0, 0, 0);
-      player.shieldPivot.position.set(0, -0.84, 0.12);
-      enemy.shieldPivot.position.set(0, -0.84, 0.12);
 
       messagePanel.classList.remove("show");
 
