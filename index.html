@@ -2518,7 +2518,8 @@
         clothColor: 0x9e1b1b,
         skinColor: 0xd49a6a,
         x: 0,
-        z: 8
+        z: 8,
+        bodyWidthScale: 0.8
       });
 
       enemy = createGladiator({
@@ -2787,18 +2788,22 @@
       const armor = toonMaterial(opts.armorColor);
       const cloth = toonMaterial(opts.clothColor);
       const leather = toonMaterial(opts.bodyColor);
+      const bodyWidthScale = opts.bodyWidthScale || 1;
 
       const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.7, 1.15, 8, 16), skin);
       body.position.y = 1.75;
       body.castShadow = true;
       group.add(body);
       addOutline(body, 1.045);
+      // Player body width is narrowed without changing height or arm placement.
+      body.scale.set(bodyWidthScale, 1, bodyWidthScale);
 
       const chest = new THREE.Mesh(
         new THREE.BoxGeometry(1.25, 1.1, 0.5),
         new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, visible: false })
       );
       chest.position.y = 2.08;
+      chest.scale.set(bodyWidthScale, 1, bodyWidthScale);
       chest.visible = false;
       group.add(chest);
 
@@ -2810,12 +2815,14 @@
       belt.castShadow = true;
       group.add(belt);
       addOutline(belt, 1.035);
+      belt.scale.set(bodyWidthScale, 1, bodyWidthScale);
 
       const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 1.02, 0.65, 12), cloth);
       skirt.position.y = 1.18;
       skirt.castShadow = true;
       group.add(skirt);
       addOutline(skirt, 1.04);
+      skirt.scale.set(bodyWidthScale, 1, bodyWidthScale);
 
       const headPivot = new THREE.Group();
       headPivot.position.set(0, 3.05, 0);
@@ -3744,34 +3751,62 @@
     }
 
     function animateEnemyAttack(g, t) {
-      // Enemy uses the same local-right hand setup as the player.
-      // Keep the club on the front/right side during the whole swing instead of rotating it behind the body.
-      g.swordPivot.position.set(0.04, -0.78, 0.08);
+      /*
+        Enemy front-swing fix:
+        Keep the attacking arm pitched forward (negative X rotation) for the entire attack.
+        The previous recovery/strike let the arm rotate positive on X, which pulled the club
+        behind the opponent. The club pivot also stays slightly outside and forward so it does
+        not pass through the torso.
+      */
+      const sideOutside = -0.08;     // stays on the opponent's right side, away from the chest
+      const frontClearance = 0.34;   // keeps the club in front of the body during the swing
+      g.swordPivot.position.set(sideOutside, -0.78, frontClearance);
 
-      if (t < 0.34) {
-        const p = easeOut(t / 0.34);
-        g.rightArmPivot.rotation.x = -0.42 - p * 1.05;
-        g.rightArmPivot.rotation.z = -0.22 - p * 0.82;
-        g.rightArmPivot.rotation.y = -0.12 - p * 0.18;
-        g.swordPivot.rotation.x = -0.54 - p * 0.54;
-        g.swordPivot.rotation.y = -0.1;
-        g.swordPivot.rotation.z = -0.42 - p * 1.22;
-      } else if (t < 0.76) {
-        const p = easeInOut((t - 0.34) / 0.42);
-        g.rightArmPivot.rotation.x = -1.47 + p * 2.08;
-        g.rightArmPivot.rotation.z = -1.04 + p * 1.72;
-        g.rightArmPivot.rotation.y = -0.3 + p * 0.38;
-        g.swordPivot.rotation.x = -1.08 + p * 1.18;
-        g.swordPivot.rotation.y = -0.1 + p * 0.16;
-        g.swordPivot.rotation.z = -1.64 + p * 2.72;
+      if (t < 0.32) {
+        const p = easeOut(t / 0.32);
+
+        // Raise the weapon in front-right, never behind the shoulder.
+        g.rightArmPivot.rotation.x = THREE.MathUtils.lerp(-0.42, -1.28, p);
+        g.rightArmPivot.rotation.y = THREE.MathUtils.lerp(-0.08, -0.18, p);
+        g.rightArmPivot.rotation.z = THREE.MathUtils.lerp(-0.20, -0.88, p);
+
+        g.swordPivot.rotation.x = THREE.MathUtils.lerp(-0.62, -0.88, p);
+        g.swordPivot.rotation.y = THREE.MathUtils.lerp(-0.10, -0.02, p);
+        g.swordPivot.rotation.z = THREE.MathUtils.lerp(-0.38, -1.02, p);
+      } else if (t < 0.78) {
+        const p = easeInOut((t - 0.32) / 0.46);
+        const snap = Math.sin(p * Math.PI);
+
+        // Horizontal sweep across the opponent's front. X rotation remains negative so the
+        // club projects forward instead of arcing through/behind the body.
+        g.rightArmPivot.rotation.x = -1.24 + p * 0.58 - snap * 0.12;
+        g.rightArmPivot.rotation.y = -0.18 + p * 0.46;
+        g.rightArmPivot.rotation.z = -0.88 + p * 1.82;
+
+        g.swordPivot.position.set(
+          THREE.MathUtils.lerp(sideOutside, -0.14, p),
+          -0.78,
+          frontClearance + snap * 0.08
+        );
+        g.swordPivot.rotation.x = -0.88 + p * 0.32;
+        g.swordPivot.rotation.y = -0.02 + p * 0.2;
+        g.swordPivot.rotation.z = -1.02 + p * 2.04;
       } else {
-        const p = easeOut((t - 0.76) / 0.24);
-        g.rightArmPivot.rotation.x = 0.61 - p * 0.79;
-        g.rightArmPivot.rotation.z = 0.68 - p * 0.54;
-        g.rightArmPivot.rotation.y = 0.08 - p * 0.08;
-        g.swordPivot.rotation.x = 0.1 - p * 0.72;
-        g.swordPivot.rotation.y = 0.06 - p * 0.16;
-        g.swordPivot.rotation.z = 1.08 - p * 1.46;
+        const p = easeOut((t - 0.78) / 0.22);
+
+        // Recover back toward idle while still staying in front of the torso.
+        g.rightArmPivot.rotation.x = THREE.MathUtils.lerp(-0.66, -0.28, p);
+        g.rightArmPivot.rotation.y = THREE.MathUtils.lerp(0.28, -0.04, p);
+        g.rightArmPivot.rotation.z = THREE.MathUtils.lerp(0.94, 0.18, p);
+
+        g.swordPivot.position.set(
+          THREE.MathUtils.lerp(-0.14, 0.04, p),
+          -0.78,
+          THREE.MathUtils.lerp(frontClearance, 0.12, p)
+        );
+        g.swordPivot.rotation.x = THREE.MathUtils.lerp(-0.56, -0.62, p);
+        g.swordPivot.rotation.y = THREE.MathUtils.lerp(0.18, -0.10, p);
+        g.swordPivot.rotation.z = THREE.MathUtils.lerp(1.02, -0.38, p);
       }
 
       // Shield braces forward a little during the enemy attack so the off hand reads naturally.
