@@ -982,35 +982,19 @@
     }
 
     #victorySubtitle {
-      position: relative;
-      z-index: 1;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      margin-top: 10px;
-      color: #d7d0c5;
-      font-size: clamp(17px, 2.8vw, 34px);
-      font-weight: 900;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      text-shadow: 0 3px 8px #000;
+      display: none;
     }
 
     #victorySubtitle::before,
     #victorySubtitle::after {
-      content: "";
-      width: min(120px, 16vw);
-      height: 2px;
-      background: linear-gradient(90deg, transparent, rgba(226, 185, 94, 0.76), transparent);
-      box-shadow: 0 0 8px rgba(226, 185, 94, 0.16);
+      display: none;
     }
 
     #victoryMainFrame {
       position: relative;
       z-index: 1;
       margin: 8px auto 18px;
-      padding: 48px clamp(14px, 2.2vw, 26px) 22px;
+      padding: 22px clamp(14px, 2.2vw, 26px) 22px;
       border: 4px ridge rgba(195, 145, 67, 0.85);
       background:
         radial-gradient(circle at 24% 50%, rgba(171, 87, 28, 0.18), transparent 32%),
@@ -1053,7 +1037,7 @@
 
     #victoryPortraitWrap {
       position: relative;
-      min-height: 290px;
+      min-height: 278px;
       display: flex;
       align-items: end;
       justify-content: center;
@@ -1137,17 +1121,17 @@
 
     #victoryShoulders {
       position: absolute;
-      bottom: -8px;
-      width: 268px;
-      height: 170px;
-      border-radius: 120px 120px 18px 18px;
+      bottom: -2px;
+      width: 222px;
+      height: 142px;
+      border-radius: 104px 104px 16px 16px;
       background:
         radial-gradient(circle at 33% 24%, rgba(255, 216, 160, 0.22), transparent 16%),
         radial-gradient(circle at 70% 38%, rgba(92, 16, 8, 0.45), transparent 12%),
         linear-gradient(135deg, #9b673f, #5b2e17 45%, #241008 100%);
       border-top: 4px ridge rgba(194, 141, 75, 0.68);
       box-shadow:
-        inset 0 0 30px rgba(0,0,0,0.45),
+        inset 0 0 26px rgba(0,0,0,0.45),
         0 -4px 0 rgba(31, 15, 8, 0.7);
     }
 
@@ -1325,10 +1309,38 @@
       width: 54px;
       height: 54px;
       border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       background:
-        radial-gradient(circle at 34% 28%, #ffe5a0, #c48b2e 54%, #60370c 100%);
-      border: 3px ridge rgba(255, 216, 111, 0.82);
-      box-shadow: inset 0 0 12px rgba(99, 55, 13, 0.48), 0 8px 12px rgba(0,0,0,0.42);
+        radial-gradient(circle at 34% 28%, rgba(255, 211, 238, 0.96), rgba(190, 55, 118, 0.94) 30%, rgba(117, 35, 136, 0.96) 64%, rgba(48, 8, 62, 1) 100%);
+      border: 3px ridge rgba(221, 111, 195, 0.72);
+      box-shadow:
+        inset 0 0 14px rgba(38, 4, 40, 0.6),
+        0 8px 12px rgba(0,0,0,0.42),
+        0 0 14px rgba(150, 32, 126, 0.16);
+      overflow: hidden;
+    }
+
+    .coinStack span::before {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 214, 244, 0.38);
+      box-shadow: inset 0 0 9px rgba(255,255,255,0.08);
+    }
+
+    .coinStack span::after {
+      content: "☠";
+      position: relative;
+      z-index: 1;
+      color: rgba(255, 233, 247, 0.92);
+      font-size: 19px;
+      line-height: 1;
+      text-shadow:
+        0 1px 0 rgba(69, 11, 43, 0.9),
+        0 0 8px rgba(255, 120, 214, 0.22);
     }
 
     .coinStack span:nth-child(1) { left: 6px; bottom: 0; }
@@ -1507,12 +1519,12 @@
         <div id="victoryHeader">
           <div id="victoryLaurels" aria-hidden="true">❦</div>
           <div id="victoryTitle">Victory</div>
-          <div id="victorySubtitle">Opponent Defeated</div>
+          <div id="victorySubtitle"></div>
         </div>
 
         <div id="victoryMainFrame">
           <div id="victoryRibbon">
-            <span id="victoryRibbonText">Next Opponent</span>
+            <span id="victoryRibbonText"></span>
           </div>
 
           <div id="victoryOpponentPanel">
@@ -1530,7 +1542,7 @@
 
             <div id="victoryStats">
               <div id="victoryOpponentName">Awaiting Challenger</div>
-              <div id="victoryDefeatedName">Opponent defeated</div>
+              <div id="victoryDefeatedName"></div>
 
               <div class="victoryStatRow">
                 <div class="victoryStatIcon">♥</div>
@@ -1563,7 +1575,7 @@
               <span></span><span></span><span></span>
             </div>
             <div>
-              <div class="victoryRewardLabel">Gold Earned</div>
+              <div class="victoryRewardLabel">Bloodcoins Earned</div>
               <div id="victoryGoldEarned" class="victoryRewardValue">0</div>
             </div>
           </div>
@@ -1957,8 +1969,8 @@
       }
 
       victoryTitle.textContent = hasVictory ? "Victory" : "Defeat";
-      victorySubtitle.textContent = hasVictory ? "Opponent Defeated" : "Gladiator Defeated";
-      victoryRibbonText.textContent = hasVictory ? "Next Opponent" : "Arena Outcome";
+      victorySubtitle.textContent = "";
+      victoryRibbonText.textContent = "";
       victoryOpponentName.textContent = previewName;
       victoryDefeatedName.textContent = hasVictory
         ? currentEnemyName + " defeated"
