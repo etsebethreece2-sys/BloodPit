@@ -493,6 +493,8 @@
 
     let enemyDeathTimer = 0;
     let enemyDeathDuration = 1.55;
+    let enemyVictoryDelayTimer = 0;
+    const VICTORY_SCREEN_DELAY = 2;
     let pendingVictoryText = "";
     let pendingVictoryDetail = "";
 
@@ -527,6 +529,10 @@
     const PLAYER_SPEED = 7.2;
     const ENEMY_SPEED = 3.36;
     const ENEMY_ATTACK_DURATION = 1.25;
+    const ENEMY_ATTACK_START_DISTANCE = 2.75;
+    const ENEMY_CHASE_STOP_DISTANCE = 1.45;
+    const ENEMY_ATTACK_STOP_DISTANCE = 1.05;
+    const ENEMY_ATTACK_WALK_SPEED_MULTIPLIER = 0.62;
     const PLAYER_ATTACK_DURATION = 0.7488;
     const PLAYER_ATTACK_TYPES = ["overhead", "sideRight", "sideLeft", "stab"];
     const FINISHER_SLOWMO_DURATION = 0.82;
@@ -781,6 +787,119 @@
       return texture;
     }
 
+    function createBloodSplatTexture() {
+      const canvas = document.createElement("canvas");
+      canvas.width = 128;
+      canvas.height = 128;
+      const ctx = canvas.getContext("2d");
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const centerX = 64 + (Math.random() - 0.5) * 16;
+      const centerY = 64 + (Math.random() - 0.5) * 16;
+      const mainGradient = ctx.createRadialGradient(centerX, centerY, 3, centerX, centerY, 48);
+      mainGradient.addColorStop(0, "rgba(135, 3, 3, 0.98)");
+      mainGradient.addColorStop(0.45, "rgba(92, 0, 0, 0.88)");
+      mainGradient.addColorStop(1, "rgba(35, 0, 0, 0)");
+
+      ctx.fillStyle = mainGradient;
+      ctx.beginPath();
+      ctx.ellipse(centerX, centerY, 42 + Math.random() * 15, 30 + Math.random() * 18, Math.random() * Math.PI, 0, Math.PI * 2);
+      ctx.fill();
+
+      for (let i = 0; i < 18; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 14 + Math.random() * 43;
+        const x = centerX + Math.cos(angle) * distance;
+        const y = centerY + Math.sin(angle) * distance;
+        const r = 3 + Math.random() * 12;
+
+        ctx.fillStyle = Math.random() > 0.35
+          ? "rgba(92, 0, 0, 0.72)"
+          : "rgba(155, 8, 6, 0.68)";
+        ctx.beginPath();
+        ctx.ellipse(x, y, r * (0.65 + Math.random() * 0.9), r * (0.45 + Math.random() * 0.85), Math.random() * Math.PI, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      for (let i = 0; i < 10; i++) {
+        const x = centerX + (Math.random() - 0.5) * 68;
+        const y = centerY + 18 + Math.random() * 48;
+        const dripLength = 10 + Math.random() * 28;
+        const dripWidth = 2 + Math.random() * 5;
+
+        ctx.strokeStyle = "rgba(70, 0, 0, 0.62)";
+        ctx.lineWidth = dripWidth;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + (Math.random() - 0.5) * 8, y + dripLength * 0.5, x + (Math.random() - 0.5) * 10, y + dripLength);
+        ctx.stroke();
+      }
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.magFilter = THREE.NearestFilter;
+      texture.minFilter = THREE.NearestFilter;
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    }
+
+    function createBloodStainMaterial() {
+      return new THREE.MeshBasicMaterial({
+        map: createBloodSplatTexture(),
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      });
+    }
+
+    function addBloodStain(parent, bloodStains, position, scale, threshold, rotationZ = 0) {
+      const stain = new THREE.Mesh(
+        new THREE.CircleGeometry(0.5, 20),
+        createBloodStainMaterial()
+      );
+
+      stain.position.copy(position);
+      stain.rotation.z = rotationZ;
+      stain.scale.set(scale.x, scale.y, 1);
+      stain.renderOrder = 10;
+      stain.visible = false;
+      stain.userData.baseScale = scale.clone();
+      stain.userData.threshold = threshold;
+      parent.add(stain);
+      bloodStains.push(stain);
+      return stain;
+    }
+
+    function updateGladiatorBlood(g, healthRatio = 1) {
+      if (!g || !g.bloodStains) return;
+
+      const damageAmount = 1 - THREE.MathUtils.clamp(healthRatio, 0, 1);
+
+      for (const stain of g.bloodStains) {
+        const threshold = stain.userData.threshold || 0;
+        const baseScale = stain.userData.baseScale || new THREE.Vector3(1, 1, 1);
+        const strength = THREE.MathUtils.clamp((damageAmount - threshold) / 0.22, 0, 1);
+
+        if (strength <= 0.01) {
+          stain.visible = false;
+          stain.material.opacity = 0;
+          continue;
+        }
+
+        const growth = 0.45 + strength * 1.05;
+        stain.visible = true;
+        stain.material.opacity = 0.2 + strength * 0.68;
+        stain.scale.set(baseScale.x * growth, baseScale.y * growth, 1);
+      }
+    }
+
+    function updateOpponentBloodTexture() {
+      if (!enemy || !enemy.bloodStains) return;
+      updateGladiatorBlood(enemy, enemyMaxHP > 0 ? enemyHP / enemyMaxHP : 1);
+    }
+
     function addOutline(mesh, scale = 1.045) {
       if (!mesh.geometry) return;
 
@@ -843,7 +962,8 @@
         clothColor: 0x273f8f,
         skinColor: 0xb9784a,
         x: 0,
-        z: -8
+        z: -8,
+        hasShield: false
       });
 
       scene.add(player.group);
@@ -1152,46 +1272,50 @@
       shieldPivot.position.set(0, -0.84, 0.12);
       leftArmPivot.add(shieldPivot);
 
+      const hasShield = opts.hasShield !== false;
       const shieldRadius = 0.696;
+      let shield = null;
 
-      const shield = new THREE.Mesh(
-        new THREE.CylinderGeometry(shieldRadius, shieldRadius, 0.16, 36),
-        toonMaterial(0x5b2619)
-      );
-      shield.rotation.x = Math.PI / 2;
-      shield.castShadow = true;
-      shieldPivot.add(shield);
-      addOutline(shield, 1.04);
+      if (hasShield) {
+        shield = new THREE.Mesh(
+          new THREE.CylinderGeometry(shieldRadius, shieldRadius, 0.16, 36),
+          toonMaterial(0x5b2619)
+        );
+        shield.rotation.x = Math.PI / 2;
+        shield.castShadow = true;
+        shieldPivot.add(shield);
+        addOutline(shield, 1.04);
 
-      const shieldRim = new THREE.Mesh(
-        new THREE.TorusGeometry(shieldRadius, 0.05, 10, 56),
-        armor
-      );
-      shieldRim.position.z = 0.095;
-      shieldRim.rotation.set(0, 0, 0);
-      shieldRim.castShadow = true;
-      shieldPivot.add(shieldRim);
-      addOutline(shieldRim, 1.035);
+        const shieldRim = new THREE.Mesh(
+          new THREE.TorusGeometry(shieldRadius, 0.05, 10, 56),
+          armor
+        );
+        shieldRim.position.z = 0.095;
+        shieldRim.rotation.set(0, 0, 0);
+        shieldRim.castShadow = true;
+        shieldPivot.add(shieldRim);
+        addOutline(shieldRim, 1.035);
 
-      const innerShieldRing = new THREE.Mesh(
-        new THREE.TorusGeometry(0.372, 0.03, 8, 44),
-        armor
-      );
-      innerShieldRing.position.z = 0.105;
-      innerShieldRing.rotation.set(0, 0, 0);
-      innerShieldRing.castShadow = true;
-      shieldPivot.add(innerShieldRing);
-      addOutline(innerShieldRing, 1.035);
+        const innerShieldRing = new THREE.Mesh(
+          new THREE.TorusGeometry(0.372, 0.03, 8, 44),
+          armor
+        );
+        innerShieldRing.position.z = 0.105;
+        innerShieldRing.rotation.set(0, 0, 0);
+        innerShieldRing.castShadow = true;
+        shieldPivot.add(innerShieldRing);
+        addOutline(innerShieldRing, 1.035);
 
-      const shieldBoss = new THREE.Mesh(
-        new THREE.SphereGeometry(0.216, 16, 16),
-        armor
-      );
-      shieldBoss.position.z = 0.145;
-      shieldBoss.scale.z = 0.55;
-      shieldBoss.castShadow = true;
-      shieldPivot.add(shieldBoss);
-      addOutline(shieldBoss, 1.04);
+        const shieldBoss = new THREE.Mesh(
+          new THREE.SphereGeometry(0.216, 16, 16),
+          armor
+        );
+        shieldBoss.position.z = 0.145;
+        shieldBoss.scale.z = 0.55;
+        shieldBoss.castShadow = true;
+        shieldPivot.add(shieldBoss);
+        addOutline(shieldBoss, 1.04);
+      }
 
       const swordPivot = new THREE.Group();
       swordPivot.position.set(0.04, -0.78, 0.02);
@@ -1298,6 +1422,17 @@
       rightLegPivot.add(rightSandal);
       addOutline(rightSandal, 1.05);
 
+      const bloodStains = [];
+      addBloodStain(body, bloodStains, new THREE.Vector3(-0.25, 0.2, 0.72), new THREE.Vector3(0.55, 0.42, 1), 0.08, -0.35);
+      addBloodStain(body, bloodStains, new THREE.Vector3(0.28, -0.15, 0.73), new THREE.Vector3(0.46, 0.36, 1), 0.22, 0.28);
+      addBloodStain(body, bloodStains, new THREE.Vector3(0.04, 0.48, 0.72), new THREE.Vector3(0.38, 0.34, 1), 0.34, 0.08);
+      addBloodStain(head, bloodStains, new THREE.Vector3(0.12, -0.04, 0.43), new THREE.Vector3(0.22, 0.18, 1), 0.42, 0.2);
+      addBloodStain(skirt, bloodStains, new THREE.Vector3(-0.3, -0.08, 0.78), new THREE.Vector3(0.36, 0.27, 1), 0.5, -0.15);
+      addBloodStain(leftArm, bloodStains, new THREE.Vector3(0.03, -0.16, 0.18), new THREE.Vector3(0.24, 0.44, 1), 0.6, 0.35);
+      addBloodStain(rightArm, bloodStains, new THREE.Vector3(-0.02, -0.2, 0.18), new THREE.Vector3(0.25, 0.42, 1), 0.68, -0.3);
+      addBloodStain(leftLeg, bloodStains, new THREE.Vector3(0.02, -0.25, 0.19), new THREE.Vector3(0.22, 0.38, 1), 0.76, 0.22);
+      addBloodStain(rightLeg, bloodStains, new THREE.Vector3(-0.02, -0.28, 0.19), new THREE.Vector3(0.22, 0.38, 1), 0.84, -0.22);
+
       return {
         group,
         body,
@@ -1330,7 +1465,9 @@
         headLookPitch: 0,
         baseHeadPitch: 0,
         baseHeadRoll: 0,
-        isDead: false
+        bloodStains,
+        isDead: false,
+        ragdoll: null
       };
     }
 
@@ -1487,7 +1624,7 @@
       updatePlayer(dt);
       updateEnemy(dt);
       updateAnimations(dt);
-      updateEnemyDeath(dt);
+      updateEnemyDeath(dt, rawDt);
 
       checkEnemySwordDamage();
 
@@ -1579,12 +1716,19 @@
       const targetYaw = Math.atan2(toPlayer.x, toPlayer.z);
       enemy.group.rotation.y = lerpAngle(enemy.group.rotation.y, targetYaw, dt * 8);
 
-      const enemyStopDistance = 1.55;
-      const enemyAttackStartDistance = 2.25;
+      if (enemyAttackCooldown <= 0 && enemyAttackTimer <= 0 && dist < ENEMY_ATTACK_START_DISTANCE) {
+        enemyAttackTimer = ENEMY_ATTACK_DURATION;
+        enemyAttackCooldown = (1.08 + Math.random() * 0.65) * enemyCooldownMultiplier;
+        enemyHitDone = false;
+      }
 
-      if (dist > enemyStopDistance && enemyAttackTimer <= 0) {
-        enemy.group.position.addScaledVector(toPlayer, ENEMY_SPEED * enemySpeedMultiplier * dt);
-        enemy.walkTime += dt * 9.2;
+      const isAttacking = enemyAttackTimer > 0;
+      const stopDistance = isAttacking ? ENEMY_ATTACK_STOP_DISTANCE : ENEMY_CHASE_STOP_DISTANCE;
+      const speedMultiplier = isAttacking ? ENEMY_ATTACK_WALK_SPEED_MULTIPLIER : 1;
+
+      if (dist > stopDistance) {
+        enemy.group.position.addScaledVector(toPlayer, ENEMY_SPEED * enemySpeedMultiplier * speedMultiplier * dt);
+        enemy.walkTime += dt * (isAttacking ? 7.4 : 9.2);
 
         const enemyForward = new THREE.Vector3(Math.sin(enemy.group.rotation.y), 0, Math.cos(enemy.group.rotation.y));
         const enemyRight = new THREE.Vector3(-Math.cos(enemy.group.rotation.y), 0, Math.sin(enemy.group.rotation.y));
@@ -1596,46 +1740,128 @@
 
         if (enemy.dustTimer <= 0) {
           createDustPuff(enemy.group.position.clone(), toPlayer.clone().multiplyScalar(-1));
-          enemy.dustTimer = 0.12;
+          enemy.dustTimer = isAttacking ? 0.16 : 0.12;
         }
       } else {
         enemy.idleTime += dt;
-        enemy.walkTime += dt * 1.2;
+        enemy.walkTime += dt * (isAttacking ? 4.5 : 1.2);
         enemy.dustTimer = 0;
         enemy.moveLocalX = THREE.MathUtils.lerp(enemy.moveLocalX, 0, dt * 8);
         enemy.moveLocalZ = THREE.MathUtils.lerp(enemy.moveLocalZ, 0, dt * 8);
-
-        if (enemyAttackCooldown <= 0 && enemyAttackTimer <= 0 && dist < enemyAttackStartDistance) {
-          enemyAttackTimer = ENEMY_ATTACK_DURATION;
-          enemyAttackCooldown = (1.25 + Math.random() * 0.75) * enemyCooldownMultiplier;
-          enemyHitDone = false;
-        }
       }
 
       keepInsideArena(enemy.group.position);
     }
 
-    function updateEnemyDeath(dt) {
-      if (enemyDeathTimer <= 0) return;
+    function startEnemyRagdoll(attacker = player) {
+      const pushDir = enemy.group.position.clone().sub(attacker.group.position);
+      pushDir.y = 0;
 
-      enemyDeathTimer = Math.max(0, enemyDeathTimer - dt);
-      const t = 1 - enemyDeathTimer / enemyDeathDuration;
+      if (pushDir.lengthSq() < 0.001) {
+        pushDir.set(Math.sin(enemy.group.rotation.y), 0, Math.cos(enemy.group.rotation.y));
+      }
+
+      pushDir.normalize();
+
+      const side = Math.random() > 0.5 ? 1 : -1;
+
+      enemy.ragdoll = {
+        elapsed: 0,
+        startPosition: enemy.group.position.clone(),
+        startRotation: enemy.group.rotation.clone(),
+        pushDir,
+        side,
+        finalPitch: -1.42 - Math.random() * 0.22,
+        finalRoll: side * (0.22 + Math.random() * 0.34),
+        finalYaw: enemy.group.rotation.y + side * (0.22 + Math.random() * 0.42),
+        slideDistance: 0.62 + Math.random() * 0.48,
+        seed: Math.random() * Math.PI * 2,
+        impactDone: false
+      };
+
+      enemy.moveLocalX = 0;
+      enemy.moveLocalZ = 0;
+      enemy.currentSway = 0;
+      enemy.targetSway = 0;
+    }
+
+    function applyEnemyRagdollPose(t) {
+      if (!enemy.ragdoll) return;
+
+      const r = enemy.ragdoll;
       const p = easeInOut(t);
+      const quick = easeOut(t);
+      const loose = Math.max(0, 1 - t);
+      const bounce = Math.sin(t * Math.PI * 4 + r.seed) * loose * 0.16;
 
-      enemy.group.position.y = Math.sin(Math.min(1, t) * Math.PI) * 0.08;
-      enemy.group.rotation.x = -p * 1.38;
-      enemy.group.rotation.z = Math.sin(p * Math.PI) * 0.18;
-      enemy.rightArmPivot.rotation.x = -0.4 + p * 1.35;
-      enemy.rightArmPivot.rotation.z = 0.2 - p * 0.65;
-      enemy.leftArmPivot.rotation.x = -0.2 + p * 0.85;
-      enemy.leftArmPivot.rotation.z = 0.25 + p * 0.45;
-      enemy.swordPivot.rotation.z = 0.35 - p * 1.2;
-      enemy.shieldPivot.rotation.z = p * 0.75;
+      enemy.group.position.copy(r.startPosition);
+      enemy.group.position.addScaledVector(r.pushDir, r.slideDistance * quick);
+      enemy.group.position.y = Math.max(0, Math.sin(t * Math.PI) * 0.16 - t * 0.035);
 
-      if (enemyDeathTimer <= 0) {
-        enemy.group.position.y = 0;
-        enemy.group.rotation.x = -1.38;
-        endGame(pendingVictoryText, pendingVictoryDetail);
+      enemy.group.rotation.x = r.startRotation.x + r.finalPitch * p + bounce;
+      enemy.group.rotation.y = lerpAngle(r.startRotation.y, r.finalYaw, p);
+      enemy.group.rotation.z = r.startRotation.z + r.finalRoll * p + Math.sin(t * Math.PI * 3) * loose * 0.1;
+
+      enemy.body.rotation.x = Math.sin(t * Math.PI * 3 + r.seed) * loose * 0.08;
+      enemy.body.rotation.z = r.side * p * 0.18;
+
+      enemy.rightArmPivot.rotation.x = THREE.MathUtils.lerp(-1.35, 1.32, p) + Math.sin(t * 18 + r.seed) * loose * 0.28;
+      enemy.rightArmPivot.rotation.y = THREE.MathUtils.lerp(0.2, -0.35, p);
+      enemy.rightArmPivot.rotation.z = THREE.MathUtils.lerp(0.88, -1.05, p) + Math.cos(t * 15 + r.seed) * loose * 0.24;
+
+      enemy.leftArmPivot.rotation.x = THREE.MathUtils.lerp(-0.72, 1.12, p) + Math.cos(t * 16 + r.seed) * loose * 0.25;
+      enemy.leftArmPivot.rotation.y = THREE.MathUtils.lerp(-0.12, 0.32, p);
+      enemy.leftArmPivot.rotation.z = THREE.MathUtils.lerp(-0.55, 0.95, p) + Math.sin(t * 14 + r.seed) * loose * 0.2;
+
+      enemy.rightLegPivot.rotation.x = THREE.MathUtils.lerp(0.18, -0.82, p) + Math.sin(t * 13 + r.seed) * loose * 0.15;
+      enemy.rightLegPivot.rotation.z = r.side * p * 0.38;
+      enemy.leftLegPivot.rotation.x = THREE.MathUtils.lerp(-0.18, 0.54, p) + Math.cos(t * 11 + r.seed) * loose * 0.15;
+      enemy.leftLegPivot.rotation.z = -r.side * p * 0.32;
+
+      enemy.swordPivot.position.set(0.04 + r.side * p * 0.08, -0.78 - p * 0.16, 0.02 + p * 0.1);
+      enemy.swordPivot.rotation.x = -0.62 + p * 1.28;
+      enemy.swordPivot.rotation.y = -0.1 + r.side * p * 0.42;
+      enemy.swordPivot.rotation.z = -0.38 - r.side * p * 1.15;
+
+      enemy.shieldPivot.position.z = 0.12 + p * 0.12;
+      enemy.shieldPivot.rotation.x = -0.06 + p * 0.48;
+      enemy.shieldPivot.rotation.y = 0.06 - r.side * p * 0.38;
+      enemy.shieldPivot.rotation.z = r.side * p * 1.05;
+
+      setHeadPose(enemy, p * 0.52, -r.side * p * 0.34, r.side * p * 0.28);
+
+      if (!r.impactDone && t > 0.72) {
+        r.impactDone = true;
+        createDustPuff(enemy.group.position.clone(), r.pushDir.clone().multiplyScalar(-1));
+        shakeCamera(0.08);
+      }
+    }
+
+    function finishEnemyRagdollPose() {
+      applyEnemyRagdollPose(1);
+      enemy.group.position.y = 0;
+      enemy.body.rotation.set(0, 0, enemy.ragdoll ? enemy.ragdoll.side * 0.18 : 0);
+    }
+
+    function updateEnemyDeath(dt, rawDt = dt) {
+      if (enemyDeathTimer > 0) {
+        enemyDeathTimer = Math.max(0, enemyDeathTimer - dt);
+        const t = 1 - enemyDeathTimer / enemyDeathDuration;
+        applyEnemyRagdollPose(t);
+
+        if (enemyDeathTimer <= 0) {
+          finishEnemyRagdollPose();
+        }
+
+        return;
+      }
+
+      if (enemyVictoryDelayTimer > 0) {
+        enemyVictoryDelayTimer = Math.max(0, enemyVictoryDelayTimer - rawDt);
+
+        if (enemyVictoryDelayTimer <= 0) {
+          endGame(pendingVictoryText, pendingVictoryDetail);
+        }
       }
     }
 
@@ -1940,7 +2166,7 @@
     function animateGladiator(g, dt, isPlayer) {
       const moving = isPlayer
         ? keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD
-        : enemy.group.position.distanceTo(player.group.position) > 1.65 && enemyAttackTimer <= 0;
+        : !g.isDead && enemy.group.position.distanceTo(player.group.position) > (enemyAttackTimer > 0 ? ENEMY_ATTACK_STOP_DISTANCE + 0.08 : ENEMY_CHASE_STOP_DISTANCE + 0.12);
 
       const walkSwing = moving ? Math.sin(g.walkTime) * 0.48 : 0;
       const stepBob = moving ? Math.abs(Math.sin(g.walkTime * 1.05)) * 0.075 : 0;
@@ -2034,8 +2260,9 @@
           }
         } else {
           g.swordPivot.rotation.set(-0.62, 0.1, 0.38 - g.currentSway * 0.06);
-          g.leftArmPivot.rotation.x = -0.28;
-          g.leftArmPivot.rotation.z = 0.32 + g.currentSway * 0.1;
+          g.leftArmPivot.rotation.x = -0.18 - walkSwing * 0.18;
+          g.leftArmPivot.rotation.y = shoulderSway * 0.18;
+          g.leftArmPivot.rotation.z = -0.24 + g.currentSway * 0.12;
           g.shieldPivot.rotation.set(-0.04, -0.08, g.currentSway * 0.06);
         }
       }
@@ -2133,6 +2360,8 @@
         isBlocking = false;
         enemyAttackTimer = 0;
         enemyDeathTimer = enemyDeathDuration;
+        enemyVictoryDelayTimer = VICTORY_SCREEN_DELAY;
+        startEnemyRagdoll(player);
 
         pendingVictoryText = "Round " + tournamentRound + " Cleared";
         pendingVictoryDetail = currentEnemyName + " was clubbed down. Next opponent awaits. +" + earned + " BloodCoins.";
@@ -2449,6 +2678,7 @@
       tournamentRoundText.textContent = tournamentRound;
       opponentHealthText.textContent = Math.ceil(enemyHP) + " / " + enemyMaxHP;
       opponentDamageText.textContent = Math.round(getEnemyDamageMin()) + " - " + Math.round(getEnemyDamageMax());
+      updateOpponentBloodTexture();
     }
 
     function flashDamage() {
@@ -2508,11 +2738,14 @@
       enemyHitDone = false;
 
       enemyDeathTimer = 0;
+      enemyVictoryDelayTimer = 0;
+      enemy.ragdoll = null;
       pendingVictoryText = "";
       pendingVictoryDetail = "";
 
       setDeadEyes(player, false);
       setDeadEyes(enemy, false);
+      updateOpponentBloodTexture();
 
       player.blinkTimer = Math.random() * 2;
       enemy.blinkTimer = Math.random() * 2;
@@ -2547,12 +2780,18 @@
       enemy.rightArmPivot.rotation.set(0, 0, 0);
       player.leftArmPivot.rotation.set(0, 0, 0);
       enemy.leftArmPivot.rotation.set(0, 0, 0);
+      player.leftLegPivot.rotation.set(0, 0, 0);
+      enemy.leftLegPivot.rotation.set(0, 0, 0);
+      player.rightLegPivot.rotation.set(0, 0, 0);
+      enemy.rightLegPivot.rotation.set(0, 0, 0);
       player.swordPivot.position.set(0.04, -0.78, 0.02);
       enemy.swordPivot.position.set(0.04, -0.78, 0.02);
       player.swordPivot.rotation.set(0, 0, 0);
       enemy.swordPivot.rotation.set(0, 0, 0);
       player.shieldPivot.rotation.set(0, 0, 0);
       enemy.shieldPivot.rotation.set(0, 0, 0);
+      player.shieldPivot.position.set(0, -0.84, 0.12);
+      enemy.shieldPivot.position.set(0, -0.84, 0.12);
 
       messagePanel.classList.remove("show");
 
