@@ -401,7 +401,8 @@
       text-align: right;
     }
 
-    /* Full-screen tournament result display */
+
+    /* Full-screen tournament bracket result display */
     #messagePanel {
       position: fixed;
       inset: 0;
@@ -409,7 +410,7 @@
       top: 0;
       width: auto;
       min-width: 0;
-      padding: clamp(18px, 4vw, 54px);
+      padding: clamp(16px, 3vw, 36px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -420,9 +421,9 @@
       border: 0;
       border-radius: 0;
       background:
-        radial-gradient(circle at 50% 20%, rgba(255, 211, 121, 0.18), transparent 30%),
-        radial-gradient(circle at 50% 110%, rgba(120, 10, 5, 0.33), transparent 50%),
-        linear-gradient(135deg, rgba(18, 8, 4, 0.96), rgba(47, 19, 8, 0.98) 45%, rgba(10, 5, 3, 0.98));
+        radial-gradient(circle at 50% 18%, rgba(255, 211, 121, 0.16), transparent 28%),
+        radial-gradient(circle at 50% 110%, rgba(120, 10, 5, 0.28), transparent 52%),
+        linear-gradient(135deg, rgba(18, 8, 4, 0.97), rgba(43, 18, 8, 0.98) 45%, rgba(10, 5, 3, 0.98));
       box-shadow:
         inset 0 0 0 8px rgba(126, 78, 27, 0.46),
         inset 0 0 0 18px rgba(24, 10, 3, 0.72),
@@ -443,7 +444,7 @@
     #messagePanel::after {
       inset: 42px;
       border-width: 1px;
-      border-color: rgba(255, 224, 145, 0.28);
+      border-color: rgba(255, 224, 145, 0.24);
     }
 
     #messagePanel.show {
@@ -452,101 +453,381 @@
       pointer-events: auto;
     }
 
-    #victoryCard {
+    #bracketCard {
       position: relative;
-      width: min(1000px, 88vw);
-      max-height: 86vh;
+      width: min(1180px, 94vw);
+      max-height: 90vh;
       overflow: auto;
-      padding: clamp(24px, 4vw, 52px);
-      border: 8px ridge #c39143;
-      border-radius: 8px 30px 8px 30px;
+      padding: clamp(18px, 2.8vw, 34px);
+      border: 7px ridge #c39143;
+      border-radius: 8px 26px 8px 26px;
       background:
-        repeating-linear-gradient(45deg, rgba(255, 226, 160, 0.045) 0 4px, transparent 4px 12px),
-        radial-gradient(circle at top, rgba(255, 217, 133, 0.22), transparent 48%),
-        linear-gradient(135deg, rgba(88, 47, 18, 0.97), rgba(22, 10, 5, 0.98));
+        repeating-linear-gradient(45deg, rgba(255, 226, 160, 0.04) 0 4px, transparent 4px 12px),
+        radial-gradient(circle at top, rgba(255, 217, 133, 0.18), transparent 48%),
+        linear-gradient(135deg, rgba(86, 47, 18, 0.96), rgba(20, 10, 5, 0.98));
       box-shadow:
-        0 0 0 5px rgba(31, 12, 3, 0.96),
-        0 0 0 11px rgba(132, 84, 29, 0.42),
-        0 28px 70px rgba(0, 0, 0, 0.82),
-        inset 0 6px 0 rgba(255, 231, 173, 0.13),
-        inset 0 -22px 42px rgba(0, 0, 0, 0.34);
+        0 0 0 4px rgba(31, 12, 3, 0.96),
+        0 0 0 10px rgba(132, 84, 29, 0.42),
+        0 24px 64px rgba(0, 0, 0, 0.82),
+        inset 0 6px 0 rgba(255, 231, 173, 0.11),
+        inset 0 -18px 34px rgba(0, 0, 0, 0.3);
+      text-align: left;
     }
 
-    .cardOrnament {
-      display: inline-block;
-      margin-bottom: 14px;
-      padding: 8px 22px;
-      border-top: 1px solid rgba(255, 216, 111, 0.45);
-      border-bottom: 1px solid rgba(255, 216, 111, 0.45);
+    #bracketCard::before {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border: 1px solid rgba(255, 223, 147, 0.18);
+      pointer-events: none;
+    }
+
+    #bracketHeader {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .bracketTopOrnament {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
       color: #ffd86f;
-      font-size: clamp(13px, 2vw, 18px);
-      font-weight: 900;
-      letter-spacing: 3px;
-      text-transform: uppercase;
       text-shadow: 0 2px 6px #000;
-    }
-
-    #message {
-      font-size: clamp(48px, 9vw, 118px);
-      line-height: 0.92;
-      margin-bottom: 14px;
-    }
-
-    #subMessage {
-      max-width: 760px;
-      margin: 0 auto 26px;
-      font-size: clamp(15px, 2.2vw, 20px);
-      line-height: 1.35;
-    }
-
-    #tournamentCardGrid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-      margin: 0 auto 28px;
-      max-width: 850px;
-    }
-
-    .cardStat {
-      min-height: 82px;
-      padding: 13px 14px;
-      border: 3px ridge rgba(195, 145, 67, 0.82);
-      background:
-        radial-gradient(circle at top, rgba(255, 222, 146, 0.13), transparent 62%),
-        linear-gradient(135deg, rgba(34, 14, 5, 0.78), rgba(8, 4, 2, 0.72));
-      box-shadow:
-        inset 0 0 16px rgba(255, 190, 58, 0.08),
-        0 8px 18px rgba(0,0,0,0.3);
-    }
-
-    .cardStat span {
-      display: block;
       margin-bottom: 8px;
-      color: #dfb25e;
-      font-size: 11px;
       font-weight: 900;
       letter-spacing: 2px;
       text-transform: uppercase;
+      font-size: clamp(12px, 1.6vw, 16px);
     }
 
-    .cardStat strong {
+    .bracketTopOrnament::before,
+    .bracketTopOrnament::after {
+      content: "";
+      width: min(110px, 16vw);
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 216, 111, 0.75), transparent);
+      box-shadow: 0 0 8px rgba(255, 216, 111, 0.2);
+    }
+
+    #message {
+      font-size: clamp(28px, 5vw, 54px);
+      line-height: 0.96;
+      margin-bottom: 8px;
+      letter-spacing: 3px;
+      text-align: center;
+    }
+
+    #subMessage {
+      max-width: 900px;
+      margin: 0 auto;
+      font-size: clamp(13px, 1.55vw, 17px);
+      line-height: 1.3;
+      text-align: center;
+    }
+
+    #bracketMetaRow {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 14px 0 22px;
+    }
+
+    .bracketMeta {
+      min-width: 160px;
+      padding: 9px 14px;
+      border: 2px ridge rgba(195, 145, 67, 0.82);
+      background:
+        radial-gradient(circle at top, rgba(255, 222, 146, 0.12), transparent 65%),
+        linear-gradient(135deg, rgba(38, 17, 7, 0.82), rgba(9, 4, 2, 0.78));
+      box-shadow: inset 0 0 12px rgba(255, 190, 58, 0.06), 0 6px 14px rgba(0,0,0,0.24);
+      text-align: center;
+    }
+
+    .bracketMeta span {
+      display: block;
+      margin-bottom: 4px;
+      color: #dcb062;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+    }
+
+    .bracketMeta strong {
       display: block;
       color: #ffe7ad;
-      font-size: clamp(13px, 2vw, 18px);
-      line-height: 1.18;
+      font-size: clamp(12px, 1.45vw, 16px);
       text-shadow: 0 2px 5px #000;
     }
 
-    @media (max-width: 980px) {
-      #tournamentCardGrid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
+    #bracketLayout {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.38fr) minmax(180px, 1fr) minmax(160px, 0.85fr) minmax(150px, 0.78fr);
+      gap: clamp(16px, 2vw, 28px);
+      align-items: stretch;
+      margin-bottom: 22px;
+    }
+
+    .bracketColumn {
+      position: relative;
+      min-height: 380px;
+    }
+
+    .bracketColumnTitle {
+      margin-bottom: 14px;
+      color: #e1b567;
+      font-size: clamp(11px, 1.2vw, 14px);
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-align: center;
+      text-shadow: 0 2px 4px #000;
+    }
+
+    #quarterfinalMatches,
+    #semifinalMatches,
+    #finalMatches {
+      display: flex;
+      flex-direction: column;
+    }
+
+    #quarterfinalMatches {
+      gap: 12px;
+      justify-content: space-between;
+      height: calc(100% - 32px);
+    }
+
+    #semifinalMatches {
+      gap: 30px;
+      justify-content: space-around;
+      padding-top: 30px;
+      height: calc(100% - 32px);
+    }
+
+    #finalMatches {
+      gap: 62px;
+      justify-content: center;
+      padding-top: 116px;
+      height: calc(100% - 32px);
+    }
+
+    .bracketMatch {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 72px;
+      padding-right: 18px;
+    }
+
+    .bracketMatch::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -16px;
+      width: 18px;
+      border-top: 2px solid rgba(214, 161, 74, 0.7);
+      transform: translateY(-50%);
+      box-shadow: 0 0 8px rgba(214, 161, 74, 0.14);
+    }
+
+    .bracketAdvancer {
+      position: relative;
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      padding-left: 18px;
+    }
+
+    .bracketAdvancer::before {
+      content: "";
+      position: absolute;
+      left: -18px;
+      top: 50%;
+      width: 18px;
+      border-top: 2px solid rgba(214, 161, 74, 0.7);
+      transform: translateY(-50%);
+      box-shadow: 0 0 8px rgba(214, 161, 74, 0.14);
+    }
+
+    .bracketAdvancer::after {
+      content: "";
+      position: absolute;
+      right: -18px;
+      top: 50%;
+      width: 18px;
+      border-top: 2px solid rgba(214, 161, 74, 0.7);
+      transform: translateY(-50%);
+      box-shadow: 0 0 8px rgba(214, 161, 74, 0.14);
+    }
+
+    #semifinalMatches .bracketAdvancer::before,
+    #finalMatches .bracketAdvancer::before {
+      height: 62px;
+      border-left: 2px solid rgba(214, 161, 74, 0.55);
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    #finalMatches .bracketAdvancer::before {
+      height: 124px;
+    }
+
+    .bracketEntry {
+      display: flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 8px 12px;
+      border: 2px ridge rgba(195, 145, 67, 0.88);
+      background:
+        linear-gradient(135deg, rgba(39, 18, 8, 0.94), rgba(15, 7, 4, 0.96));
+      color: #f8e4b2;
+      font-size: clamp(12px, 1.2vw, 14px);
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 4px #000;
+      box-shadow:
+        0 0 0 1px rgba(22, 8, 2, 0.95),
+        inset 0 0 10px rgba(255, 190, 58, 0.05),
+        0 4px 10px rgba(0,0,0,0.18);
+    }
+
+    .bracketEntry.pending {
+      color: rgba(248, 228, 178, 0.45);
+      border-color: rgba(163, 123, 58, 0.38);
+      background: linear-gradient(135deg, rgba(27, 14, 8, 0.84), rgba(12, 6, 4, 0.88));
+    }
+
+    .bracketEntry.winner {
+      color: #ffe39a;
+      border-color: rgba(229, 181, 84, 0.95);
+      box-shadow:
+        0 0 0 1px rgba(22, 8, 2, 0.95),
+        inset 0 0 16px rgba(255, 190, 58, 0.14),
+        0 0 14px rgba(255, 184, 81, 0.14);
+    }
+
+    .bracketEntry.player {
+      border-color: rgba(255, 214, 111, 0.96);
+      background:
+        linear-gradient(135deg, rgba(76, 43, 14, 0.96), rgba(22, 10, 5, 0.96));
+    }
+
+    .bracketEntry.eliminated {
+      color: rgba(244, 196, 159, 0.56);
+      filter: saturate(0.68);
+      text-decoration: line-through;
+    }
+
+    .bracketEntry .seed {
+      width: 18px;
+      margin-right: 10px;
+      color: #d6a14a;
+      font-size: 10px;
+      opacity: 0.9;
+      text-align: center;
+      flex: 0 0 auto;
+    }
+
+    #championColumn {
+      display: flex;
+      flex-direction: column;
+    }
+
+    #championBox {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 100%;
+      padding-left: 18px;
+    }
+
+    #championBox::before {
+      content: "";
+      position: absolute;
+      left: -20px;
+      top: 50%;
+      width: 20px;
+      border-top: 2px solid rgba(214, 161, 74, 0.7);
+      transform: translateY(-50%);
+    }
+
+    #championSeal {
+      width: min(160px, 100%);
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border: 4px ridge rgba(214, 161, 74, 0.88);
+      background:
+        radial-gradient(circle at top, rgba(255, 225, 148, 0.12), transparent 58%),
+        linear-gradient(135deg, rgba(34, 17, 8, 0.9), rgba(11, 5, 3, 0.96));
+      box-shadow:
+        0 0 0 3px rgba(25, 11, 3, 0.92),
+        inset 0 0 20px rgba(255, 190, 58, 0.08),
+        0 10px 24px rgba(0,0,0,0.34);
+    }
+
+    #championSealInner {
+      width: 76%;
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      color: #f4cf79;
+      font-size: clamp(36px, 5vw, 54px);
+      text-shadow: 0 3px 8px #000;
+      background:
+        radial-gradient(circle at 50% 36%, rgba(255, 220, 132, 0.16), rgba(56, 30, 10, 0.08) 62%, transparent 63%);
+    }
+
+    #championSealInner::before,
+    #championSealInner::after {
+      content: "";
+      position: absolute;
+      width: 38px;
+      height: 76px;
+      border: 4px solid rgba(214, 161, 74, 0.88);
+      border-color: rgba(214, 161, 74, 0.88) transparent transparent transparent;
+      border-radius: 50% 50% 0 0;
+      top: 22px;
+      opacity: 0.85;
+    }
+
+    #championSealInner::before {
+      left: 14px;
+      transform: rotate(-55deg);
+    }
+
+    #championSealInner::after {
+      right: 14px;
+      transform: rotate(55deg);
+    }
+
+    #championNameText {
+      max-width: 180px;
+      text-align: center;
+      color: #ffe6a7;
+      font-size: clamp(12px, 1.3vw, 15px);
+      font-weight: 900;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 5px #000;
     }
 
     #victoryButtonRow {
       display: flex;
       flex-wrap: wrap;
-      gap: 14px;
+      gap: 12px;
       justify-content: center;
       align-items: center;
     }
@@ -556,7 +837,7 @@
     #nextOpponentBtn {
       pointer-events: auto;
       cursor: pointer;
-      min-width: 220px;
+      min-width: 210px;
       border: 4px ridge #d6a14a;
       border-radius: 5px;
       background:
@@ -564,14 +845,14 @@
         linear-gradient(#a86f2e, #55270b);
       color: #ffe7ad;
       font-family: "Cinzel", Georgia, serif;
-      font-size: clamp(16px, 2.4vw, 22px);
+      font-size: clamp(14px, 1.6vw, 18px);
       font-weight: 900;
       letter-spacing: 1.6px;
       text-transform: uppercase;
-      padding: 15px 24px;
+      padding: 12px 20px;
       box-shadow:
-        0 6px 0 #251006,
-        0 13px 22px rgba(0,0,0,0.5),
+        0 5px 0 #251006,
+        0 12px 18px rgba(0,0,0,0.5),
         inset 0 3px 0 rgba(255,255,255,0.16),
         inset 0 -8px 12px rgba(0,0,0,0.24);
     }
@@ -601,132 +882,48 @@
         inset 0 2px 0 rgba(255,255,255,0.16);
     }
 
-    @media (max-width: 760px) {
-      #tournamentCardGrid {
+    @media (max-width: 1020px) {
+      #bracketLayout {
         grid-template-columns: 1fr;
       }
 
-      #messagePanel {
+      .bracketColumn {
+        min-height: auto;
+      }
+
+      #quarterfinalMatches,
+      #semifinalMatches,
+      #finalMatches {
+        height: auto;
+        padding-top: 0;
+        gap: 12px;
+      }
+
+      .bracketMatch,
+      .bracketAdvancer,
+      #championBox {
+        padding-left: 0;
+        padding-right: 0;
+      }
+
+      .bracketMatch::after,
+      .bracketAdvancer::before,
+      .bracketAdvancer::after,
+      #championBox::before {
+        display: none;
+      }
+    }
+
+    @media (max-height: 680px) {
+      #bracketCard {
         padding: 16px;
       }
 
-      #messagePanel::before {
-        inset: 10px;
-      }
-
-      #messagePanel::after {
-        inset: 24px;
+      #bracketMetaRow {
+        margin-bottom: 16px;
       }
     }
 
-
-    /* Requested refinements: remove scroll title, compact tournament card */
-    #tournamentWrap::before {
-      content: none !important;
-      display: none !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      border: 0 !important;
-    }
-
-    #victoryCard {
-      width: min(820px, 86vw) !important;
-      max-height: calc(100vh - 56px) !important;
-      overflow: hidden !important;
-      padding: clamp(12px, 2.1vw, 28px) !important;
-      border-width: 6px !important;
-      border-radius: 7px 22px 7px 22px !important;
-    }
-
-    .cardOrnament {
-      margin-bottom: 8px !important;
-      padding: 5px 16px !important;
-      font-size: clamp(11px, 1.5vw, 15px) !important;
-      letter-spacing: 2px !important;
-    }
-
-    #message {
-      font-size: clamp(34px, 6.2vw, 74px) !important;
-      line-height: 0.9 !important;
-      margin-bottom: 8px !important;
-      letter-spacing: 3px !important;
-    }
-
-    #subMessage {
-      max-width: 680px !important;
-      margin: 0 auto 14px !important;
-      font-size: clamp(12px, 1.6vw, 16px) !important;
-      line-height: 1.24 !important;
-    }
-
-    #tournamentCardGrid {
-      max-width: 700px !important;
-      gap: 8px !important;
-      margin-bottom: 16px !important;
-    }
-
-    .cardStat {
-      min-height: 54px !important;
-      padding: 8px 10px !important;
-      border-width: 2px !important;
-    }
-
-    .cardStat span {
-      margin-bottom: 4px !important;
-      font-size: 9px !important;
-      letter-spacing: 1.5px !important;
-    }
-
-    .cardStat strong {
-      font-size: clamp(11px, 1.55vw, 15px) !important;
-      line-height: 1.12 !important;
-    }
-
-    #victoryButtonRow {
-      gap: 10px !important;
-    }
-
-    .victoryBtn,
-    #restartBtn,
-    #nextOpponentBtn {
-      min-width: 178px !important;
-      font-size: clamp(12px, 1.8vw, 16px) !important;
-      padding: 10px 16px !important;
-      border-width: 3px !important;
-      box-shadow:
-        0 4px 0 #251006,
-        0 9px 16px rgba(0,0,0,0.48),
-        inset 0 2px 0 rgba(255,255,255,0.16),
-        inset 0 -6px 10px rgba(0,0,0,0.24) !important;
-    }
-
-    @media (max-height: 620px) {
-      #victoryCard {
-        width: min(760px, 90vw) !important;
-        padding: 10px 18px !important;
-      }
-
-      #message {
-        font-size: clamp(28px, 5.4vw, 56px) !important;
-      }
-
-      .cardOrnament {
-        margin-bottom: 5px !important;
-      }
-
-      #subMessage {
-        margin-bottom: 9px !important;
-      }
-
-      .cardStat {
-        min-height: 44px !important;
-        padding: 6px 8px !important;
-      }
-
-      #tournamentCardGrid {
-        margin-bottom: 10px !important;
-      }
-    }
 
   </style>
 </head>
@@ -761,16 +958,45 @@
 
 
     <div id="messagePanel" aria-hidden="true">
-      <div id="victoryCard">
-        <div class="cardOrnament">⚔ Tournament Card ⚔</div>
-        <div id="message"></div>
-        <div id="subMessage"></div>
+      <div id="bracketCard">
+        <div id="bracketHeader">
+          <div class="bracketTopOrnament">Tournament Bracket</div>
+          <div id="message"></div>
+          <div id="subMessage"></div>
+        </div>
 
-        <div id="tournamentCardGrid">
-          <div class="cardStat"><span>Round</span><strong id="cardRoundText">1</strong></div>
-          <div class="cardStat"><span>Reward</span><strong id="cardRewardText">+0 BloodCoins</strong></div>
-          <div class="cardStat"><span>Rank</span><strong id="cardRankText">Sand Rookie</strong></div>
-          <div class="cardStat"><span>Next Fight</span><strong id="cardNextOpponentText">Awaiting challenger</strong></div>
+        <div id="bracketMetaRow">
+          <div class="bracketMeta"><span>Bracket</span><strong id="bracketTournamentText">I</strong></div>
+          <div class="bracketMeta"><span>Stage</span><strong id="bracketStageText">Quarterfinal</strong></div>
+          <div class="bracketMeta"><span>Reward</span><strong id="bracketRewardText">+0 BloodCoins</strong></div>
+          <div class="bracketMeta"><span>Next Opponent</span><strong id="bracketNextOpponentText">Awaiting challenger</strong></div>
+        </div>
+
+        <div id="bracketLayout">
+          <div class="bracketColumn">
+            <div class="bracketColumnTitle">Quarterfinals</div>
+            <div id="quarterfinalMatches"></div>
+          </div>
+
+          <div class="bracketColumn">
+            <div class="bracketColumnTitle">Semifinals</div>
+            <div id="semifinalMatches"></div>
+          </div>
+
+          <div class="bracketColumn">
+            <div class="bracketColumnTitle">Final</div>
+            <div id="finalMatches"></div>
+          </div>
+
+          <div class="bracketColumn" id="championColumn">
+            <div class="bracketColumnTitle">Champion</div>
+            <div id="championBox">
+              <div id="championSeal">
+                <div id="championSealInner">⚔</div>
+              </div>
+              <div id="championNameText">Undecided</div>
+            </div>
+          </div>
         </div>
 
         <div id="victoryButtonRow">
@@ -831,6 +1057,11 @@
     const VICTORY_SCREEN_DELAY = 1.4;
     let pendingVictoryText = "";
     let pendingVictoryDetail = "";
+
+    let bracketState = null;
+
+    const PLAYER_BRACKET_NAME = "Gladiator";
+    const BRACKET_STAGE_NAMES = ["Quarterfinal", "Semifinal", "Final"];
 
     const opponentNames = [
       "Marcus Bloodfang",
@@ -899,10 +1130,14 @@
     const messagePanel = document.getElementById("messagePanel");
     const restartBtn = document.getElementById("restartBtn");
     const nextOpponentBtn = document.getElementById("nextOpponentBtn");
-    const cardRoundText = document.getElementById("cardRoundText");
-    const cardRewardText = document.getElementById("cardRewardText");
-    const cardRankText = document.getElementById("cardRankText");
-    const cardNextOpponentText = document.getElementById("cardNextOpponentText");
+    const bracketTournamentText = document.getElementById("bracketTournamentText");
+    const bracketStageText = document.getElementById("bracketStageText");
+    const bracketRewardText = document.getElementById("bracketRewardText");
+    const bracketNextOpponentText = document.getElementById("bracketNextOpponentText");
+    const quarterfinalMatches = document.getElementById("quarterfinalMatches");
+    const semifinalMatches = document.getElementById("semifinalMatches");
+    const finalMatches = document.getElementById("finalMatches");
+    const championNameText = document.getElementById("championNameText");
     const damageFlash = document.getElementById("damageFlash");
 
     init();
@@ -910,6 +1145,188 @@
 
     function randomOpponentName() {
       return opponentNames[Math.floor(Math.random() * opponentNames.length)];
+    }
+
+
+    function romanNumeral(value) {
+      const map = [
+        [1000, "M"], [900, "CM"], [500, "D"], [400, "CD"],
+        [100, "C"], [90, "XC"], [50, "L"], [40, "XL"],
+        [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]
+      ];
+
+      let out = "";
+      let n = Math.max(1, Math.floor(value));
+
+      for (const [num, sym] of map) {
+        while (n >= num) {
+          out += sym;
+          n -= num;
+        }
+      }
+
+      return out;
+    }
+
+    function getBracketCycle(round = tournamentRound) {
+      return Math.floor((Math.max(1, round) - 1) / 3) + 1;
+    }
+
+    function getBracketStageIndex(round = tournamentRound) {
+      return (Math.max(1, round) - 1) % 3;
+    }
+
+    function getBracketStageName(round = tournamentRound) {
+      return BRACKET_STAGE_NAMES[getBracketStageIndex(round)];
+    }
+
+    function randomUniqueOpponentNames(count) {
+      const chosen = [];
+      const attemptsMax = 300;
+      let attempts = 0;
+
+      while (chosen.length < count && attempts < attemptsMax) {
+        const candidate = randomOpponentName();
+        if (!chosen.includes(candidate)) chosen.push(candidate);
+        attempts += 1;
+      }
+
+      while (chosen.length < count) {
+        chosen.push(randomOpponentName() + " " + (chosen.length + 1));
+      }
+
+      return chosen;
+    }
+
+    function pickMatchWinner(match) {
+      return Math.random() > 0.5 ? match[0] : match[1];
+    }
+
+    function createBracketState(cycle = getBracketCycle()) {
+      const opponents = randomUniqueOpponentNames(7);
+      const entrants = [PLAYER_BRACKET_NAME, ...opponents];
+
+      const qfMatches = [
+        [entrants[0], entrants[1]],
+        [entrants[2], entrants[3]],
+        [entrants[4], entrants[5]],
+        [entrants[6], entrants[7]]
+      ];
+
+      const qfWinners = [
+        PLAYER_BRACKET_NAME,
+        pickMatchWinner(qfMatches[1]),
+        pickMatchWinner(qfMatches[2]),
+        pickMatchWinner(qfMatches[3])
+      ];
+
+      const sfWinners = [
+        PLAYER_BRACKET_NAME,
+        Math.random() > 0.5 ? qfWinners[2] : qfWinners[3]
+      ];
+
+      return {
+        cycle,
+        entrants,
+        qfMatches,
+        qfWinners,
+        sfWinners,
+        champion: PLAYER_BRACKET_NAME,
+        playerOpponents: [qfMatches[0][1], qfWinners[1], sfWinners[1]]
+      };
+    }
+
+    function ensureBracketState(round = tournamentRound, forceNew = false) {
+      const cycle = getBracketCycle(round);
+      if (forceNew || !bracketState || bracketState.cycle !== cycle) {
+        bracketState = createBracketState(cycle);
+      }
+      return bracketState;
+    }
+
+    function getStageReward(round = tournamentRound) {
+      return 25 + (round - 1) * 5;
+    }
+
+    function getNextOpponentPreview(round = tournamentRound, revealWins = 0) {
+      const state = ensureBracketState(round);
+      const stage = getBracketStageIndex(round);
+
+      if (revealWins > stage) {
+        if (stage === 0) return state.playerOpponents[1];
+        if (stage === 1) return state.playerOpponents[2];
+        return "New bracket awaits";
+      }
+
+      return state.playerOpponents[Math.min(stage, state.playerOpponents.length - 1)] || "Awaiting challenger";
+    }
+
+    function createBracketEntry(name, options = {}) {
+      const classes = ["bracketEntry"];
+      if (options.pending) classes.push("pending");
+      if (options.winner) classes.push("winner");
+      if (options.player) classes.push("player");
+      if (options.eliminated) classes.push("eliminated");
+
+      const label = name || "TBD";
+      const seed = options.seed != null ? `<span class="seed">${options.seed}</span>` : "";
+      return `<div class="${classes.join(" ")}">${seed}<span>${label}</span></div>`;
+    }
+
+    function renderQuarterfinalColumn(state, revealWins = 0) {
+      quarterfinalMatches.innerHTML = state.qfMatches.map((match, index) => {
+        const winner = revealWins >= 1 ? state.qfWinners[index] : "";
+
+        return `
+          <div class="bracketMatch">
+            ${createBracketEntry(match[0], {
+              seed: index * 2 + 1,
+              player: match[0] === PLAYER_BRACKET_NAME,
+              winner: winner === match[0],
+              eliminated: !!winner && winner !== match[0]
+            })}
+            ${createBracketEntry(match[1], {
+              seed: index * 2 + 2,
+              player: match[1] === PLAYER_BRACKET_NAME,
+              winner: winner === match[1],
+              eliminated: !!winner && winner !== match[1]
+            })}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderSemifinalColumn(state, revealWins = 0) {
+      semifinalMatches.innerHTML = new Array(4).fill(0).map((_, index) => {
+        const name = revealWins >= 1 ? state.qfWinners[index] : "TBD";
+        const isPlayer = name === PLAYER_BRACKET_NAME;
+        return `<div class="bracketAdvancer">${createBracketEntry(name, { pending: revealWins < 1, player: isPlayer, winner: revealWins >= 1 && !!name })}</div>`;
+      }).join("");
+    }
+
+    function renderFinalColumn(state, revealWins = 0) {
+      finalMatches.innerHTML = new Array(2).fill(0).map((_, index) => {
+        const name = revealWins >= 2 ? state.sfWinners[index] : "TBD";
+        const isPlayer = name === PLAYER_BRACKET_NAME;
+        return `<div class="bracketAdvancer">${createBracketEntry(name, { pending: revealWins < 2, player: isPlayer, winner: revealWins >= 2 && !!name })}</div>`;
+      }).join("");
+    }
+
+    function renderChampionColumn(state, revealWins = 0) {
+      championNameText.textContent = revealWins >= 3 ? state.champion : "Undecided";
+    }
+
+    function updateBracketMenu(hasVictory = false) {
+      const state = ensureBracketState();
+      const revealWins = hasVictory ? getBracketStageIndex() + 1 : getBracketStageIndex();
+      renderQuarterfinalColumn(state, revealWins);
+      renderSemifinalColumn(state, revealWins);
+      renderFinalColumn(state, revealWins);
+      renderChampionColumn(state, revealWins);
+      bracketTournamentText.textContent = romanNumeral(state.cycle);
+      bracketStageText.textContent = getBracketStageName();
+      bracketRewardText.textContent = "+" + lastVictoryReward + " BloodCoins";
+      bracketNextOpponentText.textContent = hasVictory ? getNextOpponentPreview(tournamentRound, revealWins) : "Restart the tournament";
     }
 
     function getTournamentRankName(round = tournamentRound) {
@@ -948,7 +1365,10 @@
     }
 
     function configureOpponentForRound() {
-      setNewOpponentName();
+      const state = ensureBracketState();
+      const stageIndex = getBracketStageIndex();
+      currentEnemyName = state.playerOpponents[stageIndex] || randomOpponentName();
+      queuedOpponentName = stageIndex < 2 ? state.playerOpponents[stageIndex + 1] : "";
       enemyMaxHP = ENEMY_BASE_HP + (tournamentRound - 1) * ENEMY_HP_PER_ROUND;
       enemyHP = enemyMaxHP;
       enemyDamageMultiplier = 1 + (tournamentRound - 1) * ENEMY_DAMAGE_GROWTH;
@@ -1143,9 +1563,8 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       function splat(u, v, rx, ry, alpha = 0.85, drip = true) {
-        // 20% larger blood marking while still being drawn on the attached curved shell.
-        rx *= 1.2;
-        ry *= 1.2;
+        rx *= 1.15;
+        ry *= 1.15;
 
         const x = u * canvas.width;
         const y = v * canvas.height;
@@ -1179,11 +1598,12 @@
         }
 
         if (drip) {
-          for (let i = 0; i < 5; i++) {
+          const dripCount = kind.startsWith("arm") ? 3 : 5;
+          for (let i = 0; i < dripCount; i++) {
             const dx = x + (Math.random() - 0.5) * rx * 1.15;
-            const dy = y + ry * (0.25 + Math.random() * 0.62);
-            const length = 18 + Math.random() * 68;
-            const width = 3 + Math.random() * 6;
+            const dy = y + ry * (0.15 + Math.random() * 0.5);
+            const length = (kind.startsWith("arm") ? 10 : 18) + Math.random() * (kind.startsWith("arm") ? 28 : 68);
+            const width = 2 + Math.random() * (kind.startsWith("arm") ? 4 : 6);
 
             ctx.strokeStyle = `rgba(75, 0, 0, ${alpha * 0.56})`;
             ctx.lineWidth = width;
@@ -1203,26 +1623,40 @@
         }
       }
 
-      if (kind === "face") {
-        // Sphere UVs wrap around the head, so these are placed near the visible front/cheek area.
-        splat(0.5, 0.43, 72, 48, 0.9, false);
-        splat(0.43, 0.54, 42, 30, 0.74, true);
-        splat(0.61, 0.36, 32, 24, 0.62, false);
-      } else if (kind === "faceHeavy") {
-        splat(0.53, 0.48, 94, 66, 0.82, true);
-        splat(0.35, 0.42, 36, 24, 0.58, false);
-        splat(0.68, 0.57, 44, 34, 0.54, true);
-      } else if (kind === "torsoHeavy") {
-        splat(0.5, 0.42, 126, 100, 0.82, true);
-        splat(0.35, 0.58, 84, 62, 0.7, true);
-        splat(0.64, 0.68, 72, 54, 0.58, true);
-      } else {
-        splat(0.42, 0.36, 88, 70, 0.84, true);
-        splat(0.62, 0.52, 76, 58, 0.72, true);
-        splat(0.5, 0.72, 72, 48, 0.55, true);
+      function splatRange(count, uMin, uMax, vMin, vMax, rxMin, rxMax, ryMin, ryMax, alphaMin, alphaMax, drip = true) {
+        for (let i = 0; i < count; i++) {
+          splat(
+            uMin + Math.random() * (uMax - uMin),
+            vMin + Math.random() * (vMax - vMin),
+            rxMin + Math.random() * (rxMax - rxMin),
+            ryMin + Math.random() * (ryMax - ryMin),
+            alphaMin + Math.random() * (alphaMax - alphaMin),
+            drip
+          );
+        }
       }
 
-      // Small dark flecks make it read as soaked fabric/skin rather than floating decals.
+      if (kind === "face") {
+        splatRange(2, 0.34, 0.66, 0.26, 0.56, 26, 52, 18, 34, 0.58, 0.84, false);
+        splat(0.52, 0.44, 64, 44, 0.86, false);
+      } else if (kind === "faceHeavy") {
+        splatRange(3, 0.28, 0.72, 0.24, 0.62, 28, 62, 20, 46, 0.56, 0.84, true);
+        splat(0.51, 0.46, 88, 62, 0.82, true);
+      } else if (kind === "arm") {
+        splatRange(3, 0.34, 0.66, 0.18, 0.8, 18, 30, 20, 42, 0.5, 0.78, true);
+      } else if (kind === "armHeavy") {
+        splatRange(4, 0.3, 0.7, 0.14, 0.84, 22, 34, 24, 50, 0.56, 0.82, true);
+        splat(0.5, 0.46, 42, 76, 0.68, true);
+      } else if (kind === "torsoHeavy") {
+        splatRange(5, 0.24, 0.76, 0.16, 0.74, 34, 72, 28, 64, 0.54, 0.82, true);
+        splat(0.5, 0.28, 110, 82, 0.8, true);
+        splat(0.52, 0.52, 120, 92, 0.74, true);
+      } else {
+        splatRange(4, 0.26, 0.74, 0.14, 0.72, 28, 62, 22, 54, 0.48, 0.78, true);
+        splat(0.47, 0.26, 86, 62, 0.78, true);
+        splat(0.58, 0.46, 78, 56, 0.68, true);
+      }
+
       for (let i = 0; i < 45; i++) {
         ctx.fillStyle = `rgba(40, 0, 0, ${0.1 + Math.random() * 0.22})`;
         ctx.beginPath();
@@ -1265,8 +1699,6 @@
         const verticalStart = kind === "faceHeavy" ? 0.24 : 0.32;
         const verticalLength = (kind === "faceHeavy" ? 1.58 : 1.32) * 1.2;
 
-        // Front-facing partial sphere patch. This keeps blood on the face only,
-        // instead of wrapping around to the back of the head.
         return new THREE.SphereGeometry(
           0.432,
           32,
@@ -1278,11 +1710,25 @@
         );
       }
 
+      if (kind === "arm" || kind === "armHeavy") {
+        const arc = kind === "armHeavy" ? 2.38 : 2.02;
+        const height = kind === "armHeavy" ? 1.18 : 1.02;
+
+        return new THREE.CylinderGeometry(
+          0.188,
+          0.188,
+          height,
+          24,
+          6,
+          true,
+          -arc * 0.5,
+          arc
+        );
+      }
+
       const arc = (kind === "torsoHeavy" ? 1.72 : 1.46) * 1.2;
       const height = (kind === "torsoHeavy" ? 1.42 : 1.28) * 1.2;
 
-      // Front-facing partial cylinder patch. It hugs the torso curve and turns
-      // with the body, while leaving the opponent's back clean.
       return new THREE.CylinderGeometry(
         0.718,
         0.718,
@@ -1307,10 +1753,13 @@
       if (kind === "face" || kind === "faceHeavy") {
         shell.scale.set(1.018, 1.018, 1.018);
         shell.userData.baseScale = 1.018;
+      } else if (kind === "arm" || kind === "armHeavy") {
+        shell.scale.set(1.032, 1.032, 1.032);
+        shell.userData.baseScale = 1.032;
       } else {
-        shell.position.y = 0.02;
-        shell.scale.set(1.012, 1.012, 1.012);
-        shell.userData.baseScale = 1.012;
+        shell.position.y = 0.08;
+        shell.scale.set(1.014, 1.014, 1.014);
+        shell.userData.baseScale = 1.014;
       }
 
       shell.renderOrder = 12;
@@ -1941,10 +2390,14 @@
       addOutline(rightSandal, 1.05);
 
       const bloodShells = [];
-      addCurvedBloodShell(body, bloodShells, "torso", 0.05, 0.7);
-      addCurvedBloodShell(body, bloodShells, "torsoHeavy", 0.25, 0.78);
-      addCurvedBloodShell(head, bloodShells, "face", 0.34, 0.72);
-      addCurvedBloodShell(head, bloodShells, "faceHeavy", 0.58, 0.66);
+      addCurvedBloodShell(body, bloodShells, "torso", 0.05, 0.74);
+      addCurvedBloodShell(body, bloodShells, "torsoHeavy", 0.22, 0.82);
+      addCurvedBloodShell(head, bloodShells, "face", 0.24, 0.74);
+      addCurvedBloodShell(head, bloodShells, "faceHeavy", 0.48, 0.7);
+      addCurvedBloodShell(leftArm, bloodShells, "arm", 0.18, 0.58);
+      addCurvedBloodShell(leftArm, bloodShells, "armHeavy", 0.42, 0.64);
+      addCurvedBloodShell(rightArm, bloodShells, "arm", 0.18, 0.58);
+      addCurvedBloodShell(rightArm, bloodShells, "armHeavy", 0.42, 0.64);
 
       return {
         group,
@@ -2874,10 +3327,12 @@
         setDeadEyes(enemy, true);
         roundWon = true;
 
-        const earned = 25 + (tournamentRound - 1) * 5;
+        const earned = getStageReward(tournamentRound);
         lastVictoryReward = earned;
         bloodCoins += earned;
-        queuedOpponentName = randomOpponentName();
+
+        const stageIndex = getBracketStageIndex();
+        queuedOpponentName = stageIndex < 2 ? ensureBracketState().playerOpponents[stageIndex + 1] : "";
         updateUI();
 
         gameOver = true;
@@ -2887,8 +3342,12 @@
         enemyVictoryDelayTimer = VICTORY_SCREEN_DELAY;
         startEnemyRagdoll(player);
 
-        pendingVictoryText = "Round " + tournamentRound + " Cleared";
-        pendingVictoryDetail = currentEnemyName + " was clubbed down. " + queuedOpponentName + " enters the sands next. +" + earned + " BloodCoins.";
+        pendingVictoryText = getBracketStageName(tournamentRound) + " Cleared";
+        if (stageIndex < 2) {
+          pendingVictoryDetail = currentEnemyName + " was clubbed down. " + queuedOpponentName + " awaits in the " + BRACKET_STAGE_NAMES[stageIndex + 1].toLowerCase() + ". +" + earned + " BloodCoins.";
+        } else {
+          pendingVictoryDetail = currentEnemyName + " was clubbed down. You conquered the bracket. +" + earned + " BloodCoins.";
+        }
 
         createFloatingText("+" + earned + " BloodCoins", enemy.group.position.clone().add(new THREE.Vector3(0, 3.1, 0)), 0xffd86f);
 
@@ -3198,7 +3657,7 @@
 
       enemyNameLabel.textContent = currentEnemyName + "  •  HP " + Math.ceil(enemyHP) + "/" + enemyMaxHP + "  •  DMG " + Math.round(getEnemyDamageMin()) + "-" + Math.round(getEnemyDamageMax());
       tournamentRankText.textContent = getTournamentRankName();
-      tournamentRoundText.textContent = tournamentRound;
+      tournamentRoundText.textContent = getBracketStageName() + " • Bracket " + romanNumeral(getBracketCycle());
       opponentHealthText.textContent = Math.ceil(enemyHP) + " / " + enemyMaxHP;
       opponentDamageText.textContent = Math.round(getEnemyDamageMin()) + " - " + Math.round(getEnemyDamageMax());
       updateOpponentBloodTexture();
@@ -3228,18 +3687,10 @@
       nextOpponentBtn.style.display = hasVictory ? "inline-block" : "none";
 
       if (hasVictory) {
-        nextOpponentBtn.textContent = "Fight " + (queuedOpponentName || "Next Opponent");
-        cardRoundText.textContent = String(tournamentRound);
-        cardRewardText.textContent = "+" + lastVictoryReward + " BloodCoins";
-        cardRankText.textContent = getTournamentRankName(tournamentRound + 1);
-        cardNextOpponentText.textContent = queuedOpponentName || "Unknown Challenger";
-      } else {
-        cardRoundText.textContent = String(tournamentRound);
-        cardRewardText.textContent = "+0 BloodCoins";
-        cardRankText.textContent = getTournamentRankName(tournamentRound);
-        cardNextOpponentText.textContent = "Restart the tournament";
+        nextOpponentBtn.textContent = getBracketStageIndex() === 2 ? "Start New Bracket" : "Next Opponent";
       }
 
+      updateBracketMenu(hasVictory);
       messagePanel.setAttribute("aria-hidden", "false");
       messagePanel.classList.add("show");
 
@@ -3256,10 +3707,12 @@
       } else {
         tournamentRound = 1;
         queuedOpponentName = "";
+        bracketState = null;
       }
 
       roundWon = false;
       lastVictoryReward = 0;
+      ensureBracketState(tournamentRound, getBracketStageIndex(tournamentRound) === 0 || !shouldAdvance);
       configureOpponentForRound();
 
       playerHP = playerMaxHP;
