@@ -501,7 +501,7 @@
 
     #tournamentCardGrid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 12px;
       margin: 0 auto 28px;
       max-width: 850px;
@@ -535,6 +535,12 @@
       font-size: clamp(13px, 2vw, 18px);
       line-height: 1.18;
       text-shadow: 0 2px 5px #000;
+    }
+
+    @media (max-width: 980px) {
+      #tournamentCardGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     #victoryButtonRow {
@@ -761,9 +767,7 @@
         <div id="subMessage"></div>
 
         <div id="tournamentCardGrid">
-          <div class="cardStat"><span>Result</span><strong id="cardResultText">Victory</strong></div>
           <div class="cardStat"><span>Round</span><strong id="cardRoundText">1</strong></div>
-          <div class="cardStat"><span>Defeated</span><strong id="cardDefeatedText">Opponent</strong></div>
           <div class="cardStat"><span>Reward</span><strong id="cardRewardText">+0 BloodCoins</strong></div>
           <div class="cardStat"><span>Rank</span><strong id="cardRankText">Sand Rookie</strong></div>
           <div class="cardStat"><span>Next Fight</span><strong id="cardNextOpponentText">Awaiting challenger</strong></div>
@@ -824,7 +828,7 @@
     let enemyDeathTimer = 0;
     let enemyDeathDuration = 1.55;
     let enemyVictoryDelayTimer = 0;
-    const VICTORY_SCREEN_DELAY = 2;
+    const VICTORY_SCREEN_DELAY = 1.4;
     let pendingVictoryText = "";
     let pendingVictoryDetail = "";
 
@@ -862,7 +866,8 @@
     const ENEMY_ATTACK_START_DISTANCE = 3.3;
     const ENEMY_CHASE_STOP_DISTANCE = 1.45;
     const ENEMY_ATTACK_STOP_DISTANCE = 1.05;
-    const ENEMY_HIT_RADIUS = 1.46;
+    // Damaging range only. Attack animation range above stays unchanged.
+    const ENEMY_HIT_RADIUS = 1.898;
     const ENEMY_ATTACK_WALK_SPEED_MULTIPLIER = 0.62;
     const PLAYER_ATTACK_DURATION = 0.7488;
     const PLAYER_ATTACK_TYPES = ["overhead", "sideRight", "sideLeft", "stab"];
@@ -894,9 +899,7 @@
     const messagePanel = document.getElementById("messagePanel");
     const restartBtn = document.getElementById("restartBtn");
     const nextOpponentBtn = document.getElementById("nextOpponentBtn");
-    const cardResultText = document.getElementById("cardResultText");
     const cardRoundText = document.getElementById("cardRoundText");
-    const cardDefeatedText = document.getElementById("cardDefeatedText");
     const cardRewardText = document.getElementById("cardRewardText");
     const cardRankText = document.getElementById("cardRankText");
     const cardNextOpponentText = document.getElementById("cardNextOpponentText");
@@ -1140,6 +1143,10 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       function splat(u, v, rx, ry, alpha = 0.85, drip = true) {
+        // 20% larger blood marking while still being drawn on the attached curved shell.
+        rx *= 1.2;
+        ry *= 1.2;
+
         const x = u * canvas.width;
         const y = v * canvas.height;
         const gradient = ctx.createRadialGradient(x, y, 2, x, y, Math.max(rx, ry));
@@ -1254,9 +1261,9 @@
 
     function createFrontBloodPatchGeometry(kind) {
       if (kind === "face" || kind === "faceHeavy") {
-        const arc = kind === "faceHeavy" ? 1.78 : 1.48;
-        const verticalStart = kind === "faceHeavy" ? 0.28 : 0.36;
-        const verticalLength = kind === "faceHeavy" ? 1.58 : 1.32;
+        const arc = (kind === "faceHeavy" ? 1.78 : 1.48) * 1.2;
+        const verticalStart = kind === "faceHeavy" ? 0.24 : 0.32;
+        const verticalLength = (kind === "faceHeavy" ? 1.58 : 1.32) * 1.2;
 
         // Front-facing partial sphere patch. This keeps blood on the face only,
         // instead of wrapping around to the back of the head.
@@ -1271,8 +1278,8 @@
         );
       }
 
-      const arc = kind === "torsoHeavy" ? 1.72 : 1.46;
-      const height = kind === "torsoHeavy" ? 1.42 : 1.28;
+      const arc = (kind === "torsoHeavy" ? 1.72 : 1.46) * 1.2;
+      const height = (kind === "torsoHeavy" ? 1.42 : 1.28) * 1.2;
 
       // Front-facing partial cylinder patch. It hugs the torso curve and turns
       // with the body, while leaving the opponent's back clean.
@@ -1299,9 +1306,11 @@
 
       if (kind === "face" || kind === "faceHeavy") {
         shell.scale.set(1.018, 1.018, 1.018);
+        shell.userData.baseScale = 1.018;
       } else {
         shell.position.y = 0.02;
         shell.scale.set(1.012, 1.012, 1.012);
+        shell.userData.baseScale = 1.012;
       }
 
       shell.renderOrder = 12;
@@ -1333,7 +1342,8 @@
 
         shell.visible = true;
         shell.material.opacity = 0.12 + strength * maxOpacity;
-        const pulse = 1.012 + strength * 0.006;
+        const baseScale = shell.userData.baseScale || 1.012;
+        const pulse = baseScale + strength * 0.006;
         shell.scale.set(pulse, pulse, pulse);
       }
     }
@@ -1548,21 +1558,24 @@
       const headGeo = new THREE.SphereGeometry(0.18, 8, 8);
       const armGeo = new THREE.BoxGeometry(0.7, 0.08, 0.07);
 
-      const count = 156;
+      const crowdTiers = 3;
+      const silhouettesPerTier = 96;
+      const count = crowdTiers * silhouettesPerTier;
       const bodies = new THREE.InstancedMesh(bodyGeo, crowdMat, count);
       const heads = new THREE.InstancedMesh(headGeo, crowdMat, count);
       const arms = new THREE.InstancedMesh(armGeo, crowdMat, count);
       const dummy = new THREE.Object3D();
 
       for (let i = 0; i < count; i++) {
-        const angle = (i / count) * Math.PI * 2;
-        const tier = i % 3;
-        const jitter = (Math.random() - 0.5) * 0.22;
+        const tier = Math.floor(i / silhouettesPerTier);
+        const slot = i % silhouettesPerTier;
+        // Equal angular spacing per tier, with each row offset half a slot so the crowd feels denser.
+        const angle = ((slot + tier * 0.5) / silhouettesPerTier) * Math.PI * 2;
         const radius = ARENA_RADIUS + 2.35 + tier * 0.92;
-        const x = Math.cos(angle + jitter) * radius;
-        const z = Math.sin(angle + jitter) * radius;
-        const baseY = 2.18 + tier * 0.34 + Math.random() * 0.42;
-        const scale = 0.72 + Math.random() * 0.55;
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        const baseY = 2.18 + tier * 0.34 + Math.sin(slot * 1.37 + tier) * 0.16 + 0.21;
+        const scale = 0.72 + ((slot * 19 + tier * 11) % 37) / 37 * 0.55;
 
         dummy.position.set(x, baseY, z);
         dummy.rotation.set(0, -angle + Math.PI / 2, 0);
@@ -3216,16 +3229,12 @@
 
       if (hasVictory) {
         nextOpponentBtn.textContent = "Fight " + (queuedOpponentName || "Next Opponent");
-        cardResultText.textContent = "Victory";
         cardRoundText.textContent = String(tournamentRound);
-        cardDefeatedText.textContent = currentEnemyName;
         cardRewardText.textContent = "+" + lastVictoryReward + " BloodCoins";
         cardRankText.textContent = getTournamentRankName(tournamentRound + 1);
         cardNextOpponentText.textContent = queuedOpponentName || "Unknown Challenger";
       } else {
-        cardResultText.textContent = "Defeat";
         cardRoundText.textContent = String(tournamentRound);
-        cardDefeatedText.textContent = "Gladiator";
         cardRewardText.textContent = "+0 BloodCoins";
         cardRankText.textContent = getTournamentRankName(tournamentRound);
         cardNextOpponentText.textContent = "Restart the tournament";
