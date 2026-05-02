@@ -1,13 +1,625 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cat Digger</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <canvas id="game"></canvas>
-  <script src="script.js"></script>
-</body>
-</html>
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Environment, Sky, Text, Html, Sparkles } from "@react-three/drei";
+import * as THREE from "three";
+import { motion } from "framer-motion";
+import { Compass, Mountain, Wind, Flame, Gamepad2 } from "lucide-react";
+
+const WORLD_SIZE = 360;
+const DRAGON_START = new THREE.Vector3(0, 8, 28);
+
+function useKeyboard() {
+  const keys = useRef({});
+
+  useEffect(() => {
+    const down = (event) => {
+      keys.current[event.code] = true;
+      if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) {
+        event.preventDefault();
+      }
+    };
+    const up = (event) => {
+      keys.current[event.code] = false;
+    };
+
+    window.addEventListener("keydown", down, { passive: false });
+    window.addEventListener("keyup", up);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+    };
+  }, []);
+
+  return keys;
+}
+
+function Dragon({ dragonRef, velocityRef, stateRef }) {
+  const body = useRef();
+  const leftWing = useRef();
+  const rightWing = useRef();
+  const tail = useRef();
+  const neck = useRef();
+  const head = useRef();
+  const flame = useRef();
+  const keys = useKeyboard();
+  const yaw = useRef(Math.PI);
+  const pitch = useRef(0);
+  const speed = useRef(0);
+  const firePulse = useRef(0);
+
+  useFrame((_, delta) => {
+    const k = keys.current;
+    const turning = Number(k.KeyA || k.ArrowLeft) - Number(k.KeyD || k.ArrowRight);
+    const forward = Number(k.KeyW || k.ArrowUp) - Number(k.KeyS || k.ArrowDown);
+    const climb = Number(k.Space) - Number(k.ShiftLeft || k.ShiftRight || k.KeyC);
+    const boost = k.KeyE ? 1.65 : 1;
+
+    const targetSpeed = forward > 0 ? 34 * boost : forward < 0 ? -12 : 0;
+    speed.current = THREE.MathUtils.lerp(speed.current, targetSpeed, 1 - Math.pow(0.02, delta));
+
+    yaw.current += turning * delta * (speed.current >= 0 ? 1 : -1) * 1.35;
+    pitch.current = THREE.MathUtils.lerp(pitch.current, climb * 0.42, 1 - Math.pow(0.04, delta));
+
+    const forwardVector = new THREE.Vector3(
+      Math.sin(yaw.current) * Math.cos(pitch.current),
+      Math.sin(pitch.current),
+      Math.cos(yaw.current) * Math.cos(pitch.current)
+    );
+
+    const targetVelocity = forwardVector.multiplyScalar(speed.current);
+    targetVelocity.y += climb * 16;
+    targetVelocity.y -= 5.5;
+
+    velocityRef.current.lerp(targetVelocity, 1 - Math.pow(0.025, delta));
+    dragonRef.current.position.addScaledVector(velocityRef.current, delta);
+
+    const minHeight = 3.2;
+    const terrainHeight = getTerrainHeight(dragonRef.current.position.x, dragonRef.current.position.z) + minHeight;
+    if (dragonRef.current.position.y < terrainHeight) {
+      dragonRef.current.position.y = THREE.MathUtils.lerp(dragonRef.current.position.y, terrainHeight, 0.5);
+      velocityRef.current.y = Math.max(0, velocityRef.current.y);
+    }
+
+    dragonRef.current.position.x = THREE.MathUtils.clamp(dragonRef.current.position.x, -WORLD_SIZE / 2, WORLD_SIZE / 2);
+    dragonRef.current.position.z = THREE.MathUtils.clamp(dragonRef.current.position.z, -WORLD_SIZE / 2, WORLD_SIZE / 2);
+
+    dragonRef.current.rotation.y = THREE.MathUtils.lerp(dragonRef.current.rotation.y, yaw.current, 1 - Math.pow(0.025, delta));
+    dragonRef.current.rotation.x = THREE.MathUtils.lerp(dragonRef.current.rotation.x, -pitch.current * 0.55, 1 - Math.pow(0.06, delta));
+    dragonRef.current.rotation.z = THREE.MathUtils.lerp(dragonRef.current.rotation.z, turning * 0.42, 1 - Math.pow(0.04, delta));
+
+    const flap = Math.sin(performance.now() * 0.011) * 0.62 + 0.24;
+    const activeFlap = Math.abs(speed.current) > 2 || climb !== 0;
+    if (leftWing.current && rightWing.current) {
+      leftWing.current.rotation.z = THREE.MathUtils.lerp(leftWing.current.rotation.z, activeFlap ? flap : 0.25, 0.25);
+      rightWing.current.rotation.z = THREE.MathUtils.lerp(rightWing.current.rotation.z, activeFlap ? -flap : -0.25, 0.25);
+    }
+
+    if (tail.current) {
+      tail.current.rotation.y = Math.sin(performance.now() * 0.0032) * 0.18 + turning * 0.2;
+      tail.current.rotation.x = Math.sin(performance.now() * 0.0041) * 0.08;
+    }
+    if (neck.current) neck.current.rotation.x = -0.16 + pitch.current * 0.45;
+    if (head.current) head.current.rotation.y = turning * -0.18;
+
+    firePulse.current = THREE.MathUtils.lerp(firePulse.current, k.KeyF ? 1 : 0, 1 - Math.pow(0.005, delta));
+    if (flame.current) {
+      flame.current.visible = firePulse.current > 0.03;
+      flame.current.scale.setScalar(0.8 + firePulse.current * 3.8 + Math.sin(performance.now() * 0.05) * 0.12);
+      flame.current.material.opacity = firePulse.current * 0.78;
+    }
+
+    stateRef.current = {
+      speed: Math.max(0, Math.round(Math.abs(speed.current))),
+      altitude: Math.round(dragonRef.current.position.y),
+      fire: firePulse.current > 0.2,
+      boost: Boolean(k.KeyE),
+    };
+  });
+
+  return (
+    <group ref={dragonRef} position={DRAGON_START.toArray()}>
+      <group ref={body}>
+        <mesh castShadow rotation={[0, 0, Math.PI / 2]} scale={[1.4, 3.7, 1.15]}>
+          <capsuleGeometry args={[1, 2.5, 8, 16]} />
+          <meshStandardMaterial color="#30533d" roughness={0.72} metalness={0.05} />
+        </mesh>
+
+        <mesh castShadow position={[0, 0.28, -1.55]} rotation={[0, 0, Math.PI / 2]} scale={[0.95, 1.8, 0.86]}>
+          <capsuleGeometry args={[0.8, 1.6, 8, 14]} />
+          <meshStandardMaterial color="#244330" roughness={0.8} />
+        </mesh>
+
+        <group ref={neck} position={[0, 0.18, 2.9]} rotation={[-0.16, 0, 0]}>
+          <mesh castShadow rotation={[0.35, 0, 0]} scale={[0.58, 0.58, 1.8]}>
+            <capsuleGeometry args={[0.46, 1.8, 8, 12]} />
+            <meshStandardMaterial color="#345e45" roughness={0.7} />
+          </mesh>
+          <group ref={head} position={[0, 0.23, 1.82]}>
+            <mesh castShadow scale={[0.82, 0.62, 1.1]}>
+              <boxGeometry args={[1.2, 0.82, 1.45]} />
+              <meshStandardMaterial color="#386b4e" roughness={0.66} />
+            </mesh>
+            <mesh castShadow position={[0, -0.12, 0.88]} scale={[0.68, 0.4, 0.72]}>
+              <boxGeometry args={[1, 0.55, 1.05]} />
+              <meshStandardMaterial color="#2a523b" roughness={0.7} />
+            </mesh>
+            <mesh position={[-0.28, 0.16, 0.78]} scale={[0.08, 0.08, 0.08]}>
+              <sphereGeometry args={[1, 16, 16]} />
+              <meshStandardMaterial color="#f8e27b" emissive="#b8860b" emissiveIntensity={1.2} />
+            </mesh>
+            <mesh position={[0.28, 0.16, 0.78]} scale={[0.08, 0.08, 0.08]}>
+              <sphereGeometry args={[1, 16, 16]} />
+              <meshStandardMaterial color="#f8e27b" emissive="#b8860b" emissiveIntensity={1.2} />
+            </mesh>
+            <mesh castShadow position={[-0.42, 0.46, -0.15]} rotation={[0.35, 0.25, 0.2]} scale={[0.12, 0.48, 0.12]}>
+              <coneGeometry args={[1, 2.2, 5]} />
+              <meshStandardMaterial color="#d6c597" roughness={0.55} />
+            </mesh>
+            <mesh castShadow position={[0.42, 0.46, -0.15]} rotation={[0.35, -0.25, -0.2]} scale={[0.12, 0.48, 0.12]}>
+              <coneGeometry args={[1, 2.2, 5]} />
+              <meshStandardMaterial color="#d6c597" roughness={0.55} />
+            </mesh>
+            <mesh ref={flame} visible={false} position={[0, -0.18, 1.68]} rotation={[Math.PI / 2, 0, 0]}>
+              <coneGeometry args={[0.34, 2.25, 18]} />
+              <meshStandardMaterial color="#ff7a18" emissive="#ff3d00" emissiveIntensity={2.2} transparent opacity={0.7} depthWrite={false} />
+            </mesh>
+          </group>
+        </group>
+
+        <group ref={tail} position={[0, -0.04, -3.15]}>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <mesh key={i} castShadow position={[0, -0.04 * i, -0.85 * i]} rotation={[0.05 * i, 0, 0]} scale={[0.75 - i * 0.1, 0.68 - i * 0.08, 0.92]}>
+              <capsuleGeometry args={[0.44, 0.9, 8, 10]} />
+              <meshStandardMaterial color={i < 2 ? "#2f5740" : "#254530"} roughness={0.82} />
+            </mesh>
+          ))}
+          <mesh castShadow position={[0, -0.18, -4.7]} rotation={[Math.PI / 2, 0, 0]} scale={[0.16, 0.16, 0.8]}>
+            <coneGeometry args={[1.2, 2.2, 6]} />
+            <meshStandardMaterial color="#d6c597" />
+          </mesh>
+        </group>
+
+        <Wing side="left" wingRef={leftWing} />
+        <Wing side="right" wingRef={rightWing} />
+        <Leg x={-0.72} z={1.2} />
+        <Leg x={0.72} z={1.2} />
+        <Leg x={-0.72} z={-1.35} />
+        <Leg x={0.72} z={-1.35} />
+
+        {[-1.85, -1.1, -0.35, 0.42, 1.2, 2.0].map((z, i) => (
+          <mesh key={z} castShadow position={[0, 0.96, z]} rotation={[Math.PI * 0.04, 0, 0]} scale={[0.13 + i * 0.01, 0.5, 0.18]}>
+            <coneGeometry args={[1, 2, 4]} />
+            <meshStandardMaterial color="#d8cfac" roughness={0.62} />
+          </mesh>
+        ))}
+      </group>
+    </group>
+  );
+}
+
+function Wing({ side, wingRef }) {
+  const sign = side === "left" ? -1 : 1;
+  return (
+    <group ref={wingRef} position={[sign * 1.05, 0.25, 0.2]} rotation={[0.05, 0, sign * 0.25]}>
+      <mesh castShadow position={[sign * 1.45, 0.08, 0]} rotation={[0, 0, sign * Math.PI / 2]} scale={[0.18, 1.6, 0.18]}>
+        <capsuleGeometry args={[0.22, 2.7, 8, 8]} />
+        <meshStandardMaterial color="#203b2b" />
+      </mesh>
+      <mesh castShadow position={[sign * 2.7, -0.15, -0.65]} rotation={[0.14, 0.02, sign * 0.09]} scale={[2.9, 0.045, 1.5]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#6b4235" roughness={0.95} transparent opacity={0.88} />
+      </mesh>
+      <mesh castShadow position={[sign * 3.65, -0.28, -1.78]} rotation={[0.24, 0.04, sign * -0.08]} scale={[2.4, 0.04, 1.25]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#6b4235" roughness={0.95} transparent opacity={0.82} />
+      </mesh>
+      {[0.4, 1.25, 2.1].map((z, i) => (
+        <mesh key={z} castShadow position={[sign * (1.65 + i * 0.72), -0.02, -z]} rotation={[0.2, 0, sign * 0.65]} scale={[0.1, 0.1, 1.3 + i * 0.2]}>
+          <capsuleGeometry args={[0.28, 1.7, 8, 8]} />
+          <meshStandardMaterial color="#21392a" />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function Leg({ x, z }) {
+  return (
+    <group position={[x, -0.78, z]}>
+      <mesh castShadow rotation={[0.35, 0, x > 0 ? -0.22 : 0.22]} scale={[0.22, 0.62, 0.22]}>
+        <capsuleGeometry args={[0.6, 1.15, 8, 10]} />
+        <meshStandardMaterial color="#213b2b" roughness={0.8} />
+      </mesh>
+      <mesh castShadow position={[x > 0 ? 0.12 : -0.12, -0.58, 0.12]} scale={[0.22, 0.16, 0.44]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#1b3024" />
+      </mesh>
+      {[0, 1, 2].map((i) => (
+        <mesh key={i} castShadow position={[(i - 1) * 0.13 + (x > 0 ? 0.14 : -0.14), -0.6, 0.4]} rotation={[Math.PI / 2, 0, 0]} scale={[0.04, 0.04, 0.17]}>
+          <coneGeometry args={[1, 2.5, 5]} />
+          <meshStandardMaterial color="#ded1a3" />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function FollowCamera({ targetRef, velocityRef }) {
+  const { camera } = useThree();
+  const targetPosition = useMemo(() => new THREE.Vector3(), []);
+  const lookAt = useMemo(() => new THREE.Vector3(), []);
+  const idealOffset = useMemo(() => new THREE.Vector3(), []);
+
+  useFrame((_, delta) => {
+    const dragon = targetRef.current;
+    if (!dragon) return;
+
+    const speedLift = THREE.MathUtils.clamp(velocityRef.current.length() / 45, 0, 1);
+    idealOffset.set(0, 7 + speedLift * 3, -18 - speedLift * 10);
+    idealOffset.applyEuler(dragon.rotation);
+    idealOffset.add(dragon.position);
+
+    targetPosition.copy(idealOffset);
+    camera.position.lerp(targetPosition, 1 - Math.pow(0.018, delta));
+
+    lookAt.copy(dragon.position).add(new THREE.Vector3(0, 3.2, 8).applyEuler(dragon.rotation));
+    camera.lookAt(lookAt);
+    camera.fov = THREE.MathUtils.lerp(camera.fov, 55 + speedLift * 14, 1 - Math.pow(0.05, delta));
+    camera.updateProjectionMatrix();
+  });
+
+  return null;
+}
+
+function getTerrainHeight(x, z) {
+  const meadow = Math.sin(x * 0.025) * 1.2 + Math.cos(z * 0.018) * 1.5;
+  const ridge = Math.max(0, 22 - Math.hypot(x + 96, z - 58) * 0.22);
+  const farRidge = Math.max(0, 18 - Math.hypot(x - 112, z + 96) * 0.18);
+  const islandRise = Math.max(0, 10 - Math.hypot(x - 12, z + 10) * 0.08);
+  return meadow + ridge + farRidge + islandRise;
+}
+
+function Terrain() {
+  const geometry = useMemo(() => {
+    const segments = 128;
+    const geo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, segments, segments);
+    geo.rotateX(-Math.PI / 2);
+    const position = geo.attributes.position;
+    for (let i = 0; i < position.count; i += 1) {
+      const x = position.getX(i);
+      const z = position.getZ(i);
+      position.setY(i, getTerrainHeight(x, z));
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }, []);
+
+  return (
+    <mesh receiveShadow geometry={geometry}>
+      <meshStandardMaterial color="#6c8d55" roughness={0.9} metalness={0.02} />
+    </mesh>
+  );
+}
+
+function Lake() {
+  return (
+    <mesh position={[34, 1.35, -42]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      <circleGeometry args={[34, 64]} />
+      <meshStandardMaterial color="#4d8fa7" transparent opacity={0.72} roughness={0.35} metalness={0.15} />
+    </mesh>
+  );
+}
+
+function Tree({ position, scale = 1, rotation = 0 }) {
+  return (
+    <group position={position} scale={scale} rotation={[0, rotation, 0]}>
+      <mesh castShadow position={[0, 2.1, 0]}>
+        <cylinderGeometry args={[0.35, 0.55, 4.2, 8]} />
+        <meshStandardMaterial color="#65452d" roughness={0.9} />
+      </mesh>
+      <mesh castShadow position={[0, 5.2, 0]}>
+        <coneGeometry args={[2.2, 4.8, 9]} />
+        <meshStandardMaterial color="#244d30" roughness={0.8} />
+      </mesh>
+      <mesh castShadow position={[0, 7.3, 0]}>
+        <coneGeometry args={[1.6, 3.5, 9]} />
+        <meshStandardMaterial color="#2c6040" roughness={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function Rock({ position, scale = [1, 1, 1], rotation = 0 }) {
+  return (
+    <mesh castShadow receiveShadow position={position} rotation={[0.12, rotation, -0.08]} scale={scale}>
+      <dodecahedronGeometry args={[1, 0]} />
+      <meshStandardMaterial color="#7b7e76" roughness={0.95} />
+    </mesh>
+  );
+}
+
+function Crystal({ position, scale = 1, color = "#86e7ff" }) {
+  return (
+    <group position={position} scale={scale}>
+      <mesh castShadow rotation={[0.1, 0.4, 0]}>
+        <octahedronGeometry args={[1.2, 0]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.35} roughness={0.25} metalness={0.1} />
+      </mesh>
+      <pointLight color={color} intensity={0.75} distance={16} />
+    </group>
+  );
+}
+
+function Ruins({ position, rotation = 0, scale = 1 }) {
+  return (
+    <group position={position} rotation={[0, rotation, 0]} scale={scale}>
+      {[-3.5, -1.2, 1.2, 3.5].map((x, i) => (
+        <mesh key={x} castShadow receiveShadow position={[x, 3, 0]} rotation={[0.02 * i, 0, 0.02 * (i - 1)]}>
+          <cylinderGeometry args={[0.55, 0.72, 6, 12]} />
+          <meshStandardMaterial color="#b1a990" roughness={0.92} />
+        </mesh>
+      ))}
+      <mesh castShadow receiveShadow position={[0, 6.3, 0]} scale={[4.4, 0.45, 0.65]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#b7af97" roughness={0.9} />
+      </mesh>
+      <mesh receiveShadow position={[0, 0.2, 0]} scale={[6, 0.25, 3.4]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="#948b76" roughness={0.95} />
+      </mesh>
+    </group>
+  );
+}
+
+function WatchTower({ position, rotation = 0, scale = 1 }) {
+  return (
+    <group position={position} rotation={[0, rotation, 0]} scale={scale}>
+      <mesh castShadow position={[0, 5, 0]}>
+        <cylinderGeometry args={[1.4, 1.8, 10, 8]} />
+        <meshStandardMaterial color="#8f6e4a" roughness={0.85} />
+      </mesh>
+      <mesh castShadow position={[0, 10.9, 0]} rotation={[0, Math.PI / 4, 0]}>
+        <coneGeometry args={[2.7, 2.5, 4]} />
+        <meshStandardMaterial color="#5e3a2a" roughness={0.82} />
+      </mesh>
+      <mesh position={[0, 7.2, 1.82]}>
+        <boxGeometry args={[0.75, 1.2, 0.08]} />
+        <meshStandardMaterial color="#1d1a16" emissive="#ffbb55" emissiveIntensity={0.35} />
+      </mesh>
+    </group>
+  );
+}
+
+const decoratedObjects = [
+  { type: "tree", p: [-72, getTerrainHeight(-72, -38), -38], s: 1.35, r: 0.4 },
+  { type: "tree", p: [-84, getTerrainHeight(-84, -22), -22], s: 1.05, r: 2.3 },
+  { type: "tree", p: [-96, getTerrainHeight(-96, -8), -8], s: 1.25, r: 1.6 },
+  { type: "tree", p: [-111, getTerrainHeight(-111, 18), 18], s: 1.5, r: 0.9 },
+  { type: "tree", p: [-68, getTerrainHeight(-68, 22), 22], s: 0.95, r: 3.2 },
+  { type: "tree", p: [-52, getTerrainHeight(-52, 38), 38], s: 1.2, r: 2.8 },
+  { type: "tree", p: [-126, getTerrainHeight(-126, 42), 42], s: 1.2, r: 1.1 },
+  { type: "tree", p: [-142, getTerrainHeight(-142, 16), 16], s: 1.35, r: 0.1 },
+  { type: "tree", p: [-133, getTerrainHeight(-133, -26), -26], s: 1.1, r: 2.1 },
+  { type: "tree", p: [92, getTerrainHeight(92, 14), 14], s: 1.25, r: 2.7 },
+  { type: "tree", p: [118, getTerrainHeight(118, 32), 32], s: 1.55, r: 0.5 },
+  { type: "tree", p: [132, getTerrainHeight(132, 52), 52], s: 1.2, r: 1.4 },
+  { type: "tree", p: [104, getTerrainHeight(104, 72), 72], s: 1.0, r: 3.6 },
+  { type: "tree", p: [76, getTerrainHeight(76, 62), 62], s: 1.32, r: 0.2 },
+  { type: "rock", p: [-16, getTerrainHeight(-16, 5) + 0.8, 5], s: [2.5, 1.1, 1.5], r: 1.4 },
+  { type: "rock", p: [10, getTerrainHeight(10, -18) + 0.6, -18], s: [1.4, 0.8, 1.2], r: 0.5 },
+  { type: "rock", p: [52, getTerrainHeight(52, 12) + 0.7, 12], s: [1.9, 1, 2.6], r: 2.8 },
+  { type: "rock", p: [-46, getTerrainHeight(-46, 78) + 0.9, 78], s: [2.7, 1.5, 2], r: 1.0 },
+  { type: "rock", p: [98, getTerrainHeight(98, -82) + 1.1, -82], s: [2.5, 1.5, 1.9], r: 1.9 },
+  { type: "crystal", p: [24, getTerrainHeight(24, 44) + 1.8, 44], s: 1.5 },
+  { type: "crystal", p: [18, getTerrainHeight(18, 54) + 1.3, 54], s: 0.9, color: "#b78cff" },
+  { type: "crystal", p: [36, getTerrainHeight(36, 52) + 1.4, 52], s: 1.0, color: "#7dffbd" },
+];
+
+function DecoratedWorld() {
+  return (
+    <>
+      <Terrain />
+      <Lake />
+      <Ruins position={[-35, getTerrainHeight(-35, -86), -86]} rotation={0.5} scale={1.2} />
+      <WatchTower position={[78, getTerrainHeight(78, -66), -66]} rotation={-0.6} scale={1.1} />
+      <WatchTower position={[-128, getTerrainHeight(-128, 78), 78]} rotation={1.1} scale={0.85} />
+
+      {decoratedObjects.map((item, index) => {
+        if (item.type === "tree") return <Tree key={index} position={item.p} scale={item.s} rotation={item.r} />;
+        if (item.type === "rock") return <Rock key={index} position={item.p} scale={item.s} rotation={item.r} />;
+        if (item.type === "crystal") return <Crystal key={index} position={item.p} scale={item.s} color={item.color} />;
+        return null;
+      })}
+
+      <PathStones />
+      <FloatingRings />
+      <BoundaryMarkers />
+      <Sparkles count={90} speed={0.18} size={2.6} scale={[160, 50, 160]} position={[0, 28, 0]} opacity={0.26} />
+      <Text position={[0, getTerrainHeight(0, 70) + 8, 70]} rotation={[-0.15, 0, 0]} fontSize={4.2} color="#f3ead2" anchorX="center">
+        Emberfall Valley
+      </Text>
+    </>
+  );
+}
+
+function PathStones() {
+  const stones = useMemo(() => {
+    const points = [
+      [-72, -88], [-58, -75], [-44, -64], [-30, -55], [-13, -49], [6, -47], [24, -44], [42, -36], [58, -24], [68, -8], [75, 10], [82, 28], [94, 43]
+    ];
+    return points.map(([x, z], i) => ({ x, z, y: getTerrainHeight(x, z) + 0.12, r: (i * 0.73) % Math.PI, s: 0.75 + (i % 3) * 0.18 }));
+  }, []);
+
+  return (
+    <group>
+      {stones.map((stone, i) => (
+        <mesh key={i} receiveShadow castShadow position={[stone.x, stone.y, stone.z]} rotation={[-Math.PI / 2, 0, stone.r]} scale={[stone.s * 1.2, stone.s, 0.16]}>
+          <cylinderGeometry args={[1.2, 1.2, 0.35, 9]} />
+          <meshStandardMaterial color="#9a927f" roughness={0.95} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function FloatingRings() {
+  return (
+    <group>
+      {[
+        [0, 28, -42, 0],
+        [45, 34, -8, 0.5],
+        [72, 45, 45, 1.1],
+        [-38, 32, 58, -0.7],
+        [-82, 40, 8, 0.2],
+      ].map(([x, y, z, r], i) => (
+        <group key={i} position={[x, y, z]} rotation={[0.2, r, 0]}>
+          <mesh>
+            <torusGeometry args={[5, 0.26, 10, 48]} />
+            <meshStandardMaterial color="#ffce6c" emissive="#ff9a21" emissiveIntensity={0.8} roughness={0.35} metalness={0.2} />
+          </mesh>
+          <pointLight color="#ffb04d" intensity={0.7} distance={24} />
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function BoundaryMarkers() {
+  const positions = [
+    [-170, 0], [170, 0], [0, -170], [0, 170], [-132, -132], [132, -132], [-132, 132], [132, 132],
+  ];
+  return (
+    <group>
+      {positions.map(([x, z], i) => (
+        <group key={i} position={[x, getTerrainHeight(x, z), z]}>
+          <mesh castShadow position={[0, 4, 0]}>
+            <cylinderGeometry args={[0.45, 0.7, 8, 8]} />
+            <meshStandardMaterial color="#66513d" roughness={0.86} />
+          </mesh>
+          <mesh position={[0, 8.5, 0]}>
+            <sphereGeometry args={[0.72, 16, 16]} />
+            <meshStandardMaterial color="#ffb86b" emissive="#ff6c2f" emissiveIntensity={0.9} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function GameScene({ setHud }) {
+  const dragonRef = useRef();
+  const velocityRef = useRef(new THREE.Vector3());
+  const stateRef = useRef({ speed: 0, altitude: 0, fire: false, boost: false });
+
+  useFrame(() => {
+    setHud((old) => {
+      const next = stateRef.current;
+      if (old.speed === next.speed && old.altitude === next.altitude && old.fire === next.fire && old.boost === next.boost) return old;
+      return { ...next };
+    });
+  });
+
+  return (
+    <>
+      <ambientLight intensity={0.52} />
+      <directionalLight position={[42, 88, 24]} intensity={1.9} castShadow shadow-mapSize={[2048, 2048]} shadow-camera-left={-130} shadow-camera-right={130} shadow-camera-top={130} shadow-camera-bottom={-130} />
+      <pointLight position={[-30, 24, -86]} color="#ffc16d" intensity={0.7} distance={55} />
+      <Sky sunPosition={[65, 32, 18]} turbidity={4.5} rayleigh={1.2} mieCoefficient={0.006} mieDirectionalG={0.78} />
+      <Environment preset="sunset" />
+      <fog attach="fog" args={["#c7d6cc", 70, 310]} />
+      <DecoratedWorld />
+      <Dragon dragonRef={dragonRef} velocityRef={velocityRef} stateRef={stateRef} />
+      <FollowCamera targetRef={dragonRef} velocityRef={velocityRef} />
+    </>
+  );
+}
+
+function Hud({ hud }) {
+  return (
+    <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-5 text-white">
+      <div className="flex items-start justify-between gap-4">
+        <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-white/15 bg-black/35 p-4 shadow-2xl backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-orange-400/20 p-2">
+              <Flame className="h-6 w-6 text-orange-200" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-wide">Dragon Simulator</h1>
+              <p className="text-sm text-white/75">Hand-decorated third-person valley flight</p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 gap-3 rounded-2xl border border-white/15 bg-black/35 p-4 text-sm shadow-2xl backdrop-blur-md">
+          <Stat icon={<Wind className="h-4 w-4" />} label="Speed" value={`${hud.speed} kt`} active={hud.boost} />
+          <Stat icon={<Mountain className="h-4 w-4" />} label="Altitude" value={`${hud.altitude} m`} />
+          <Stat icon={<Flame className="h-4 w-4" />} label="Fire" value={hud.fire ? "Breathing" : "Ready"} active={hud.fire} />
+          <Stat icon={<Compass className="h-4 w-4" />} label="World" value="Fixed map" />
+        </motion.div>
+      </div>
+
+      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="w-fit rounded-2xl border border-white/15 bg-black/35 p-4 shadow-2xl backdrop-blur-md">
+        <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-white/90">
+          <Gamepad2 className="h-4 w-4" /> Controls
+        </div>
+        <div className="grid gap-x-5 gap-y-1 text-sm text-white/78 sm:grid-cols-2">
+          <p><kbd>W/S</kbd> fly forward/back</p>
+          <p><kbd>A/D</kbd> turn smoothly</p>
+          <p><kbd>Space</kbd> climb</p>
+          <p><kbd>Shift</kbd> descend</p>
+          <p><kbd>E</kbd> boost glide</p>
+          <p><kbd>F</kbd> breathe fire</p>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function Stat({ icon, label, value, active = false }) {
+  return (
+    <div className={`rounded-xl px-3 py-2 ${active ? "bg-orange-400/25" : "bg-white/10"}`}>
+      <div className="flex items-center gap-2 text-white/65">
+        {icon}
+        <span>{label}</span>
+      </div>
+      <div className="mt-1 font-bold text-white">{value}</div>
+    </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <Html center>
+      <div className="rounded-2xl bg-black/50 px-5 py-3 text-center text-white shadow-xl backdrop-blur-md">
+        <div className="text-lg font-bold">Summoning dragon...</div>
+        <div className="text-sm text-white/70">Building Emberfall Valley</div>
+      </div>
+    </Html>
+  );
+}
+
+export default function DragonThirdPersonSimulator() {
+  const [hud, setHud] = useState({ speed: 0, altitude: Math.round(DRAGON_START.y), fire: false, boost: false });
+
+  return (
+    <div className="relative h-screen w-full overflow-hidden bg-slate-950">
+      <Canvas shadows camera={{ position: [0, 12, 44], fov: 58, near: 0.1, far: 900 }} dpr={[1, 1.8]}>
+        <React.Suspense fallback={<LoadingFallback />}>
+          <GameScene setHud={setHud} />
+        </React.Suspense>
+      </Canvas>
+      <Hud hud={hud} />
+      <style>{`
+        kbd {
+          border-radius: 0.45rem;
+          border: 1px solid rgba(255,255,255,0.22);
+          background: rgba(255,255,255,0.13);
+          padding: 0.08rem 0.35rem;
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: rgba(255,255,255,0.92);
+        }
+      `}</style>
+    </div>
+  );
+}
